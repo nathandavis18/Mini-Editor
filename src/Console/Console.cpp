@@ -927,6 +927,7 @@ void Console::updateRenderedColor(const size_t rowOffset, const size_t colOffset
 
 		size_t insertPos = highlight.endCol;
 		if (insertPos >= colOffset) insertPos -= colOffset;
+		else if (insertPos < colOffset) insertPos = 0;
 		if (insertPos >= mWindow->cols) insertPos = mWindow->cols;
 		renderString = &mWindow->fileRows.at(highlight.endRow).renderedLine;
 
