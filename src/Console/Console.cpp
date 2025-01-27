@@ -29,6 +29,7 @@ SOFTWARE.
 #include <format> //C++20 is required. MSVC/GCC-13/Clang-14/17/AppleClang-15
 
 #ifdef _WIN32
+#define NOMINMAX
 #include <Windows.h>
 #elif defined(__linux__) || defined(__APPLE__)
 #include <termios.h>
@@ -895,13 +896,14 @@ void Console::updateRenderedColor(const size_t rowOffset, const size_t colOffset
 	size_t prevRow = 0;
 	for (const auto& highlight : mHighlights)
 	{
+		if (!highlight.drawColor) continue;
 		if (highlight.startRow == highlight.endRow && (highlight.endCol < colOffset || highlight.startCol > colOffset + mWindow->cols)) continue;
 		if (highlight.startRow > mWindow->rowOffset + mWindow->rows) return;
 
 		std::string* renderString = &mWindow->fileRows.at(highlight.startRow).renderedLine;
 		if (prevRow != highlight.startRow) charactersToAdjust = 0;
 
-		const uint8_t color = SyntaxHighlight::color(highlight.colorType);
+		const uint8_t color = SyntaxHighlight::color(highlight.highlightType);
 		std::string colorFormat = std::format("\x1b[38;5;{}m", std::to_string(color));
 		if (rowOffset > highlight.startRow)
 		{
@@ -960,6 +962,7 @@ void Console::findEndMarker(std::string& currentWord, size_t& row, size_t& posOf
 		{
 			mHighlights.emplace_back(hlType, startRow, startCol, row - 1, mWindow->fileRows.at(row - 1).renderedLine.length());
 			currentWord.clear();
+			mHighlights.back().endFound = false;
 			return;
 		}
 		currentWord = mWindow->fileRows.at(row).renderedLine;
@@ -987,52 +990,114 @@ void Console::findEndMarker(std::string& currentWord, size_t& row, size_t& posOf
 		mHighlights.emplace_back(hlType, startRow, startCol, row, posOffset + endPos + strToFind.length());
 		currentWord = currentWord.substr(endPos + strToFind.length());
 		posOffset += endPos + strToFind.length();
+		mHighlights.back().endFound = true;
 	}
 }
 
 /// <summary>
 /// Sets the highlight points of the rendered string if a syntax is given
 /// The stored format is (HighlightType, startRow, startCol, endRow, endCol)
-/// Needs to be optimized.
+/// May need more testing, but should be optimized and bug-free
 /// </summary>
 void Console::setHighlight()
 {
 	if (mWindow->syntax == nullptr) return; //Can't highlight if there is no syntax
 
-	for (int64_t i = 0; i < mHighlights.size(); ++i)
+	int64_t rowToStart = -1;
+	int64_t startOffset = -1;
+
+	for (int64_t i = 0; i < mHighlights.size(); ++i) //First pass gets rid of all unnecessary syntax highlights (all the off-screen ones)
 	{
-		if (mHighlights[i].startRow >= mWindow->fileCursorY)
+		if (mHighlights[i].highlightType == SyntaxHighlight::HighlightType::MultilineComment || mHighlights[i].highlightType == SyntaxHighlight::HighlightType::String) 
 		{
-			mHighlights.erase(mHighlights.begin() + i, mHighlights.end());
-			break;
+			if (mHighlights[i].startRow < mWindow->rowOffset && mHighlights[i].endRow < mWindow->rowOffset) //Don't erase this or we will lose the starting point
+			{
+				mHighlights[i].drawColor = false; //Don't want to actually set the render color for this since it is offscreen
+				continue; 
+			}
 		}
-		if (mHighlights[i].endRow < mWindow->rowOffset)
+		if (mHighlights[i].startRow < mWindow->rowOffset && !(mHighlights[i].highlightType == SyntaxHighlight::HighlightType::MultilineComment || mHighlights[i].highlightType == SyntaxHighlight::HighlightType::String)) 
 		{
 			mHighlights.erase(mHighlights.begin() + i);
 			--i;
 		}
-	}
-	size_t i = mWindow->fileCursorY;
-	size_t startOffset = 0;
-	for (const auto& highlight : mHighlights)
-	{
-		if (i >= highlight.startRow && i <= highlight.endRow)
+		else if (mHighlights[i].startRow > mWindow->rowOffset + mWindow->rows) 
 		{
-			i = highlight.endRow;
-			startOffset = highlight.endCol;
-			break;
+			mHighlights.erase(mHighlights.begin() + i, mHighlights.end());
+		}
+		else if (mHighlights[i].endRow < mWindow->rowOffset) 
+		{
+			mHighlights.erase(mHighlights.begin() + i);
+			--i;
+		}
+		else if (mHighlights[i].startRow == mWindow->fileCursorY) 
+		{
+			mHighlights.erase(mHighlights.begin() + i);
+			--i;
+		}
+		else if (mHighlights[i].endRow == mWindow->fileCursorY && mHighlights[i].endFound)
+		{
+			if (mHighlights[i].highlightType == SyntaxHighlight::HighlightType::String || mHighlights[i].highlightType == SyntaxHighlight::HighlightType::MultilineComment) 
+			{
+				if (mHighlights[i].startRow < mWindow->rowOffset && rowToStart == -1)
+				{
+					rowToStart = mHighlights[i].startRow;
+					startOffset = mHighlights[i].startCol;
+				}
+			}
+			mHighlights.erase(mHighlights.begin() + i);
+			--i;
+		}
+		else if (!mHighlights[i].endFound) 
+		{
+			if (mHighlights[i].startRow < mWindow->rowOffset && rowToStart == -1) 
+			{
+				rowToStart = mHighlights[i].startRow;
+				startOffset = mHighlights[i].startCol;
+			}
+			mHighlights.erase(mHighlights.begin() + i);
+			--i;
 		}
 	}
 
-	for (; i < mWindow->fileRows.size(); ++i)
+	//2nd pass clears the ones that need to be updated. Essentially, all that should be left is multiline comments and quotes.
+	for (int64_t i = 0; i < mHighlights.size(); ++i) 
+	{
+		if (mHighlights[i].startRow >= mWindow->rowOffset) 
+		{
+			mHighlights.erase(mHighlights.begin() + i);
+			--i;
+		}
+		else if (mHighlights[i].endRow >= mWindow->rowOffset && mHighlights[i].endRow <= mWindow->rowOffset + mWindow->rows) 
+		{
+			if (mHighlights[i].highlightType == SyntaxHighlight::HighlightType::String || mHighlights[i].highlightType == SyntaxHighlight::HighlightType::MultilineComment) 
+			{
+				if (mHighlights[i].startRow < mWindow->rowOffset) 
+				{
+					rowToStart = mHighlights[i].startRow;
+					startOffset = mHighlights[i].startCol;
+				}
+				mHighlights.erase(mHighlights.begin() + i);
+				--i;
+			}
+		}
+	}
+
+	size_t i = rowToStart == -1 ? mWindow->rowOffset : rowToStart;
+	if (rowToStart == -1) 
+	{
+		startOffset = 0;
+	}
+
+	for (; i < mWindow->fileRows.size() && i <= mWindow->rowOffset + mWindow->rows; ++i)
 	{
 		if (i > mWindow->rowOffset + mWindow->rows) return;
 
 		FileHandler::Row* row = &mWindow->fileRows.at(i); //The starting row
 
+		size_t findPos = 0, posOffset = startOffset; //posOffset keeps track of how far into the string we are, since findPos depends on currentWord, which progressively gets smaller
 		std::string currentWord = row->renderedLine.substr(startOffset);
 		startOffset = 0;
-		size_t findPos, posOffset = 0; //posOffset keeps track of how far into the string we are, since findPos depends on currentWord, which progressively gets smaller
 		const uint8_t singlelineCommentLength = mWindow->syntax->singlelineComment.length();
 		const uint8_t multilineCommentLength = mWindow->syntax->multilineCommentStart.length();
 
@@ -1081,7 +1146,7 @@ void Console::setHighlight()
 				size_t startCol = posOffset;
 				size_t startRow = i;
 				currentWord = currentWord.substr(findPos);
-				findEndMarker(currentWord, i, posOffset, findPos, startRow, startCol, std::string() + currentWord[findPos], SyntaxHighlight::HighlightType::String);
+				findEndMarker(currentWord, i, posOffset, findPos, startRow, startCol, std::string() + currentWord[0], SyntaxHighlight::HighlightType::String);
 			}
 			else if (findPos + multilineCommentLength - 1 < currentWord.length() //Multiline comments stay open until the closing marker is found
 				&& currentWord.substr(findPos, multilineCommentLength) == mWindow->syntax->multilineCommentStart)

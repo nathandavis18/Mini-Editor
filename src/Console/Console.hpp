@@ -87,8 +87,9 @@ private:
 
 	struct HighlightLocations
 	{
-		SyntaxHighlight::HighlightType colorType;
+		SyntaxHighlight::HighlightType highlightType;
 		size_t startRow, startCol, endRow, endCol;
+		bool endFound = true, drawColor = true;
 	};
 
 	struct FileHistory

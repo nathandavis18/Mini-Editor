@@ -62,6 +62,7 @@ int main(int argc, const char** argv)
 	{
 		while (Console::mode() == Mode::CommandMode || Console::mode() == Mode::ReadMode)
 		{
+			Console::prepRenderedString();
 			Console::refreshScreen();
 			const KeyActions::KeyAction inputCode = InputHandler::getInput();
 			if (inputCode != KeyActions::KeyAction::None)
@@ -83,6 +84,11 @@ int main(int argc, const char** argv)
 		if (Console::mode() == Mode::ExitMode)
 		{
 			Console::disableRawInput();
+#ifdef _WIN32
+			system("cls");
+#else
+			system("clear");
+#endif
 			break;
 		}
 	}
