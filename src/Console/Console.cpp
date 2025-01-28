@@ -1097,6 +1097,11 @@ void Console::setHighlight()
 		FileHandler::Row* row = &mWindow->fileRows.at(i); //The starting row
 
 		size_t findPos = 0, posOffset = startOffset; //posOffset keeps track of how far into the string we are, since findPos depends on currentWord, which progressively gets smaller
+
+		if (i < mWindow->rowOffset) 
+		{
+			replaceRenderedStringTabs(row->renderedLine);
+		}
 		std::string currentWord = row->renderedLine.substr(startOffset);
 		startOffset = 0;
 		const uint8_t singlelineCommentLength = mWindow->syntax->singlelineComment.length();
