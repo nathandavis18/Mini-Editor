@@ -28,8 +28,8 @@ jobs:
             - name: Upload artifacts
               uses: actions/upload-artifact@v4
               with:
-                name: my-artifact
-                path: ./out/build
+                name: NotVim-Winx64-Release
+                path: ./out/build/nve.exe
 
     release:
         runs-on: windows-latest
@@ -40,7 +40,7 @@ jobs:
               uses: actions/download-artifact@v4
               with:
                 name: NotVim-Winx64-Release
-                path: ./out/build
+                path: ./out/build/nve.exe
             - name: Create Release
               uses: actions/create-release@v1
               with:
@@ -54,6 +54,6 @@ jobs:
               uses: actions/upload-release-asset@v1
               with:
                 upload_url: ${{ github.ref_name }}
-                asset_path: ./out/build
+                asset_path: ./out/build/nve.exe
                 asset_name: NotVim-Winx64-Release.zip
                 asset_content_type: application/zip
