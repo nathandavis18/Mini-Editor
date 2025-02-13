@@ -39,7 +39,7 @@ jobs:
             - name: Download artifacts
               uses: actions/download-artifact@v4
               with:
-                name: my-artifact
+                name: NotVim-Winx64-Release
                 path: ./out/build
             - name: Create Release
               uses: actions/create-release@v1
@@ -47,7 +47,7 @@ jobs:
                 tag_name: ${{ github.ref_name }}
                 release_name: Release ${{ github.ref_name }}
                 draft: false
-                prerelease: false
+                prerelease: true
                 body: |
                     Release notes
             - name: Upload Release Asset
@@ -55,9 +55,5 @@ jobs:
               with:
                 upload_url: ${{ github.ref_name }}
                 asset_path: ./out/build
-                asset_name: my-artifact.zip
+                asset_name: NotVim-Winx64-Release.zip
                 asset_content_type: application/zip
-            - name: Publish Release
-              uses: actions/publish-release@v1
-              with:
-                path: ./out/build
