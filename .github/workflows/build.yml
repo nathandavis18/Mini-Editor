@@ -20,7 +20,7 @@ jobs:
               with:
                 build-dir: out/build
                 generator: Ninja
-                cxx-compiler: MSVC
+                cxx-compiler: g++
                 cxx-flags: -std=c++20
                 options: CMAKE_BUILD_TYPE=Release
 
