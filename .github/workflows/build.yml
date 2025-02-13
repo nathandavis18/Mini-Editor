@@ -21,6 +21,7 @@ jobs:
                 build-dir: out/build
                 generator: Ninja
                 cxx-compiler: clang++
+                c-compiler: clang
                 cxx-flags: -std=c++20
                 options: CMAKE_BUILD_TYPE=Release
 
