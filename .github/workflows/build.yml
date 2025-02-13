@@ -16,7 +16,7 @@ jobs:
               uses: seanmiddleditch/gha-setup-ninja@v5
                 
             - name: Build Project
-            - uses: threeal/cmake-action@v2.1.0
+              uses: threeal/cmake-action@v2.1.0
               with:
                 build-dir: out/build
                 generator: Ninja
