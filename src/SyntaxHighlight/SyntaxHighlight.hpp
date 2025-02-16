@@ -26,14 +26,15 @@ SOFTWARE.
 #include <vector>
 #include <string>
 #include <cstdint> //uint8_t
+#include <unordered_set>
 
 namespace SyntaxHighlight{
 	struct EditorSyntax
 	{
-		std::vector<std::string> filematch;
-		std::vector<std::string> builtInTypeKeywords;
-		std::vector<std::string> loopKeywords;
-		std::vector<std::string> otherKeywords;
+		std::unordered_set<std::string> filematch;
+		std::unordered_set<std::string> builtInTypeKeywords;
+		std::unordered_set<std::string> loopKeywords;
+		std::unordered_set<std::string> otherKeywords;
 		std::string singlelineComment;
 		std::string multilineCommentStart;
 		std::string multilineCommentEnd;
@@ -62,8 +63,8 @@ namespace SyntaxHighlight{
 
 	//================================================ CPP KEYWORDS =================================================================\\
 
-	static const std::vector<std::string> cppFiletypes{ ".cpp", ".cc", ".cxx", ".hpp", ".h", ".hxx", ".hh" };
-	static const std::vector<std::string> cppBuiltInTypes{
+	static const std::unordered_set<std::string> cppFiletypes{ ".cpp", ".cc", ".cxx", ".hpp", ".h", ".hxx", ".hh" };
+	static const std::unordered_set<std::string> cppBuiltInTypes{
 		//Built-in types and main keywords
 		"alignas", "alignof", "asm", "_asm", "auto", "bool", "char", "char8_t", "char16_t", "char32_t", "class",
 		"compl", "concept", "const", "consteval", "constexpr", "constinit", "const_cast", "decltype", "delete", "double",
@@ -73,12 +74,12 @@ namespace SyntaxHighlight{
 		"template", "this", "thread_local", "true", "typedef", "typeid", "typename", "union", "unsigned", "using", "virtual",
 		"void", "volatile", "wchar_t"
 	};
-	static const std::vector<std::string> cppControlKeywords{
+	static const std::unordered_set<std::string> cppControlKeywords{
 		//Loop/Control keywords
 		"and", "and_eq", "bitand", "bitor", "break", "case", "catch", "continue", "co_await", "co_return", "co_yield", "default",
 		"do", "else", "for", "goto", "if", "not", "not_eq", "or", "or_eq", "return", "switch", "throw", "try", "while", "xor", "xor_eq"
 	};
-	static const std::vector<std::string> cppOtherKeywords{
+	static const std::unordered_set<std::string> cppOtherKeywords{
 		//Some other keywords, such as macro definitions
 		"#define", "#ifdef", "#ifndef", "#if", "defined", "#include", "#elif", "#endif"
 	}; 

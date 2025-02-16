@@ -40,9 +40,8 @@ SOFTWARE.
 #define NotVimVersion "0.4.0a"
 
 /// <summary>
-/// Construct the window
+/// Default Construct the window
 /// </summary>
-/// <param name="fileName"></param>
 Console::Window::Window() : fileCursorX(0), fileCursorY(0), cols(0), rows(0), renderedCursorX(0), renderedCursorY(0), colNumberToDisplay(0), savedRenderedCursorXPos(0),
 rowOffset(0), colOffset(0), dirty(false), rawModeEnabled(false), fileRows(FileHandler::loadFileContents()), syntax(SyntaxHighlight::syntax())
 {}
@@ -50,8 +49,8 @@ rowOffset(0), colOffset(0), dirty(false), rawModeEnabled(false), fileRows(FileHa
 /// <summary>
 /// Sets/Gets the current mode the editor is in
 /// </summary>
-/// <param name="m"></param>
-/// <returns></returns>
+/// <param name="m"> The new mode </param>
+/// <returns> The current mode </returns>
 Mode& Console::mode(Mode m)
 {
 	if (m != Mode::None)
@@ -93,7 +92,6 @@ void Console::setRenderedString()
 /// Builds the output buffer and displays it to the user through std::cout
 /// Uses ANSI escape codes for clearing screen/displaying cursor and for colors
 /// </summary>
-/// <param name="mode"></param>
 void Console::refreshScreen()
 {
 	std::string renderBuffer = "\x1b[1;1H"; //Move the cursor to (0, 0)
@@ -224,7 +222,11 @@ void Console::refreshScreen()
 }
 
 /// <summary>
-/// Moves the file cursor through the file rows depending on which key is pressed
+/// Controls the different cursor movement operations
+/// Called when a movement key is pressed, including:
+///		Page Up/Down				Ctrl Page Up/Down
+///		Arrow Up/Left/Right/Down	Ctrl Arrow Left/Right
+///		Home/End					Ctrl Home/End
 /// </summary>
 /// <param name="key">The arrow key pressed</param>
 void Console::moveCursor(const KeyActions::KeyAction key)
@@ -434,8 +436,9 @@ void Console::moveCursor(const KeyActions::KeyAction key)
 
 /// <summary>
 /// When CTRL-ArrowUp / CTRL-ArrowDown is pressed, shift the viewable screen area up/down one if possible
+/// Move the screen offset if the cursor is at the end of the screen
 /// </summary>
-/// <param name="key"></param>
+/// <param name="key">The key pressed</param>
 void Console::shiftRowOffset(const KeyActions::KeyAction key)
 {
 	if (key == KeyActions::KeyAction::CtrlArrowDown)
@@ -492,9 +495,20 @@ void Console::addRow()
 }
 
 /// <summary>
+/// Deletes a row when the last character in the row is removed
+/// </summary>
+/// <param name="rowNum">The row to be deleted</param>
+void Console::deleteRow(const size_t rowNum)
+{
+	if (rowNum > mWindow->fileRows.size()) return;
+	mWindow->fileRows.erase(mWindow->fileRows.begin() + rowNum);
+	mWindow->dirty = true;
+}
+
+/// <summary>
 /// Deletes a character behind/ahead of the cursor depending on key pressed
 /// </summary>
-/// <param name="key"></param>
+/// <param name="key">Delete or Backspace, or their CTRL variants</param>
 void Console::deleteChar(const KeyActions::KeyAction key)
 {
 	FileHandler::Row& row = mWindow->fileRows.at(mWindow->fileCursorY);
@@ -610,6 +624,7 @@ void Console::deleteChar(const KeyActions::KeyAction key)
 
 /// <summary>
 /// Inserts a given character at the current position and moves the cursor forward
+/// This is what will typically be called on keyboard input
 /// </summary>
 /// <param name="c">The character to insert</param>
 void Console::insertChar(const unsigned char c)
@@ -626,7 +641,8 @@ void Console::insertChar(const unsigned char c)
 
 /// <summary>
 /// Adds the last change made to the undo history
-/// Currently every change made gets added, but I am planning to have it on a timer so if a bunch of changes happen at once they will all be on the same history stack
+/// Currently every change made gets added
+/// I am planning to have it on a timer so if a bunch of changes happen at once they will all be on the same history stack
 /// </summary>
 void Console::addUndoHistory()
 {
@@ -714,9 +730,9 @@ void Console::save()
 		{
 			output.append(mWindow->fileRows.at(i).line);
 		}
-		else
+		else [[ likely ]]
 		{
-			output.append(mWindow->fileRows.at(i).line + "\n");
+			output.append(mWindow->fileRows.at(i).line + "\r\n");
 		}
 	}
 	FileHandler::saveFile(output);
@@ -746,17 +762,6 @@ void Console::enableEditMode()
 		mWindow->fileRows.push_back(FileHandler::Row());
 	}
 	mMode = Mode::EditMode;
-}
-
-/// <summary>
-/// Deletes a row when the last character in the row is removed
-/// </summary>
-/// <param name="rowNum"></param>
-void Console::deleteRow(const size_t rowNum)
-{
-	if (rowNum > mWindow->fileRows.size()) return;
-	mWindow->fileRows.erase(mWindow->fileRows.begin() + rowNum);
-	mWindow->dirty = true;
 }
 
 /// <summary>
@@ -837,10 +842,10 @@ void Console::fixRenderedCursorPosition(const FileHandler::Row& row)
 
 
 /// <summary>
-/// This function needs work
+/// Adjusts the rendered line, adding spaces in place of tabs as needed
+/// Tab stops are every 8 columns, so the max possible amount of spaces to replace is 7
 /// </summary>
 /// <param name="renderedLine"></param>
-/// <param name="offset"></param>
 void Console::replaceRenderedStringTabs(std::string& renderedLine)
 {
 	size_t lineLength = renderedLine.length();
@@ -850,7 +855,7 @@ void Console::replaceRenderedStringTabs(std::string& renderedLine)
 		if (renderedLine[i] != static_cast<uint8_t>(KeyActions::KeyAction::Tab)) continue;
 
 		renderedLine[i] = ' '; //Replace the tab character with a space
-		uint8_t t = 7 - (i % 8);
+		uint8_t t = maxSpacesForTab - (i % tabSpacing);
 		while (t > 0)
 		{
 			renderedLine.insert(renderedLine.begin() + (i), ' '); //Add spaces until we reach a multiple of 8
@@ -868,7 +873,6 @@ void Console::replaceRenderedStringTabs(std::string& renderedLine)
 /// Gets the amount of spaces the rendered cursor needs to be adjusted to account for tabs
 /// </summary>
 /// <param name="row">Row to check</param>
-/// <returns>The amount of spaces to add</returns>
 size_t Console::getRenderedCursorTabSpaces(const FileHandler::Row& row)
 {
 	size_t spacesToAdd = 0;
@@ -878,17 +882,16 @@ size_t Console::getRenderedCursorTabSpaces(const FileHandler::Row& row)
 
 		if (row.line[i] != static_cast<uint8_t>(KeyActions::KeyAction::Tab)) continue;
 
-		spacesToAdd += 7 - ((i + spacesToAdd) % 8); //Tabs are replaced with up to 8 spaces, depending on how close to a multiple of 8 the tab is
+		spacesToAdd += maxSpacesForTab - ((i + spacesToAdd) % tabSpacing); //Tabs are replaced with up to 8 spaces, depending on how close to a multiple of 8 the tab is
 	}
 	return spacesToAdd;
 }
 
 /// <summary>
-/// Sets the rendered color of the current row based on what setHighlight() does
+/// Sets the rendered color for any highlight on screen
 /// </summary>
-/// <param name="renderString">The string being prepped for render</param>
-/// <param name="row">The current row number</param>
-/// <param name="colOffset">The current colOffset to know if a certain highlight is off-screen or needs to be rendered</param>
+/// <param name="rowOffset"></param>
+/// <param name="colOffset"></param>
 void Console::updateRenderedColor(const size_t rowOffset, const size_t colOffset)
 {
 	std::string normalColorMode = "\x1b[0m";
@@ -943,16 +946,23 @@ void Console::updateRenderedColor(const size_t rowOffset, const size_t colOffset
 /// Tries to find the end marker, denoted as strToFind
 /// Either runs until the max row count is reached or until it is found
 /// </summary>
-/// <param name="currentWord"></param>
-/// <param name="row"></param>
-/// <param name="posOffset"></param>
-/// <param name="findPos"></param>
-/// <param name="strToFind"></param>
-/// <param name="hlType"></param>
-void Console::findEndMarker(std::string& currentWord, size_t& row, size_t& posOffset, size_t& findPos, size_t startRow, size_t startCol, const std::string& strToFind, const SyntaxHighlight::HighlightType hlType, bool addHighlight)
+/// <param name="currentWord"> The 'word' we are checking to find the end marker </param>
+/// <param name="row"> The current row. Must be reference, since the setHighlight funciton depends on this </param>
+/// <param name="posOffset"> The offset within the current word, so we don't re-check the same stuff </param>
+/// <param name="findPos"> Where the starting marker was found </param>
+/// <param name="startRow"> What row we started on, since this may be multiple rows in length </param>
+/// <param name="startCol"></param>
+/// <param name="strToFind"> What end marker we are trying to find </param>
+/// <param name="hlType"> The type of highlight </param>
+void Console::findEndMarker(std::string_view& currentWord, size_t& row, size_t& posOffset, size_t& findPos, size_t startRow, size_t startCol, const std::string& strToFind, const SyntaxHighlight::HighlightType hlType)
 {
 	size_t endPos;
-	uint8_t offset = strToFind.length(); //Offsets by the opening marker length while on the same row as the opening marker. 
+
+	//If the end marker length is longer than 255 characters, wtf is the end marker???
+	uint8_t offset = static_cast<uint8_t>(strToFind.length()); //Offsets by the opening marker length while on the same row as the opening marker. 
+
+	bool addHighlight = false;
+
 	while ((endPos = currentWord.find(strToFind, offset)) == std::string::npos)
 	{
 		offset = 0; //If on a new row, no need to offset the check position
@@ -962,11 +972,11 @@ void Console::findEndMarker(std::string& currentWord, size_t& row, size_t& posOf
 		if (row >= mWindow->fileRows.size())
 		{
 			mHighlights.emplace_back(hlType, startRow, startCol, row - 1, mWindow->fileRows.at(row - 1).renderedLine.length());
-			currentWord.clear();
+			currentWord = std::string_view(); //Clear the string_view
 			mHighlights.back().endFound = false;
 			return;
 		}
-		currentWord = mWindow->fileRows.at(row).renderedLine;
+		currentWord = mWindow->fileRows.at(row).renderedLine; //Making a copy so currentWord never becomes a dangling pointer
 	}
 	if (endPos > 0)
 	{
@@ -997,7 +1007,6 @@ void Console::findEndMarker(std::string& currentWord, size_t& row, size_t& posOf
 
 /// <summary>
 /// Sets the highlight points of the rendered string if a syntax is given
-/// The stored format is (HighlightType, startRow, startCol, endRow, endCol)
 /// May need more testing, but should be optimized and bug-free
 /// </summary>
 void Console::setHighlight()
@@ -1102,16 +1111,17 @@ void Console::setHighlight()
 		{
 			replaceRenderedStringTabs(row->renderedLine);
 		}
-		std::string currentWord = row->renderedLine.substr(startOffset);
+		std::string renderedLineCopy = row->renderedLine.substr(startOffset); //Make a copy of the renderedLine so there is no dangling pointer
+		std::string_view currentWord = renderedLineCopy; //Use a string_view for string parsing, as it is more efficient than constantly making copies of strings with substr()
 		startOffset = 0;
-		const uint8_t singlelineCommentLength = mWindow->syntax->singlelineComment.length();
-		const uint8_t multilineCommentLength = mWindow->syntax->multilineCommentStart.length();
+		const uint8_t singlelineCommentLength = static_cast<uint8_t>(mWindow->syntax->singlelineComment.length()); //If the comment character is longer than 255 characters, just don't. Find a new character
+		const uint8_t multilineCommentLength = static_cast<uint8_t>(mWindow->syntax->multilineCommentStart.length()); //If the comment character is longer than 255 characters, just don't. Find a new character
 
 		while ((findPos = currentWord.find_first_of(separators)) != std::string::npos)
 		{
 			row = &mWindow->fileRows.at(i); //Makes sure the correct row is always being used
 
-			std::string wordToCheck = currentWord.substr(0, findPos); //The word/character sequence before the separator character
+			std::string_view wordToCheck = currentWord.substr(0, findPos); //The word/character sequence before the separator character
 
 			if (!wordToCheck.empty() && wordToCheck.find_first_not_of("0123456789") == std::string::npos)
 			{
@@ -1119,29 +1129,17 @@ void Console::setHighlight()
 			}
 			else if (!wordToCheck.empty())
 			{
-				for (const auto& type : mWindow->syntax->builtInTypeKeywords)
-				{
-					if (type == wordToCheck)
-					{
-						mHighlights.emplace_back(SyntaxHighlight::HighlightType::KeywordBuiltInType, i, posOffset, i, posOffset + wordToCheck.length());
-						goto commentcheck;
-					}
+				if (mWindow->syntax->builtInTypeKeywords.contains(std::string(wordToCheck))) {
+					mHighlights.emplace_back(SyntaxHighlight::HighlightType::KeywordBuiltInType, i, posOffset, i, posOffset + wordToCheck.length());
+					goto commentcheck;
 				}
-				for (const auto& control : mWindow->syntax->loopKeywords)
-				{
-					if (control == wordToCheck)
-					{
-						mHighlights.emplace_back(SyntaxHighlight::HighlightType::KeywordControl, i, posOffset, i, posOffset + wordToCheck.length());
-						goto commentcheck;
-					}
+				else if (mWindow->syntax->loopKeywords.contains(std::string(wordToCheck))) {
+					mHighlights.emplace_back(SyntaxHighlight::HighlightType::KeywordControl, i, posOffset, i, posOffset + wordToCheck.length());
+					goto commentcheck;
 				}
-				for (const auto& other : mWindow->syntax->otherKeywords)
-				{
-					if (other == wordToCheck)
-					{
-						mHighlights.emplace_back(SyntaxHighlight::HighlightType::KeywordOther, i, posOffset, i, posOffset + wordToCheck.length());
-						goto commentcheck;
-					}
+				else if (mWindow->syntax->otherKeywords.contains(std::string(wordToCheck))) {
+					mHighlights.emplace_back(SyntaxHighlight::HighlightType::KeywordOther, i, posOffset, i, posOffset + wordToCheck.length());
+					goto commentcheck;
 				}
 			}
 
@@ -1171,44 +1169,33 @@ void Console::setHighlight()
 			}
 			else
 			{
-			nextword:
+				//Go to the next word
 				posOffset += findPos + 1;
 				currentWord = currentWord.substr(findPos + 1);
 				continue;
 			}
 		}
+
 		if (!currentWord.empty()) //If the last character in the string isn't a separator character/comment/string
 		{
 			if (currentWord.find_first_not_of("0123456789") == std::string::npos)
 			{
 				mHighlights.emplace_back(SyntaxHighlight::HighlightType::Number, i, posOffset, i, posOffset + currentWord.length());
-				continue;
+				goto nextrow;
 			}
 			else
 			{
-				for (const auto& type : mWindow->syntax->builtInTypeKeywords)
-				{
-					if (type == currentWord)
-					{
-						mHighlights.emplace_back(SyntaxHighlight::HighlightType::KeywordBuiltInType, i, posOffset, i, posOffset + currentWord.length());
-						goto nextrow;
-					}
+				if (mWindow->syntax->builtInTypeKeywords.contains(std::string(currentWord))) {
+					mHighlights.emplace_back(SyntaxHighlight::HighlightType::KeywordBuiltInType, i, posOffset, i, posOffset + currentWord.length());
+					goto nextrow;
 				}
-				for (const auto& control : mWindow->syntax->loopKeywords)
-				{
-					if (control == currentWord)
-					{
-						mHighlights.emplace_back(SyntaxHighlight::HighlightType::KeywordControl, i, posOffset, i, posOffset + currentWord.length());
-						goto nextrow;
-					}
+				else if (mWindow->syntax->loopKeywords.contains(std::string(currentWord))) {
+					mHighlights.emplace_back(SyntaxHighlight::HighlightType::KeywordControl, i, posOffset, i, posOffset + currentWord.length());
+					goto nextrow;
 				}
-				for (const auto& other : mWindow->syntax->otherKeywords)
-				{
-					if (other == currentWord)
-					{
-						mHighlights.emplace_back(SyntaxHighlight::HighlightType::KeywordOther, i, posOffset, i, posOffset + currentWord.length());
-						goto nextrow;
-					}
+				else if (mWindow->syntax->otherKeywords.contains(std::string(currentWord))) {
+					mHighlights.emplace_back(SyntaxHighlight::HighlightType::KeywordOther, i, posOffset, i, posOffset + currentWord.length());
+					goto nextrow;
 				}
 			}
 		nextrow: //Nothing left to do on this row
@@ -1228,7 +1215,7 @@ static termios defaultMode;
 /// <summary>
 /// Initializes the window and all other dependencies
 /// </summary>
-/// <param name="fileName">The filename grabbed from argv[1]</param>
+/// <param name="fName">The filename grabbed from argv[1]</param>
 void Console::initConsole(const std::string_view& fName)
 {
 	FileHandler::fileName(fName);
@@ -1264,7 +1251,6 @@ void Console::initConsole(const std::string_view& fName)
 /// <summary>
 /// Sets the window's row/column count
 /// </summary>
-/// <param name="window"></param>
 /// <returns>True if size has changed, false otherwise</returns>
 bool Console::setWindowSize()
 {
@@ -1302,6 +1288,8 @@ bool Console::setWindowSize()
 			std::cerr << "Error getting window size";
 			exit(EXIT_FAILURE);
 		}
+
+		//Working on finding a replacement for this, as this introduces possible buffer overflow risk
 		if (sscanf(buf.data() + 2, "%d;%d", &rows, &cols) != 2) //If the rows/cols data wasn't reported
 		{
 			std::cerr << "Error getting window size";

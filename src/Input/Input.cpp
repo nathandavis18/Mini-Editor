@@ -215,7 +215,8 @@ namespace InputHandler
 			break;
 		case KeyAction::CtrlC: //Don't need to do anything for this
 			break;
-		default:
+
+		default: [[ likely ]] //This is the most likely scenario
 			Console::insertChar(static_cast<uint8_t>(key));
 			break;
 		}

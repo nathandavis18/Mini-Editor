@@ -68,14 +68,11 @@ namespace SyntaxHighlight
 
 		for (uint8_t i = 0; i < syntaxContents.size(); ++i)
 		{
-			for (const auto& fileType : syntaxContents[i].filematch)
+			if (syntaxContents[i].filematch.contains(extension)) 
 			{
-				if (fileType == extension)
-				{
-					setColors();
-					syntaxIndex = i;
-					return;
-				}
+				setColors();
+				syntaxIndex = i;
+				return;
 			}
 		}
 	}
@@ -96,6 +93,6 @@ namespace SyntaxHighlight
 	/// <returns></returns>
 	uint8_t color(HighlightType type)
 	{
-		return colors[static_cast<int>(type)];
+		return colors[static_cast<uint8_t>(type)];
 	}
 }
