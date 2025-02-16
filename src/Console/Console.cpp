@@ -94,8 +94,8 @@ void Console::setRenderedString()
 /// </summary>
 void Console::refreshScreen()
 {
-	std::string renderBuffer = "\x1b[1;1H"; //Move the cursor to (0, 0)
-	renderBuffer.append("\x1b[3J"); //Erase the screen to redraw changes
+	mRenderBuffer = "\x1b[1;1H"; //Move the cursor to (0, 0)
+	mRenderBuffer.append("\x1b[3J"); //Erase the screen to redraw changes
 
 	for (size_t y = mWindow->rowOffset; y < mWindow->fileRows.size() && y < mWindow->rows + mWindow->rowOffset; ++y)
 	{
@@ -122,11 +122,11 @@ void Console::refreshScreen()
 	updateRenderedColor(mWindow->rowOffset, mWindow->colOffset);
 	for (size_t i = mWindow->rowOffset; i < mWindow->fileRows.size() && i < mWindow->rowOffset + mWindow->rows; ++i)
 	{
-		renderBuffer.append(mWindow->fileRows.at(i).renderedLine);
-		renderBuffer.append("\x1b[0K\r\n");
+		mRenderBuffer.append(mWindow->fileRows.at(i).renderedLine);
+		mRenderBuffer.append("\x1b[0K\r\n");
 	}
 
-	renderBuffer.append("\x1b[0m"); //Make sure color mode is back to normal
+	mRenderBuffer.append("\x1b[0m"); //Make sure color mode is back to normal
 	const char* emptyRowCharacter = "~";
 
 	if (mWindow->rowOffset + mWindow->rows >= mWindow->fileRows.size())
@@ -141,29 +141,32 @@ void Console::refreshScreen()
 					size_t padding = (mWindow->cols - welcome.length()) / 2;
 					if (padding > 0)
 					{
-						renderBuffer.append(emptyRowCharacter);
+						mRenderBuffer.append(emptyRowCharacter);
 						--padding;
 					}
 					while (padding > 0)
 					{
-						renderBuffer.append(" ");
+						mRenderBuffer.append(" ");
 						--padding;
 					}
-					renderBuffer.append(welcome);
+					mRenderBuffer.append(welcome);
 				}
 				else
 				{
-					renderBuffer.append("\x1b[0m"); //Make sure color mode is back to normal
-					renderBuffer.append(emptyRowCharacter);
-					renderBuffer.append("\x1b[0K\r\n"); //Clear the rest of the row
+					mRenderBuffer.append("\x1b[0m"); //Make sure color mode is back to normal
+					mRenderBuffer.append(emptyRowCharacter);
+					mRenderBuffer.append("\x1b[0K\r\n"); //Clear the rest of the row
 				}
 				continue;
 			}
 		}
 	}
 
-	renderBuffer.append("\x1b[7m"); //Set to inverse color mode (white background dark text) for status row
+	const uint8_t statusRowStart = mWindow->rows + 1;
+	constexpr bool statusColStart = 0;
 
+	std::string statusAndCursorBuffer = std::format("\x1b[{};{}H", statusRowStart, 0); //Move the cursor to this position for status update stuff;
+	statusAndCursorBuffer.append("\x1b[7m"); //Set to inverse color mode (white background dark text) for status row
 	std::string status, rStatus, modeToDisplay;
 	status = std::format("{} - {} lines {}", FileHandler::fileName(), mWindow->fileRows.size(), mWindow->dirty ? "(modified)" : "");
 	if (mMode == Mode::EditMode)
@@ -182,18 +185,18 @@ void Console::refreshScreen()
 		modeToDisplay = "READ ONLY";
 	}
 	size_t statusLength = (status.length() > mWindow->cols) ? mWindow->cols : status.length();
-	renderBuffer.append(status);
+	statusAndCursorBuffer.append(status);
 
 	while (statusLength < (mWindow->cols / 2))
 	{
 		if ((mWindow->cols / 2) - statusLength == modeToDisplay.length() / 2)
 		{
-			renderBuffer.append(modeToDisplay);
+			statusAndCursorBuffer.append(modeToDisplay);
 			break;
 		}
 		else
 		{
-			renderBuffer.append(" ");
+			statusAndCursorBuffer.append(" ");
 			++statusLength;
 		}
 	}
@@ -203,22 +206,30 @@ void Console::refreshScreen()
 	{
 		if (mWindow->cols - statusLength == rStatus.length())
 		{
-			renderBuffer.append(rStatus);
+			statusAndCursorBuffer.append(rStatus);
 			break;
 		}
 		else
 		{
-			renderBuffer.append(" ");
+			statusAndCursorBuffer.append(" ");
 			++statusLength;
 		}
 	}
 
-	renderBuffer.append("\x1b[0m\r\n"); //Set to default mode
+	statusAndCursorBuffer.append("\x1b[0m\r\n"); //Set to default mode
 
-	std::string cursorPosition = std::format("\x1b[{};{}H", mWindow->renderedCursorY + 1, mWindow->renderedCursorX + 1); //Move the cursor to this position
-	renderBuffer.append(cursorPosition);
-	std::cout << renderBuffer;
-	std::cout.flush(); //Finally, flush the buffer so everything displays properly
+	if (mRenderBuffer != mPreviousRenderBuffer) 
+	{
+		std::cout << mRenderBuffer;
+		std::cout.flush(); //Finally, flush the buffer so everything displays properly
+		mPreviousRenderBuffer = mRenderBuffer;
+	}
+
+	std::string cursorPosition = std::format("\x1b[{};{}H", mWindow->renderedCursorY + 1, mWindow->renderedCursorX + 1); //Move the cursor to this position after drawing status bar
+	statusAndCursorBuffer.append(cursorPosition);
+
+	std::cout << statusAndCursorBuffer;
+	std::cout.flush();
 }
 
 /// <summary>
@@ -745,7 +756,7 @@ void Console::save()
 void Console::enableCommandMode()
 {
 	disableRawInput();
-	mWindow->renderedCursorX = 0; mWindow->renderedCursorY = mWindow->rows + 2;
+	mWindow->renderedCursorX = 0; mWindow->renderedCursorY = mWindow->rows + statusMessageRows;
 	mMode = Mode::CommandMode;
 
 	prepRenderedString();
@@ -1303,7 +1314,6 @@ bool Console::setWindowSize()
 		mWindow->rows = ws.ws_row;
 	}
 #endif
-	constexpr uint8_t statusMessageRows = 2;
 	mWindow->rows -= statusMessageRows;
 
 	if (prevRows != mWindow->rows || prevCols != mWindow->cols) return true; //Checks if the window size has changed

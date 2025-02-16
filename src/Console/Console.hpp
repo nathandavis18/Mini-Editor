@@ -112,6 +112,8 @@ private:
 	static void setHighlight();
 
 private:
+	inline static std::string mRenderBuffer, mPreviousRenderBuffer; //Implementing double-buffering so the screen doesn't need to always update
+
 	inline static std::unique_ptr<Window> mWindow;
 	inline static std::vector<HighlightLocations> mHighlights;
 	inline static std::stack<FileHistory> mRedoHistory;
@@ -121,4 +123,5 @@ private:
 
 	static constexpr uint8_t tabSpacing = 8;
 	static constexpr uint8_t maxSpacesForTab = 7;
+	static constexpr uint8_t statusMessageRows = 2;
 };
