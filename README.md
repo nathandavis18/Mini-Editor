@@ -1,23 +1,25 @@
 # NotVim Editor
 
-A custom, 0 dependencies (yes, not even curses/ncurses), cross-platform VIM-like console-based text editor. Tested on Windows and Linux.
+NotVim Editor is a WIP, custom, 0 dependencies, cross-platform, console-based text editor, currently tested to work on Windows and Linux.
+
+All standard features of a text-editor, with the exception of find/replace, have been implemented and should be bug-free. 
+Be sure to check out [Getting Starting](#getting-started)!
 <hr>
 
 ### Demo
 
-https://github.com/user-attachments/assets/bc71a3f9-f7f1-4bb0-9f69-fb3d8aef2c8a
+
 
 <hr>
 
 ### Versions
-If you would like to try the latest features, you can build the application from the master branch. However, some features may be experimental, and bugs may arise.
+If you would like to try the latest features, you can build the application from the dev branch. However, some features may be experimental, and bugs may arise.
 
 If you would like to use a stable release, check out the releases tab. Releases are tested to be as stable as possible. Some bugs may slip through to releases, so be sure to report those!
 
 <hr>
 
 ### Controls/Features
-Currently you can only move the cursor while in edit mode. This will soon be changed to allow moving cursor in read mode as well.
 
 Controls are listed as follows:
 
@@ -57,11 +59,26 @@ More key functionality will be added as this project progresses.
 
 <hr>
 
+### Getting Started
+
+If you are on Windows and would like to try this out right away, head to the releases tab and download the nve.exe file. This is the standalone program executable.
+Check out [Usage](#usage) to learn how to use it!
+
+Be sure to check out [Building](#building) if you would like to build the project for yourself!
+
+If you would like to contribute, check out [Contributing](#contributing)!
+
 ### Building
 
-A CMake Build script is provided. CMake 3.12, as well as a C++20 compliant compiler is required.
+A CMake Build script is provided. CMake 3.12, as well as a C++20 compliant compiler is required. A python script to automate the cmake build process is also provided, if you have Python installed.
 
-To build, run
+To build with the Python script, run
+
+	python build.py
+
+This will build the project into the folder path ./out/build
+
+To build manually, run
 
 	cmake -B {buildDir} -G {buildGenerator} -S {pathToCMakeScript} -DCMAKE_BUILD_TYPE=Release
 
@@ -101,8 +118,9 @@ Check the issues page to see all known bugs
 
 ### Contributing
 
-If you would like to contribute to this project, feel free to clone this repo, make a new branch and work on any changes you see necessary.
-If you come across any issues, feel free to make your own fix for it, or create an issue so I am aware of it and can fix it.
+I am welcome to any and all who want to contribute! Pushing to the master branch is restricted (for obvious reasons, lol). If you would like to contribute, 
+just clone the repo, make a new branch, and implement whatever features you would like! You can also fork this repo and contribute that way. All changes must be approved by me, 
+as I am the sole maintainer of this project. 
 
 #### UNTESTED ON OSX (macOS). 
  
