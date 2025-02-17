@@ -68,6 +68,8 @@ Be sure to check out [Building](#building) if you would like to build the projec
 
 If you would like to contribute, check out [Contributing](#contributing)!
 
+<hr>
+
 ### Building
 
 A CMake Build script is provided. CMake 3.12, as well as a C++20 compliant compiler is required. A python script to automate the cmake build process is also provided, if you have Python installed.
@@ -121,6 +123,8 @@ Check the issues page to see all known bugs
 I am welcome to any and all who want to contribute! Pushing to the master branch is restricted (for obvious reasons, lol). If you would like to contribute, 
 just clone the repo, make a new branch, and implement whatever features you would like! You can also fork this repo and contribute that way. All changes must be approved by me, 
 as I am the sole maintainer of this project. 
+
+<hr>
 
 #### UNTESTED ON OSX (macOS). 
  
