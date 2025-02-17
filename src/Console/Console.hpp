@@ -113,7 +113,7 @@ private:
 	static size_t getRenderedCursorTabSpaces(const FileHandler::Row&);
 	static void updateRenderedColor(const size_t rowOffset, const size_t colOffset);
 	static void findEndMarker(std::string_view& currentWord, size_t& row, size_t& posOffset, size_t& findPos, size_t startRow, size_t startCol, const std::string& strToFind, const SyntaxHighlight::HighlightType);
-	static bool highlightCommentCheck(std::string_view& currentWord, FileHandler::Row* row, size_t findPos, size_t& posOffset, size_t i);
+	static bool highlightCommentCheck(std::string_view& currentWord, FileHandler::Row* row, size_t findPos, size_t& posOffset, size_t& i);
 	static std::tuple<int64_t, int64_t> removeOffScreenHighlights();
 	static void highlightKeywordNumberCheck(std::string_view& currentWord, size_t i, size_t posOffset);
 	static void setHighlight();

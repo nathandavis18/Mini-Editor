@@ -1000,52 +1000,45 @@ void Console::updateRenderedColor(const size_t rowOffset, const size_t colOffset
 void Console::findEndMarker(std::string_view& currentWord, size_t& row, size_t& posOffset, size_t& findPos, size_t startRow, size_t startCol, const std::string& strToFind, const SyntaxHighlight::HighlightType hlType)
 {
 	size_t endPos;
+	
+	uint8_t offset = static_cast<uint8_t>(strToFind.length()); //If the end marker is longer than 255 characters, get a new end marker lol
 
-	//If the end marker length is longer than 255 characters, wtf is the end marker???
-	uint8_t offset = static_cast<uint8_t>(strToFind.length()); //Offsets by the opening marker length while on the same row as the opening marker. 
-
-	bool addHighlight = false;
-
-	while ((endPos = currentWord.find(strToFind, offset)) == std::string::npos)
+	while (true) 
 	{
-		offset = 0; //If on a new row, no need to offset the check position
-		findPos = 0;
-		posOffset = 0;
-		++row;
-		if (row >= mWindow->fileRows.size())
+		while ((endPos = currentWord.find(strToFind, offset)) == std::string::npos)
 		{
-			mHighlights.emplace_back(hlType, startRow, startCol, row - 1, mWindow->fileRows.at(row - 1).renderedLine.length());
-			currentWord = std::string_view(); //Clear the string_view
-			mHighlights.back().endFound = false;
-			return;
+			findPos = 0;
+			posOffset = 0;
+			offset = 0;
+			++row;
+			if (row >= mWindow->fileRows.size())
+			{
+				mHighlights.emplace_back(hlType, startRow, startCol, row - 1, mWindow->fileRows.at(row - 1).renderedLine.length(), false, true);
+				currentWord = std::string_view();
+				return;
+			}
+			currentWord = mWindow->fileRows.at(row).renderedLine;
 		}
-		currentWord = mWindow->fileRows.at(row).renderedLine; //Making a copy so currentWord never becomes a dangling pointer
-	}
-	if (endPos > 0)
-	{
-		if (currentWord[endPos - 1] == mWindow->syntax->escapeChar && !(endPos > 1 && currentWord.substr(endPos - 2, 2) == (std::string() + mWindow->syntax->escapeChar + mWindow->syntax->escapeChar)))
+		if (endPos >= 1) //If there is a chance for there to be an escape char
 		{
-			currentWord = currentWord.substr(endPos);
-			posOffset += endPos;
-			findEndMarker(currentWord, row, posOffset, findPos, startRow, startCol, strToFind, hlType);
+			if (currentWord[endPos - 1] == mWindow->syntax->escapeChar)
+			{
+				if (!(endPos > 1 && currentWord.substr(endPos - 2, 2) == std::string() + mWindow->syntax->escapeChar + mWindow->syntax->escapeChar))
+				{
+					size_t newOffset = endPos + 1;
+					posOffset += newOffset;
+					currentWord = currentWord.substr(newOffset);
+					continue;
+				}
+			}
 		}
-		else
-		{
-			addHighlight = true;
-		}
-	}
-	else
-	{
-		addHighlight = true;
-	}
+		break;
 
-	if (addHighlight)
-	{
-		mHighlights.emplace_back(hlType, startRow, startCol, row, posOffset + endPos + strToFind.length());
-		currentWord = currentWord.substr(endPos + strToFind.length());
-		posOffset += endPos + strToFind.length();
-		mHighlights.back().endFound = true;
 	}
+	size_t endCol = posOffset + endPos + strToFind.length();
+	mHighlights.emplace_back(hlType, startRow, startCol, row, endCol, true, true);
+	currentWord = currentWord.substr(endPos + strToFind.length());
+	posOffset += endPos + strToFind.length();
 }
 
 /// <summary>
@@ -1057,7 +1050,7 @@ void Console::findEndMarker(std::string_view& currentWord, size_t& row, size_t& 
 /// <param name="posOffset"></param>
 /// <param name="i"></param>
 /// <returns>True if we need to go to the next row, otherwise false</returns>
-bool Console::highlightCommentCheck(std::string_view& currentWord, FileHandler::Row* row, size_t findPos, size_t& posOffset, size_t i)
+bool Console::highlightCommentCheck(std::string_view& currentWord, FileHandler::Row* row, size_t findPos, size_t& posOffset, size_t& i)
 {
 	const uint8_t singlelineCommentLength = static_cast<uint8_t>(mWindow->syntax->singlelineComment.length()); //If the comment character is longer than 255 characters, just don't. Find a new character
 	const uint8_t multilineCommentLength = static_cast<uint8_t>(mWindow->syntax->multilineCommentStart.length()); //If the comment character is longer than 255 characters, just don't. Find a new character
