@@ -265,49 +265,70 @@ void Console::refreshScreen()
 }
 
 /// <summary>
+/// Arrow Left/Right and Ctrl-Arrow Left/Right have the same functionality in a few scenarios
+/// If one of those scenarios is the case, act accordingly
+/// </summary>
+/// <param name="key"></param>
+/// <returns></returns>
+int8_t Console::moveCursorLeftRight(const KeyActions::KeyAction key)
+{
+	bool isForward = (key == KeyActions::KeyAction::ArrowRight || key == KeyActions::KeyAction::CtrlArrowRight);
+
+	if (isForward)
+	{
+		if (mWindow->fileCursorY == mWindow->fileRows.size() - 1 
+		 && mWindow->fileCursorX == mWindow->fileRows.at(mWindow->fileCursorY).line.length()) return cursorCantMove; //Can't move any farther right if we are at the end of the file
+
+		if (mWindow->fileCursorX == mWindow->fileRows.at(mWindow->fileCursorY).line.length())
+		{
+			++mWindow->fileCursorY;
+			mWindow->fileCursorX = 0;
+			return cursorMovedNewLine;
+		}
+
+		if (key == KeyActions::KeyAction::ArrowRight) ++mWindow->fileCursorX;
+	}
+	else
+	{
+		if (mWindow->fileCursorX == 0 && mWindow->fileCursorY == 0) return cursorCantMove;
+
+		if (mWindow->fileCursorX == 0)
+		{
+			--mWindow->fileCursorY;
+			mWindow->fileCursorX = mWindow->fileRows.at(mWindow->fileCursorY).line.length();
+			return cursorMovedNewLine;
+		}
+
+		if (key == KeyActions::KeyAction::ArrowLeft) --mWindow->fileCursorX;
+	}
+	return cursorMoveNormal;
+}
+
+/// <summary>
 /// Controls the different cursor movement operations
 /// Called when a movement key is pressed, including:
-///		Page Up/Down				Ctrl Page Up/Down
+///		Ctrl Page Up/Down
 ///		Arrow Up/Left/Right/Down	Ctrl Arrow Left/Right
 ///		Home/End					Ctrl Home/End
 /// </summary>
 /// <param name="key">The arrow key pressed</param>
 void Console::moveCursor(const KeyActions::KeyAction key)
 {
+	int8_t returnCode = 0;
+	if (key == KeyActions::KeyAction::ArrowLeft || key == KeyActions::KeyAction::ArrowRight 
+		|| key == KeyActions::KeyAction::CtrlArrowLeft || key == KeyActions::KeyAction::CtrlArrowRight)
+	{
+		returnCode = moveCursorLeftRight(key);
+		if (returnCode == cursorCantMove) return;
+	}
+
+	if (key != KeyActions::KeyAction::ArrowUp && key != KeyActions::KeyAction::ArrowDown)
+	{
+		mWindow->updateSavedPos = true;
+	}
+
 	switch (key)
 	{
-	case KeyActions::KeyAction::ArrowLeft:
-		if (mWindow->fileCursorX == 0 && mWindow->fileCursorY == 0) return; //Can't move any farther left if we are at the beginning of the file
-
-		if (mWindow->fileCursorX == 0)
-		{
-			--mWindow->fileCursorY;
-			mWindow->fileCursorX = mWindow->fileRows.at(mWindow->fileCursorY).line.length();
-		}
-		else
-		{
-			--mWindow->fileCursorX;
-		}
-		mWindow->updateSavedPos = true;
-		break;
-	case KeyActions::KeyAction::ArrowRight:
-		if (mWindow->fileCursorY == mWindow->fileRows.size() - 1)
-		{
-			if (mWindow->fileCursorX == mWindow->fileRows.at(mWindow->fileCursorY).line.length()) return; //Can't move any farther right if we are at the end of the file
-		}
-
-		if (mWindow->fileCursorX == mWindow->fileRows.at(mWindow->fileCursorY).line.length())
-		{
-			mWindow->fileCursorX = 0;
-			++mWindow->fileCursorY;
-		}
-		else
-		{
-			++mWindow->fileCursorX;
-		}
-		mWindow->updateSavedPos = true;
-		break;
-
 	case KeyActions::KeyAction::ArrowUp:
 		if (mWindow->fileCursorY == 0)
 		{
@@ -331,86 +352,102 @@ void Console::moveCursor(const KeyActions::KeyAction key)
 		break;
 
 	case KeyActions::KeyAction::CtrlArrowLeft:
-		//Stuff copied from ArrowLeft
-		if (mWindow->fileCursorX == 0 && mWindow->fileCursorY == 0) return; //Can't move any farther left if we are at the beginning of the file
-
-		if (mWindow->fileCursorX == 0)
+		if(returnCode == cursorMoveNormal)
 		{
-			--mWindow->fileCursorY;
-			mWindow->fileCursorX = mWindow->fileRows.at(mWindow->fileCursorY).line.length();
-		}
-		//New Stuff
-		else
-		{
-			size_t findPos; //If there isn't a separator character before the cursor
-			if ((findPos = mWindow->fileRows.at(mWindow->fileCursorY).line.substr(0, mWindow->fileCursorX).find_last_of(separators)) == std::string::npos)
-			{
-				mWindow->fileCursorX = 0;
-			}
-			else if (findPos == mWindow->fileCursorX - 1) //If the separator character is just before the cursor
+			while (mWindow->fileCursorX > 0)
 			{
 				--mWindow->fileCursorX;
+				if (separators.find(mWindow->fileRows.at(mWindow->fileCursorY).line[mWindow->fileCursorX]) != std::string::npos) break;
 			}
-			else
-			{
-				mWindow->fileCursorX = findPos; //Go to the end of the previous word
-			}
-
-		}
-		mWindow->updateSavedPos = true;
+		} 
 		break;
+
 	case KeyActions::KeyAction::CtrlArrowRight:
-		//Stuff copied from ArrowRight
-		if (mWindow->fileCursorY == mWindow->fileRows.size() - 1)
+		if(returnCode == cursorMoveNormal)
 		{
-			if (mWindow->fileCursorX == mWindow->fileRows.at(mWindow->fileCursorY).line.length()) return; //Can't move any farther right if we are at the end of the file
-		}
-
-		if (mWindow->fileCursorX == mWindow->fileRows.at(mWindow->fileCursorY).line.length())
-		{
-			mWindow->fileCursorX = 0;
-			++mWindow->fileCursorY;
-		}
-
-		//New stuff
-		else
-		{
-			size_t findPos; //If there isn't a separator character within the remaining string
-			if ((findPos = mWindow->fileRows.at(mWindow->fileCursorY).line.substr(mWindow->fileCursorX).find_first_of(separators)) == std::string::npos)
-			{
-				mWindow->fileCursorX = mWindow->fileRows.at(mWindow->fileCursorY).line.length();
-			}
-			else if (findPos == 0) //If the cursor is currently on the separator character
+			while (mWindow->fileCursorX < mWindow->fileRows.at(mWindow->fileCursorY).line.length())
 			{
 				++mWindow->fileCursorX;
-			}
-			else
-			{
-				mWindow->fileCursorX += findPos + 1; //Go to the character just beyond the separator (the start of the next word)
+				if (separators.find(mWindow->fileRows.at(mWindow->fileCursorY).line[mWindow->fileCursorX]) != std::string::npos) break;
 			}
 		}
-		mWindow->updateSavedPos = true;
+
 		break;
 
 	case KeyActions::KeyAction::Home:
 		mWindow->fileCursorX = 0;
-		mWindow->updateSavedPos = true;
 		break;
 		
 	case KeyActions::KeyAction::End:
 		mWindow->fileCursorX = mWindow->fileRows.at(mWindow->fileCursorY).line.length();
-		mWindow->updateSavedPos = true;
 		break;
 
 	case KeyActions::KeyAction::CtrlHome:
 		mWindow->fileCursorX = 0; mWindow->fileCursorY = 0;
-		mWindow->updateSavedPos = true;
 		break;
 
 	case KeyActions::KeyAction::CtrlEnd:
 		mWindow->fileCursorY = mWindow->fileRows.size() - 1;
 		mWindow->fileCursorX = mWindow->fileRows.at(mWindow->fileCursorY).line.length();
-		mWindow->updateSavedPos = true;
+		break;
+
+	case KeyActions::KeyAction::CtrlPageUp: //Move cursor to top of screen
+		mWindow->fileCursorY -= (mWindow->fileCursorY - mWindow->rowOffset) % mWindow->rows;
+		if (mWindow->fileCursorX > mWindow->fileRows.at(mWindow->fileCursorY).line.length())
+		{
+			mWindow->fileCursorX = mWindow->fileRows.at(mWindow->fileCursorY).line.length();
+		}
+		break;
+
+	case KeyActions::KeyAction::CtrlPageDown: //Move cursor to bottom of screen
+		if (mWindow->fileCursorY + mWindow->rows - ((mWindow->fileCursorY - mWindow->rowOffset) % mWindow->rows) > mWindow->fileRows.size() - 1)
+		{
+			mWindow->fileCursorY = mWindow->fileRows.size() - 1;
+		}
+		else
+		{
+			mWindow->fileCursorY += mWindow->rows - ((mWindow->fileCursorY - mWindow->rowOffset) % mWindow->rows);
+		}
+
+		if (mWindow->fileCursorX > mWindow->fileRows.at(mWindow->fileCursorY).line.length())
+		{
+			mWindow->fileCursorX = mWindow->fileRows.at(mWindow->fileCursorY).line.length();
+		}
+		break;
+
+	default:
+		break;
+	}
+}
+
+
+/// <summary>
+/// When a key that shifts the row offset is pressed, handle it accordingly
+/// Keys include CTRL Arrow-Up/Down, Page Up/Down
+/// </summary>
+/// <param name="key">The key pressed</param>
+void Console::shiftRowOffset(const KeyActions::KeyAction key)
+{
+	switch (key)
+	{
+	case KeyActions::KeyAction::CtrlArrowDown:
+		if (mWindow->rowOffset == mWindow->fileRows.size() - 1) return; //This is as far as the screen can be moved down
+
+		++mWindow->rowOffset;
+		if (mWindow->fileCursorY < mWindow->fileRows.size() && mWindow->renderedCursorY == 0) //Move the file cursor if the rendered cursor is at the top of the screen
+		{
+			moveCursor(KeyActions::KeyAction::ArrowDown);
+		}
+		break;
+
+	case KeyActions::KeyAction::CtrlArrowUp:
+		if (mWindow->rowOffset == 0) return; //A negative row offset would wrap and break the viewport so don't allow it to go negative
+
+		--mWindow->rowOffset;
+		if (mWindow->renderedCursorY == mWindow->rows - 1) //Move the file cursor if the rendered cursor is at the bottom of the screen
+		{
+			moveCursor(KeyActions::KeyAction::ArrowUp);
+		}
 		break;
 
 	case KeyActions::KeyAction::PageUp: //Shift screen offset up by 1 page worth (mWindow->rows)
@@ -450,59 +487,8 @@ void Console::moveCursor(const KeyActions::KeyAction key)
 		}
 		break;
 
-	case KeyActions::KeyAction::CtrlPageUp: //Move cursor to top of screen
-		mWindow->fileCursorY -= (mWindow->fileCursorY - mWindow->rowOffset) % mWindow->rows;
-		if (mWindow->fileCursorX > mWindow->fileRows.at(mWindow->fileCursorY).line.length())
-		{
-			mWindow->fileCursorX = mWindow->fileRows.at(mWindow->fileCursorY).line.length();
-		}
+	default:
 		break;
-
-	case KeyActions::KeyAction::CtrlPageDown: //Move cursor to bottom of screen
-		if (mWindow->fileCursorY + mWindow->rows - ((mWindow->fileCursorY - mWindow->rowOffset) % mWindow->rows) > mWindow->fileRows.size() - 1)
-		{
-			mWindow->fileCursorY = mWindow->fileRows.size() - 1;
-		}
-		else
-		{
-			mWindow->fileCursorY += mWindow->rows - ((mWindow->fileCursorY - mWindow->rowOffset) % mWindow->rows);
-		}
-
-		if (mWindow->fileCursorX > mWindow->fileRows.at(mWindow->fileCursorY).line.length())
-		{
-			mWindow->fileCursorX = mWindow->fileRows.at(mWindow->fileCursorY).line.length();
-		}
-		break;
-	}
-}
-
-
-/// <summary>
-/// When CTRL-ArrowUp / CTRL-ArrowDown is pressed, shift the viewable screen area up/down one if possible
-/// Move the screen offset if the cursor is at the end of the screen
-/// </summary>
-/// <param name="key">The key pressed</param>
-void Console::shiftRowOffset(const KeyActions::KeyAction key)
-{
-	if (key == KeyActions::KeyAction::CtrlArrowDown)
-	{
-		if (mWindow->rowOffset == mWindow->fileRows.size() - 1) return; //This is as far as the screen can be moved down
-
-		++mWindow->rowOffset;
-		if (mWindow->fileCursorY < mWindow->fileRows.size() && mWindow->renderedCursorY == 0) //Move the file cursor if the rendered cursor is at the top of the screen
-		{
-			moveCursor(KeyActions::KeyAction::ArrowDown);
-		}
-	}
-	else if (key == KeyActions::KeyAction::CtrlArrowUp)
-	{
-		if (mWindow->rowOffset == 0) return; //A negative row offset would wrap and break the viewport so don't allow it to go negative
-
-		--mWindow->rowOffset;
-		if (mWindow->renderedCursorY == mWindow->rows - 1) //Move the file cursor if the rendered cursor is at the bottom of the screen
-		{
-			moveCursor(KeyActions::KeyAction::ArrowUp);
-		}
 	}
 }
 

@@ -103,6 +103,7 @@ private:
 	static void renderStatusAndCursor();
 	static void prepRenderedLineForRender();
 	static void renderEndOfFile();
+	static int8_t moveCursorLeftRight(const KeyActions::KeyAction key);
 	static void deleteRow(const size_t rowNum);
 	static void addUndoHistory();
 	static void addRedoHistory();
@@ -126,9 +127,14 @@ private:
 	inline static std::stack<FileHistory> mRedoHistory;
 	inline static std::stack<FileHistory> mUndoHistory;
 	inline static Mode mMode = Mode::ReadMode;
-	inline static const std::string separators = " \"',.()+-/*=~%;:[]{}<>";
+	inline static const std::string_view separators = " \"',.()+-/*=~%;:[]{}<>";
 
 	static constexpr uint8_t tabSpacing = 8;
 	static constexpr uint8_t maxSpacesForTab = 7;
 	static constexpr uint8_t statusMessageRows = 2;
+
+	//Return codes from moveCursorLeftRight()
+	static constexpr int8_t cursorCantMove = -1;
+	static constexpr int8_t cursorMovedNewLine = 0;
+	static constexpr int8_t cursorMoveNormal = 1;
 };

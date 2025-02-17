@@ -148,8 +148,6 @@ namespace InputHandler
 		case KeyAction::End:
 		case KeyAction::CtrlHome:
 		case KeyAction::CtrlEnd:
-		case KeyAction::PageDown:
-		case KeyAction::PageUp:
 		case KeyAction::CtrlPageDown:
 		case KeyAction::CtrlPageUp:
 			Console::moveCursor(key);
@@ -157,6 +155,8 @@ namespace InputHandler
 
 		case KeyAction::CtrlArrowDown:
 		case KeyAction::CtrlArrowUp:
+		case KeyAction::PageDown:
+		case KeyAction::PageUp:
 			Console::shiftRowOffset(key);
 			break;
 
