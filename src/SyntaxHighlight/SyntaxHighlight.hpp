@@ -23,27 +23,32 @@ SOFTWARE.
 */
 
 #pragma once
+#include <File/File.hpp>
+
 #include <vector>
 #include <string>
+#include <string_view>
 #include <cstdint> //uint8_t
 #include <unordered_set>
 
 namespace SyntaxHighlight{
+
 	struct EditorSyntax
 	{
-		std::unordered_set<std::string> filematch;
-		std::unordered_set<std::string> builtInTypeKeywords;
-		std::unordered_set<std::string> loopKeywords;
-		std::unordered_set<std::string> otherKeywords;
-		std::string singlelineComment;
-		std::string multilineCommentStart;
-		std::string multilineCommentEnd;
+		std::unordered_set<std::string_view> filematch;
+		std::unordered_set<std::string_view> builtInTypeKeywords;
+		std::unordered_set<std::string_view> loopKeywords;
+		std::unordered_set<std::string_view> otherKeywords;
+		std::string_view singlelineComment;
+		std::string_view multilineCommentStart;
+		std::string_view multilineCommentEnd;
 		char escapeChar;
 	};
 
-	EditorSyntax* syntax();
+	const EditorSyntax* syntax();
 
 	void initSyntax(const std::string_view& fName);
+
 
 	enum class HighlightType
 	{
@@ -60,11 +65,23 @@ namespace SyntaxHighlight{
 
 	uint8_t color(HighlightType);
 
+	struct HighlightLocations
+	{
+		HighlightType highlightType;
+		size_t startRow, startCol, endRow, endCol;
+		bool endFound = true, drawColor = true;
+	};
+	
+	std::vector<HighlightLocations>& highlightLocations();
+	void findEndMarker(std::vector<FileHandler::Row>& fileRows, std::string_view& currentWord, size_t& row, size_t& posOffset, size_t& findPos, size_t startRow, size_t startCol, const std::string_view& strToFind, const HighlightType);
+	bool highlightCommentCheck(std::vector<FileHandler::Row>& fileRows, std::string_view& currentWord, FileHandler::Row* row, size_t findPos, size_t& posOffset, size_t& i);
+	std::tuple<int64_t, int64_t> removeOffScreenHighlights(size_t rowOffset, size_t rows, size_t fileCursorY);
+	void highlightKeywordNumberCheck(std::string_view& currentWord, size_t i, size_t posOffset);
 
 	//================================================ CPP KEYWORDS =================================================================\\
 
-	static const std::unordered_set<std::string> cppFiletypes{ ".cpp", ".cc", ".cxx", ".hpp", ".h", ".hxx", ".hh" };
-	static const std::unordered_set<std::string> cppBuiltInTypes{
+	static const std::unordered_set<std::string_view> cppFiletypes{ ".cpp", ".cc", ".cxx", ".hpp", ".h", ".hxx", ".hh" };
+	static const std::unordered_set<std::string_view> cppBuiltInTypes{
 		//Built-in types and main keywords
 		"alignas", "alignof", "asm", "_asm", "auto", "bool", "char", "char8_t", "char16_t", "char32_t", "class",
 		"compl", "concept", "const", "consteval", "constexpr", "constinit", "const_cast", "decltype", "delete", "double",
@@ -74,12 +91,12 @@ namespace SyntaxHighlight{
 		"template", "this", "thread_local", "true", "typedef", "typeid", "typename", "union", "unsigned", "using", "virtual",
 		"void", "volatile", "wchar_t"
 	};
-	static const std::unordered_set<std::string> cppControlKeywords{
+	static const std::unordered_set<std::string_view> cppControlKeywords{
 		//Loop/Control keywords
 		"and", "and_eq", "bitand", "bitor", "break", "case", "catch", "continue", "co_await", "co_return", "co_yield", "default",
 		"do", "else", "for", "goto", "if", "not", "not_eq", "or", "or_eq", "return", "switch", "throw", "try", "while", "xor", "xor_eq"
 	};
-	static const std::unordered_set<std::string> cppOtherKeywords{
+	static const std::unordered_set<std::string_view> cppOtherKeywords{
 		//Some other keywords, such as macro definitions
 		"#define", "#ifdef", "#ifndef", "#if", "defined", "#include", "#elif", "#endif"
 	}; 

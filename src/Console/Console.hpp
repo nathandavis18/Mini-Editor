@@ -83,14 +83,6 @@ private:
 
 		bool dirty;
 		bool rawModeEnabled;
-		SyntaxHighlight::EditorSyntax* syntax;
-	};
-
-	struct HighlightLocations
-	{
-		SyntaxHighlight::HighlightType highlightType;
-		size_t startRow, startCol, endRow, endCol;
-		bool endFound = true, drawColor = true;
 	};
 
 	struct FileHistory
@@ -113,17 +105,13 @@ private:
 	static void replaceRenderedStringTabs(std::string&);
 	static size_t getRenderedCursorTabSpaces(const FileHandler::Row&);
 	static void updateRenderedColor(const size_t rowOffset, const size_t colOffset);
-	static void findEndMarker(std::string_view& currentWord, size_t& row, size_t& posOffset, size_t& findPos, size_t startRow, size_t startCol, const std::string& strToFind, const SyntaxHighlight::HighlightType);
-	static bool highlightCommentCheck(std::string_view& currentWord, FileHandler::Row* row, size_t findPos, size_t& posOffset, size_t& i);
-	static std::tuple<int64_t, int64_t> removeOffScreenHighlights();
-	static void highlightKeywordNumberCheck(std::string_view& currentWord, size_t i, size_t posOffset);
 	static void setHighlight();
 
 private:
 	inline static std::string mRenderBuffer, mPreviousRenderBuffer; //Implementing double-buffering so the screen doesn't need to always update
 
 	inline static std::unique_ptr<Window> mWindow;
-	inline static std::vector<HighlightLocations> mHighlights;
+	inline static std::vector<SyntaxHighlight::HighlightLocations>& mHighlights = SyntaxHighlight::highlightLocations();
 	inline static std::stack<FileHistory> mRedoHistory;
 	inline static std::stack<FileHistory> mUndoHistory;
 	inline static Mode mMode = Mode::ReadMode;
