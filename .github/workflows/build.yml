@@ -46,8 +46,8 @@ jobs:
               uses: marvinpinto/action-automatic-releases@latest
               with:
                 repo_token: ${{ secrets.GITHUB_TOKEN }}
-                automatic_release_tag: v0.5.0a
-                title: v0.5.0a
+                automatic_release_tag: v0.5.1a
+                title: v0.5.1a - Refactoring and optimizations
                 prerelease: true
                 files: |
                     ./out/build/nve.exe
