@@ -31,6 +31,7 @@ SOFTWARE.
 #include <string>
 #include <memory>
 #include <stack>
+#include <tuple>
 
 enum class Mode
 {
@@ -99,23 +100,41 @@ private:
 		size_t colOffset, rowOffset;
 	};
 
+	static void renderStatusAndCursor();
+	static void prepRenderedLineForRender();
+	static void renderEndOfFile();
+	static int8_t moveCursorLeftRight(const KeyActions::KeyAction key);
+	static void deleteRow(const size_t rowNum);
 	static void addUndoHistory();
 	static void addRedoHistory();
 	static void setRenderedString();
-	static void deleteRow(const size_t rowNum);
 	static void setCursorLinePosition();
 	static void fixRenderedCursorPosition(const FileHandler::Row&);
 	static void replaceRenderedStringTabs(std::string&);
 	static size_t getRenderedCursorTabSpaces(const FileHandler::Row&);
 	static void updateRenderedColor(const size_t rowOffset, const size_t colOffset);
-	static void findEndMarker(std::string& currentWord, size_t& row, size_t& posOffset, size_t& findPos, size_t startRow, size_t startCol, const std::string& strToFind, const SyntaxHighlight::HighlightType, bool = false);
+	static void findEndMarker(std::string_view& currentWord, size_t& row, size_t& posOffset, size_t& findPos, size_t startRow, size_t startCol, const std::string& strToFind, const SyntaxHighlight::HighlightType);
+	static bool highlightCommentCheck(std::string_view& currentWord, FileHandler::Row* row, size_t findPos, size_t& posOffset, size_t& i);
+	static std::tuple<int64_t, int64_t> removeOffScreenHighlights();
+	static void highlightKeywordNumberCheck(std::string_view& currentWord, size_t i, size_t posOffset);
 	static void setHighlight();
 
 private:
+	inline static std::string mRenderBuffer, mPreviousRenderBuffer; //Implementing double-buffering so the screen doesn't need to always update
+
 	inline static std::unique_ptr<Window> mWindow;
 	inline static std::vector<HighlightLocations> mHighlights;
 	inline static std::stack<FileHistory> mRedoHistory;
 	inline static std::stack<FileHistory> mUndoHistory;
 	inline static Mode mMode = Mode::ReadMode;
-	inline static const std::string separators = " \"',.()+-/*=~%;:[]{}<>";
+	inline static const std::string_view separators = " \"',.()+-/*=~%;:[]{}<>";
+
+	static constexpr uint8_t tabSpacing = 8;
+	static constexpr uint8_t maxSpacesForTab = 7;
+	static constexpr uint8_t statusMessageRows = 2;
+
+	//Return codes from moveCursorLeftRight()
+	static constexpr int8_t cursorCantMove = -1;
+	static constexpr int8_t cursorMovedNewLine = 0;
+	static constexpr int8_t cursorMoveNormal = 1;
 };

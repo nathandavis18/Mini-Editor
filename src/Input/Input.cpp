@@ -148,8 +148,6 @@ namespace InputHandler
 		case KeyAction::End:
 		case KeyAction::CtrlHome:
 		case KeyAction::CtrlEnd:
-		case KeyAction::PageDown:
-		case KeyAction::PageUp:
 		case KeyAction::CtrlPageDown:
 		case KeyAction::CtrlPageUp:
 			Console::moveCursor(key);
@@ -157,6 +155,8 @@ namespace InputHandler
 
 		case KeyAction::CtrlArrowDown:
 		case KeyAction::CtrlArrowUp:
+		case KeyAction::PageDown:
+		case KeyAction::PageUp:
 			Console::shiftRowOffset(key);
 			break;
 
@@ -215,7 +215,8 @@ namespace InputHandler
 			break;
 		case KeyAction::CtrlC: //Don't need to do anything for this
 			break;
-		default:
+
+		default: [[ likely ]] //This is the most likely scenario
 			Console::insertChar(static_cast<uint8_t>(key));
 			break;
 		}
