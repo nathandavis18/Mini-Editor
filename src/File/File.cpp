@@ -25,6 +25,8 @@ SOFTWARE.
 #include "File.hpp"
 #include <filesystem>
 #include <fstream>
+#include <exception>
+#include <iostream>
 
 namespace FileHandler
 {
@@ -50,13 +52,21 @@ namespace FileHandler
 	/// <returns></returns>
 	std::vector<Row> loadFileContents()
 	{
-		std::filesystem::path path = std::filesystem::current_path() / _fileName;
-		std::ifstream file(path);
-		std::stringstream ss;
-		ss << file.rdbuf();
-		file.close();
+		try
+		{
+			std::filesystem::path path = std::filesystem::current_path() / _fileName;
+			std::ifstream file(path);
+			std::stringstream ss;
+			ss << file.rdbuf();
+			file.close();
 
-		return loadRows(std::move(ss.str()));
+			return loadRows(std::move(ss.str()));
+		}
+		catch (std::exception ex)
+		{
+			std::cerr << "Error opening file. ERROR: " << ex.what() << std::endl;
+			exit(EXIT_FAILURE);
+		}
 	}
 
 	/// <summary>
@@ -86,8 +96,15 @@ namespace FileHandler
 	/// <param name="newContents"></param>
 	void saveFile(const std::string_view& newContents)
 	{
-		std::filesystem::path path = std::filesystem::current_path() / _fileName;
-		std::ofstream file(path);
-		file << newContents;
+		try
+		{
+			std::filesystem::path path = std::filesystem::current_path() / _fileName;
+			std::ofstream file(path);
+			file << newContents;
+		}
+		catch (std::exception ex)
+		{
+			std::cerr << "Error saving file. ERROR: " << ex.what() << std::endl;
+		}
 	}
 }
