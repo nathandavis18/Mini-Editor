@@ -22,6 +22,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+/**
+* @file SyntaxHighlight.hpp
+* @brief Provides the interface for how syntax highlight is stored
+*/
+
 #pragma once
 #include "File/File.hpp"
 
@@ -33,6 +38,9 @@ SOFTWARE.
 
 namespace SyntaxHighlight{
 
+	/// <summary>
+	/// The structure to store what file types match with each keyword, comment, or string type.
+	/// </summary>
 	struct EditorSyntax
 	{
 		std::unordered_set<std::string_view> filematch;
@@ -45,11 +53,13 @@ namespace SyntaxHighlight{
 		char escapeChar;
 	};
 
-	const EditorSyntax* syntax();
+	const bool hasSyntax();
 
 	void initSyntax(const std::string_view& fName);
 
-
+	/// <summary>
+	/// The different types of highlights
+	/// </summary>
 	enum class HighlightType
 	{
 		Normal,
@@ -60,11 +70,15 @@ namespace SyntaxHighlight{
 		KeywordOther,
 		String,
 		Number,
-		EnumCount
+		EnumCount //A hacky way to get the number of items in an enum if each item in enum is default assigned
 	};
 
 	uint8_t color(HighlightType);
 
+	/// <summary>
+	/// The structure for how highlight locations are stored
+	/// A custom token-based system for highlights
+	/// </summary>
 	struct HighlightLocations
 	{
 		HighlightType highlightType;
@@ -72,7 +86,7 @@ namespace SyntaxHighlight{
 		bool endFound = true, drawColor = true;
 	};
 	
-	std::vector<HighlightLocations>& highlightLocations();
+	const std::vector<HighlightLocations>& highlightLocations();
 	void findEndMarker(std::vector<FileHandler::Row>& fileRows, std::string_view& currentWord, size_t& row, size_t& posOffset, size_t& findPos, size_t startRow, size_t startCol, const std::string_view& strToFind, const HighlightType);
 	bool highlightCommentCheck(std::vector<FileHandler::Row>& fileRows, std::string_view& currentWord, FileHandler::Row* row, size_t findPos, size_t& posOffset, size_t& i);
 	std::tuple<int64_t, int64_t> removeOffScreenHighlights(size_t rowOffset, size_t rows, size_t fileCursorY);

@@ -28,6 +28,11 @@ SOFTWARE.
 
 namespace FileHandler
 {
+	/// <summary>
+	/// The structure of each row in the file.
+	/// line is what is actually stored, including \t and other characters
+	/// renderedLine is what gets displayed to the user
+	/// </summary>
 	struct Row
 	{
 		std::string line;

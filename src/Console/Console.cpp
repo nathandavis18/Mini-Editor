@@ -22,6 +22,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+/**
+* @file Console.cpp
+* @brief Provides the implementation for handling terminal output and cursor movement
+* 
+* Controls everything that is displayed to the console, as well as its position relative to the file. This includes:
+* Cursor position, rendered text, as well as how the cursor moves through the file. Also includes file history for undo/redo
+* Essentially, this is the 'editor' of the Text Editor. The core piece that binds this project together.
+*/
+
 #include "Console.hpp"
 
 #include <iostream>
@@ -237,11 +246,12 @@ void Console::renderEndOfFile()
 /// <summary>
 /// Builds the output buffer and displays it to the user through std::cout
 /// Uses ANSI escape codes for clearing screen/displaying cursor and for colors
+/// Currently redraws entire screen if buffer is different. Will work on making it only redraw the changes that were made
+/// The issue right now is multiline syntax highlighting.
 /// </summary>
-void Console::refreshScreen()
+void Console::refreshScreen(bool forceRedrawScreen)
 {
-	mRenderBuffer = "\x1b[1;1H"; //Move the cursor to (1, 1)
-	mRenderBuffer.append("\x1b[3J"); //Erase the screen to redraw changes
+	mRenderBuffer = "\x1b[1;1H"; //Move cursor to start of screen to redraw changes.
 
 	prepRenderedLineForRender();
 	updateRenderedColor(mWindow->rowOffset, mWindow->colOffset);
@@ -257,8 +267,10 @@ void Console::refreshScreen()
 	{
 		renderEndOfFile();
 	}
+	
+	mRenderBuffer.append("\x1b[3J"); //Remove saved lines (so there is no scroll bar)
 
-	if (mRenderBuffer != mPreviousRenderBuffer) 
+	if (mRenderBuffer != mPreviousRenderBuffer || forceRedrawScreen) 
 	{
 		std::cout << mRenderBuffer;
 		mPreviousRenderBuffer = mRenderBuffer;
@@ -984,7 +996,7 @@ void Console::updateRenderedColor(const size_t rowOffset, const size_t colOffset
 /// </summary>
 void Console::setHighlight()
 {
-	if (SyntaxHighlight::syntax() == nullptr) return; //Can't highlight if there is no syntax
+	if (!SyntaxHighlight::hasSyntax()) return; //Can't highlight if there is no syntax
 
 	std::tuple<int64_t, int64_t> offsets = SyntaxHighlight::removeOffScreenHighlights(mWindow->rowOffset, mWindow->rows, mWindow->fileCursorY);
 	int64_t rowToStart = std::get<0>(offsets);

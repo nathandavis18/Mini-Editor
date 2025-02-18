@@ -1,9 +1,7 @@
 name: Build and Release
 on:
-    push:
-        branches: [ master ]
     pull_request:
-        branches: [ master ]
+        branches: [ release ]
 
 jobs:
     build:

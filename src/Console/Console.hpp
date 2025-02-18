@@ -22,6 +22,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+/**
+* @file Console.hpp
+* @brief Provides the interface for the Console
+* 
+* This file's purpose is to separate the implementation away from other files.
+* They don't need to know how the console works, just need to call specific functions
+*/
 #pragma once
 #include "SyntaxHighlight/SyntaxHighlight.hpp"
 #include "KeyActions/KeyActions.hh"
@@ -33,11 +40,14 @@ SOFTWARE.
 #include <stack>
 #include <tuple>
 
+/// <summary>
+/// A list of modes the editor can be in
+/// </summary>
 enum class Mode
 {
 	CommandMode,
 	EditMode,
-	FindMode,
+	FindMode, //Currently unused, working on implementation
 	ReadMode,
 	ExitMode,
 	None
@@ -48,7 +58,7 @@ class Console
 public:
 	static Mode& mode(Mode = Mode::None);
 	static void prepRenderedString();
-	static void refreshScreen();
+	static void refreshScreen(bool forceRedrawScreen = false);
 	static void moveCursor(const KeyActions::KeyAction key);
 	static void shiftRowOffset(const KeyActions::KeyAction key);
 	static void addRow();
@@ -69,6 +79,10 @@ public:
 	static void disableRawInput();
 
 private:
+
+	/// <summary>
+	/// The structure for how the window stores information and tracks current position within the file
+	/// </summary>
 	struct Window
 	{
 		Window();
@@ -85,6 +99,9 @@ private:
 		bool rawModeEnabled;
 	};
 
+	/// <summary>
+	/// The structure for saving necessary information to the undo/redo stacks
+	/// </summary>
 	struct FileHistory
 	{
 		std::vector<FileHandler::Row> rows;
@@ -111,12 +128,14 @@ private:
 	inline static std::string mRenderBuffer, mPreviousRenderBuffer; //Implementing double-buffering so the screen doesn't need to always update
 
 	inline static std::unique_ptr<Window> mWindow;
-	inline static std::vector<SyntaxHighlight::HighlightLocations>& mHighlights = SyntaxHighlight::highlightLocations();
+	inline static const std::vector<SyntaxHighlight::HighlightLocations>& mHighlights = SyntaxHighlight::highlightLocations();
 	inline static std::stack<FileHistory> mRedoHistory;
 	inline static std::stack<FileHistory> mUndoHistory;
 	inline static Mode mMode = Mode::ReadMode;
-	inline static const std::string_view separators = " \"',.()+-/*=~%;:[]{}<>";
 
+
+	//Some constants to give specific values an identifying name
+	inline static const std::string_view separators = " \"',.()+-/*=~%;:[]{}<>";
 	static constexpr uint8_t tabSpacing = 8;
 	static constexpr uint8_t maxSpacesForTab = 7;
 	static constexpr uint8_t statusMessageRows = 2;
