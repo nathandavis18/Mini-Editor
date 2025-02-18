@@ -103,11 +103,11 @@ void Console::renderStatusAndCursor()
 	std::string status = std::format("{} - {} lines {}", FileHandler::fileName(), mWindow->fileRows.size(), mWindow->dirty ? "(modified)" : "");
 
 	//Set the displayed mode and the cursor position for display
-	size_t currentRowText = mWindow->rowOffset + mWindow->renderedCursorY + 1; //Add 1 for display only. Rows and cols are 0-indexed internally
-	size_t currentColText = mWindow->colNumberToDisplay + 1;
+	size_t currentRowToDisplay = mWindow->rowOffset + mWindow->renderedCursorY + 1; //Add 1 for display only. Rows and cols are 0-indexed internally
+	size_t currentColToDisplay = mWindow->colNumberToDisplay + 1;
 	if (mMode == Mode::EditMode)
 	{
-		rStatus = std::format("row {}/{} col {}", currentRowText, mWindow->fileRows.size(), currentColText);
+		rStatus = std::format("row {}/{} col {}", currentRowToDisplay, mWindow->fileRows.size(), currentColToDisplay);
 		modeToDisplay = "EDIT";
 	}
 	else if (mMode == Mode::CommandMode)
@@ -117,10 +117,16 @@ void Console::renderStatusAndCursor()
 	}
 	else if (mMode == Mode::ReadMode)
 	{
-		rStatus = std::format("row {}/{} col {}", currentRowText, mWindow->fileRows.size(), currentColText);
+		rStatus = std::format("row {}/{} col {}", currentRowToDisplay, mWindow->fileRows.size(), currentColToDisplay);
 		modeToDisplay = "READ ONLY";
 	}
+	
 	size_t statusLength = (status.length() > mWindow->cols) ? mWindow->cols : status.length();
+	if (statusLength < status.length())
+	{
+		status.resize(statusLength);
+	}
+
 	statusAndCursorBuffer.append(status);
 
 	while (statusLength < (mWindow->cols / 2))
@@ -252,8 +258,6 @@ void Console::refreshScreen()
 		renderEndOfFile();
 	}
 
-	mRenderBuffer.append("\x1b[0m"); //Make sure color mode is back to normal
-
 	if (mRenderBuffer != mPreviousRenderBuffer) 
 	{
 		std::cout << mRenderBuffer;
@@ -261,6 +265,7 @@ void Console::refreshScreen()
 	}
 
 	renderStatusAndCursor();
+
 	std::cout.flush(); //Flush the buffer after rendering everything to screen
 }
 
@@ -357,7 +362,8 @@ void Console::moveCursor(const KeyActions::KeyAction key)
 			while (mWindow->fileCursorX > 0)
 			{
 				--mWindow->fileCursorX;
-				if (separators.find(mWindow->fileRows.at(mWindow->fileCursorY).line[mWindow->fileCursorX]) != std::string::npos) break;
+				char charToFind = mWindow->fileRows.at(mWindow->fileCursorY).line[mWindow->fileCursorX];
+				if (separators.find(charToFind) != std::string::npos) break;
 			}
 		} 
 		break;
@@ -368,7 +374,8 @@ void Console::moveCursor(const KeyActions::KeyAction key)
 			while (mWindow->fileCursorX < mWindow->fileRows.at(mWindow->fileCursorY).line.length())
 			{
 				++mWindow->fileCursorX;
-				if (separators.find(mWindow->fileRows.at(mWindow->fileCursorY).line[mWindow->fileCursorX]) != std::string::npos) break;
+				char charToFind = mWindow->fileRows.at(mWindow->fileCursorY).line[mWindow->fileCursorX];
+				if (separators.find(charToFind) != std::string::npos) break;
 			}
 		}
 
