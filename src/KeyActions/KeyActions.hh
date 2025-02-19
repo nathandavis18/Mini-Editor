@@ -22,9 +22,16 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+/**
+* @file KeyActions.hh
+* @brief Lists the action keys and their corresponding key code
+*/
 #pragma once
 namespace KeyActions
 {
+	/// <summary>
+	/// The list of action keys and their unique input value, as retrieved from _getch() in Input
+	/// </summary>
 	enum class KeyAction
 	{
 		None = 0,

@@ -43,12 +43,12 @@ namespace SyntaxHighlight
 	EditorSyntax* currentSyntax = nullptr;
 
 	/// <summary>
-	/// Returns a pointer (or nullptr) to the current syntax being used.
+	/// Used to let other files know if a syntax is loaded or not
 	/// </summary>
-	/// <returns> nullptr if no syntax, or a pointer to the correct syntax </returns>
-	const EditorSyntax* syntax()
+	/// <returns> True if a syntax is loaded, otherwise false </returns>
+	const bool hasSyntax()
 	{
-		return currentSyntax;
+		return currentSyntax != nullptr;
 	}
 
 	/// <summary>
@@ -67,7 +67,7 @@ namespace SyntaxHighlight
 	}
 
 	/// <summary>
-	/// Initializes the syntax index and vector based on the current filetype
+	/// Initializes the syntax based on the current filetype
 	/// </summary>
 	/// <param name="fName"></param>
 	void initSyntax(const std::string_view& fName)
@@ -96,7 +96,11 @@ namespace SyntaxHighlight
 		}
 	}
 
-	std::vector<HighlightLocations>& highlightLocations()
+	/// <summary>
+	/// Lets other files access a read-only version of the highlights vector
+	/// </summary>
+	/// <returns> A const reference to highlights </returns>
+	const std::vector<HighlightLocations>& highlightLocations()
 	{
 		return highlights;
 	}
@@ -130,7 +134,7 @@ namespace SyntaxHighlight
 
 		uint8_t offset = static_cast<uint8_t>(strToFind.length()); //If the end marker is longer than 255 characters, get a new end marker lol
 
-		while (true)
+		while (true) //Rather than recursive implementation, just stay in the loop until the end marker is found or EOF is reached
 		{
 			while ((endPos = currentWord.find(strToFind, offset)) == std::string::npos)
 			{
@@ -151,7 +155,7 @@ namespace SyntaxHighlight
 				if (currentWord[endPos - 1] == currentSyntax->escapeChar)
 				{
 					if (!(endPos > 1 && currentWord.substr(endPos - 2, 2) == std::string() + currentSyntax->escapeChar + currentSyntax->escapeChar))
-					{
+					{ //If the end marker is preceded by an escape character, and the escape character is not escaped itself
 						size_t newOffset = endPos + 1;
 						posOffset += newOffset;
 						currentWord = currentWord.substr(newOffset);
@@ -162,7 +166,7 @@ namespace SyntaxHighlight
 			break;
 
 		}
-		size_t endCol = posOffset + endPos + strToFind.length();
+		size_t endCol = posOffset + endPos + strToFind.length(); //The endCol is 1 character after the end marker
 		highlights.emplace_back(hlType, startRow, startCol, row, endCol, true, true);
 		currentWord = currentWord.substr(endPos + strToFind.length());
 		posOffset += endPos + strToFind.length();
@@ -180,6 +184,8 @@ namespace SyntaxHighlight
 	/// <returns>True if we need to go to the next row, otherwise false</returns>
 	bool highlightCommentCheck(std::vector<FileHandler::Row>& fileRows, std::string_view& currentWord, FileHandler::Row* row, size_t findPos, size_t& posOffset, size_t& i)
 	{
+		bool gotoNextRow = false;
+
 		const uint8_t singlelineCommentLength = static_cast<uint8_t>(currentSyntax->singlelineComment.length()); //If the comment character is longer than 255 characters, just don't. Find a new character
 		const uint8_t multilineCommentLength = static_cast<uint8_t>(currentSyntax->multilineCommentStart.length()); //If the comment character is longer than 255 characters, just don't. Find a new character
 		if (currentWord[findPos] == '"' || currentWord[findPos] == '\'') //String highlights are open until the next string marker of the same type is found
@@ -203,7 +209,7 @@ namespace SyntaxHighlight
 			&& currentWord.substr(findPos, singlelineCommentLength) == currentSyntax->singlelineComment)
 		{
 			highlights.emplace_back(HighlightType::Comment, i, findPos + posOffset, i, row->renderedLine.length());
-			return true;
+			gotoNextRow = true;
 		}
 		else
 		{
@@ -211,7 +217,7 @@ namespace SyntaxHighlight
 			posOffset += findPos + 1;
 			currentWord = currentWord.substr(findPos + 1);
 		}
-		return false;
+		return gotoNextRow;
 	}
 
 	/// <summary>
@@ -236,10 +242,29 @@ namespace SyntaxHighlight
 					continue;
 				}
 			}
-			if (highlights[i].startRow < rowOffset && !(highlights[i].highlightType == HighlightType::MultilineComment || highlights[i].highlightType == HighlightType::String))
+
+			if (highlights[i].startRow >= rowOffset)
 			{
 				highlights.erase(highlights.begin() + i);
 				--i;
+			}
+			else if (highlights[i].startRow < rowOffset && !(highlights[i].highlightType == HighlightType::MultilineComment || highlights[i].highlightType == HighlightType::String))
+			{ //Can't remove multiline comments and strings just yet, their position may need to be saved
+				highlights.erase(highlights.begin() + i);
+				--i;
+			}
+			else if (highlights[i].endRow >= rowOffset && highlights[i].endRow <= rowOffset + rows)
+			{
+				if (highlights[i].highlightType == HighlightType::String || highlights[i].highlightType == HighlightType::MultilineComment)
+				{
+					if (highlights[i].startRow < rowOffset)
+					{
+						rowToStart = highlights[i].startRow;
+						startColOffset = highlights[i].startCol;
+					}
+					highlights.erase(highlights.begin() + i);
+					--i;
+				}
 			}
 			else if (highlights[i].startRow > rowOffset + rows)
 			{
@@ -277,29 +302,6 @@ namespace SyntaxHighlight
 				}
 				highlights.erase(highlights.begin() + i);
 				--i;
-			}
-		}
-
-		//2nd pass clears the ones that need to be updated. Essentially, all that should be left is multiline comments and quotes.
-		for (int64_t i = 0; i < highlights.size(); ++i)
-		{
-			if (highlights[i].startRow >= rowOffset)
-			{
-				highlights.erase(highlights.begin() + i);
-				--i;
-			}
-			else if (highlights[i].endRow >= rowOffset && highlights[i].endRow <= rowOffset + rows)
-			{
-				if (highlights[i].highlightType == HighlightType::String || highlights[i].highlightType == HighlightType::MultilineComment)
-				{
-					if (highlights[i].startRow < rowOffset)
-					{
-						rowToStart = highlights[i].startRow;
-						startColOffset = highlights[i].startCol;
-					}
-					highlights.erase(highlights.begin() + i);
-					--i;
-				}
 			}
 		}
 

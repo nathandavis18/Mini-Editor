@@ -22,6 +22,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+/**
+* @file Console.cpp
+* @brief Provides the implementation for handling terminal output and cursor movement
+* 
+* Controls everything that is displayed to the console, as well as its position relative to the file. This includes:
+* Cursor position, rendered text, as well as how the cursor moves through the file. Also includes file history for undo/redo
+* Essentially, this is the 'editor' of the Text Editor. The core piece that binds this project together.
+*/
+
 #include "Console.hpp"
 
 #include <iostream>
@@ -103,11 +112,11 @@ void Console::renderStatusAndCursor()
 	std::string status = std::format("{} - {} lines {}", FileHandler::fileName(), mWindow->fileRows.size(), mWindow->dirty ? "(modified)" : "");
 
 	//Set the displayed mode and the cursor position for display
-	size_t currentRowText = mWindow->rowOffset + mWindow->renderedCursorY + 1; //Add 1 for display only. Rows and cols are 0-indexed internally
-	size_t currentColText = mWindow->colNumberToDisplay + 1;
+	size_t currentRowToDisplay = mWindow->rowOffset + mWindow->renderedCursorY + 1; //Add 1 for display only. Rows and cols are 0-indexed internally
+	size_t currentColToDisplay = mWindow->colNumberToDisplay + 1;
 	if (mMode == Mode::EditMode)
 	{
-		rStatus = std::format("row {}/{} col {}", currentRowText, mWindow->fileRows.size(), currentColText);
+		rStatus = std::format("row {}/{} col {}", currentRowToDisplay, mWindow->fileRows.size(), currentColToDisplay);
 		modeToDisplay = "EDIT";
 	}
 	else if (mMode == Mode::CommandMode)
@@ -117,10 +126,16 @@ void Console::renderStatusAndCursor()
 	}
 	else if (mMode == Mode::ReadMode)
 	{
-		rStatus = std::format("row {}/{} col {}", currentRowText, mWindow->fileRows.size(), currentColText);
+		rStatus = std::format("row {}/{} col {}", currentRowToDisplay, mWindow->fileRows.size(), currentColToDisplay);
 		modeToDisplay = "READ ONLY";
 	}
+	
 	size_t statusLength = (status.length() > mWindow->cols) ? mWindow->cols : status.length();
+	if (statusLength < status.length())
+	{
+		status.resize(statusLength);
+	}
+
 	statusAndCursorBuffer.append(status);
 
 	while (statusLength < (mWindow->cols / 2))
@@ -231,11 +246,12 @@ void Console::renderEndOfFile()
 /// <summary>
 /// Builds the output buffer and displays it to the user through std::cout
 /// Uses ANSI escape codes for clearing screen/displaying cursor and for colors
+/// Currently redraws entire screen if buffer is different. Will work on making it only redraw the changes that were made
+/// The issue right now is multiline syntax highlighting.
 /// </summary>
-void Console::refreshScreen()
+void Console::refreshScreen(bool forceRedrawScreen)
 {
-	mRenderBuffer = "\x1b[1;1H"; //Move the cursor to (1, 1)
-	mRenderBuffer.append("\x1b[3J"); //Erase the screen to redraw changes
+	mRenderBuffer = "\x1b[1;1H"; //Move cursor to start of screen to redraw changes.
 
 	prepRenderedLineForRender();
 	updateRenderedColor(mWindow->rowOffset, mWindow->colOffset);
@@ -251,16 +267,17 @@ void Console::refreshScreen()
 	{
 		renderEndOfFile();
 	}
+	
+	mRenderBuffer.append("\x1b[3J"); //Remove saved lines (so there is no scroll bar)
 
-	mRenderBuffer.append("\x1b[0m"); //Make sure color mode is back to normal
-
-	if (mRenderBuffer != mPreviousRenderBuffer) 
+	if (mRenderBuffer != mPreviousRenderBuffer || forceRedrawScreen) 
 	{
 		std::cout << mRenderBuffer;
 		mPreviousRenderBuffer = mRenderBuffer;
 	}
 
 	renderStatusAndCursor();
+
 	std::cout.flush(); //Flush the buffer after rendering everything to screen
 }
 
@@ -357,7 +374,8 @@ void Console::moveCursor(const KeyActions::KeyAction key)
 			while (mWindow->fileCursorX > 0)
 			{
 				--mWindow->fileCursorX;
-				if (separators.find(mWindow->fileRows.at(mWindow->fileCursorY).line[mWindow->fileCursorX]) != std::string::npos) break;
+				char charToFind = mWindow->fileRows.at(mWindow->fileCursorY).line[mWindow->fileCursorX];
+				if (separators.find(charToFind) != std::string::npos) break;
 			}
 		} 
 		break;
@@ -368,7 +386,8 @@ void Console::moveCursor(const KeyActions::KeyAction key)
 			while (mWindow->fileCursorX < mWindow->fileRows.at(mWindow->fileCursorY).line.length())
 			{
 				++mWindow->fileCursorX;
-				if (separators.find(mWindow->fileRows.at(mWindow->fileCursorY).line[mWindow->fileCursorX]) != std::string::npos) break;
+				char charToFind = mWindow->fileRows.at(mWindow->fileCursorY).line[mWindow->fileCursorX];
+				if (separators.find(charToFind) != std::string::npos) break;
 			}
 		}
 
@@ -977,7 +996,7 @@ void Console::updateRenderedColor(const size_t rowOffset, const size_t colOffset
 /// </summary>
 void Console::setHighlight()
 {
-	if (SyntaxHighlight::syntax() == nullptr) return; //Can't highlight if there is no syntax
+	if (!SyntaxHighlight::hasSyntax()) return; //Can't highlight if there is no syntax
 
 	std::tuple<int64_t, int64_t> offsets = SyntaxHighlight::removeOffScreenHighlights(mWindow->rowOffset, mWindow->rows, mWindow->fileCursorY);
 	int64_t rowToStart = std::get<0>(offsets);

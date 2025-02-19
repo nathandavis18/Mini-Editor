@@ -110,11 +110,7 @@ namespace InputHandler
 			std::cout << ":";
 			std::cin >> command;
 
-			if (command == "q" && Console::isDirty()) //Quit command - requires changes to be saved
-			{
-				break;
-			}
-			else if (command == "q")
+			if (command == "q" && !Console::isDirty()) //Quit command - requires changes to be saved
 			{
 				Console::mode(Mode::ExitMode);
 				break;
@@ -136,6 +132,7 @@ namespace InputHandler
 			}
 			Console::mode(Mode::ReadMode); //Go back to read mode after executing a command
 			Console::enableRawInput();
+			Console::refreshScreen(true);
 			break;
 
 		case KeyAction::ArrowDown:
