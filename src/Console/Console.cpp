@@ -906,7 +906,7 @@ void Console::replaceRenderedStringTabs(std::string& renderedLine)
 		uint8_t t = maxSpacesForTab - (i % tabSpacing);
 		while (t > 0)
 		{
-			renderedLine.insert(renderedLine.begin() + (i), ' '); //Add spaces until we reach a multiple of 8
+			renderedLine.insert(renderedLine.begin() + i, ' '); //Add spaces until we reach a multiple of 8
 			--t;
 			++i;
 		}

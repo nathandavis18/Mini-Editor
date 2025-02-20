@@ -79,12 +79,12 @@ namespace FileHandler
 		if (str.length() > 0)
 		{
 			size_t lineBreak = 0;
-			while ((lineBreak = str.find('\n')) != std::string::npos)
+			while ((lineBreak = str.find('\r\n')) != std::string::npos)
 			{
 				contents.emplace_back(str.substr(0, lineBreak));
-				str.erase(str.begin(), str.begin() + lineBreak + 1);
+				str.erase(str.begin(), str.begin() + lineBreak + 2);
 			}
-			contents.emplace_back(str.substr(0, str.length()));
+			contents.emplace_back(str);
 			str.clear();
 		}
 		return contents;
