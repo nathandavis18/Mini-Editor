@@ -42,18 +42,11 @@ namespace SyntaxHighlight
 	std::vector<HighlightLocations> highlights;
 	EditorSyntax* currentSyntax = nullptr;
 
-	/// <summary>
-	/// Used to let other files know if a syntax is loaded or not
-	/// </summary>
-	/// <returns> True if a syntax is loaded, otherwise false </returns>
 	const bool hasSyntax()
 	{
 		return currentSyntax != nullptr;
 	}
 
-	/// <summary>
-	/// Setting the color values for each type
-	/// </summary>
 	void setColors()
 	{
 		colors[static_cast<uint8_t>(HighlightType::Normal)] = white;
@@ -66,11 +59,7 @@ namespace SyntaxHighlight
 		colors[static_cast<uint8_t>(HighlightType::Number)] = blue;
 	}
 
-	/// <summary>
-	/// Initializes the syntax based on the current filetype
-	/// </summary>
-	/// <param name="fName"></param>
-	void initSyntax(const std::string_view& fName)
+	void initSyntax(const std::string_view fName)
 	{
 		syntaxContents.emplace_back(cppFiletypes, cppBuiltInTypes, cppControlKeywords, cppOtherKeywords, "//", "/*", "*/", '\\');
 
@@ -96,38 +85,16 @@ namespace SyntaxHighlight
 		}
 	}
 
-	/// <summary>
-	/// Lets other files access a read-only version of the highlights vector
-	/// </summary>
-	/// <returns> A const reference to highlights </returns>
 	const std::vector<HighlightLocations>& highlightLocations()
 	{
 		return highlights;
 	}
 
-	/// <summary>
-	/// Returns the color ID of a given highlight type
-	/// </summary>
-	/// <param name="type"></param>
-	/// <returns></returns>
 	uint8_t color(HighlightType type)
 	{
 		return colors[static_cast<uint8_t>(type)];
 	}
 
-	/// <summary>
-	/// Tries to find the end marker, denoted as strToFind
-	/// Either runs until the max row count is reached or until it is found
-	/// </summary>
-	/// <param name="fileRows"> The rows within the current file </param>
-	/// <param name="currentWord"> The 'word' we are checking to find the end marker </param>
-	/// <param name="row"> The current row. Must be reference, since the setHighlight funciton depends on this </param>
-	/// <param name="posOffset"> The offset within the current word, so we don't re-check the same stuff </param>
-	/// <param name="findPos"> Where the starting marker was found </param>
-	/// <param name="startRow"> What row we started on, since this may be multiple rows in length </param>
-	/// <param name="startCol"></param>
-	/// <param name="strToFind"> What end marker we are trying to find </param>
-	/// <param name="hlType"> The type of highlight </param>
 	void findEndMarker(std::vector<FileHandler::Row>& fileRows, std::string_view& currentWord, size_t& row, size_t& posOffset, size_t& findPos, size_t startRow, size_t startCol, const std::string_view& strToFind, const HighlightType hlType)
 	{
 		size_t endPos;
@@ -172,16 +139,6 @@ namespace SyntaxHighlight
 		posOffset += endPos + strToFind.length();
 	}
 
-	/// <summary>
-	/// Adds the highlight positions for comments and strings
-	/// </summary>
-	/// <param name="fileRows"> The rows within the current file </param>
-	/// <param name="currentWord"></param>
-	/// <param name="row"></param>
-	/// <param name="findPos"></param>
-	/// <param name="posOffset"></param>
-	/// <param name="i"></param>
-	/// <returns>True if we need to go to the next row, otherwise false</returns>
 	bool highlightCommentCheck(std::vector<FileHandler::Row>& fileRows, std::string_view& currentWord, FileHandler::Row* row, size_t findPos, size_t& posOffset, size_t& i)
 	{
 		bool gotoNextRow = false;
@@ -220,19 +177,13 @@ namespace SyntaxHighlight
 		return gotoNextRow;
 	}
 
-	/// <summary>
-	/// Removes off-screen highlights from the highlight vector so there are no unnecessary checks
-	/// </summary>
-	/// <param name="rowOffset"> The current row offset </param>
-	/// <param name="rows"> The number of rows that can be displayed </param>
-	/// <param name="fileCursorY"> The current cursor position </param>
-	/// <returns>A tuple of the row to start on and the column offset of that row</returns>
 	std::tuple<int64_t, int64_t> removeOffScreenHighlights(size_t rowOffset, size_t rows, size_t fileCursorY)
 	{
-		int64_t rowToStart = -1;
-		int64_t startColOffset = -1;
+		size_t rowToStart = std::numeric_limits<size_t>::max();
+		size_t startColOffset = std::numeric_limits<size_t>::max();
 
-		for (int64_t i = 0; i < highlights.size(); ++i) //First pass gets rid of all unnecessary syntax highlights (all the off-screen ones)
+	startover:
+		for (size_t i = 0; i < highlights.size(); ++i) //First pass gets rid of all unnecessary syntax highlights (all the off-screen ones)
 		{
 			if (highlights[i].highlightType == HighlightType::MultilineComment || highlights[i].highlightType == HighlightType::String)
 			{
@@ -245,13 +196,11 @@ namespace SyntaxHighlight
 
 			if (highlights[i].startRow >= rowOffset)
 			{
-				highlights.erase(highlights.begin() + i);
-				--i;
+				goto eraseHighlight;
 			}
 			else if (highlights[i].startRow < rowOffset && !(highlights[i].highlightType == HighlightType::MultilineComment || highlights[i].highlightType == HighlightType::String))
 			{ //Can't remove multiline comments and strings just yet, their position may need to be saved
-				highlights.erase(highlights.begin() + i);
-				--i;
+				goto eraseHighlight;
 			}
 			else if (highlights[i].endRow >= rowOffset && highlights[i].endRow <= rowOffset + rows)
 			{
@@ -262,8 +211,7 @@ namespace SyntaxHighlight
 						rowToStart = highlights[i].startRow;
 						startColOffset = highlights[i].startCol;
 					}
-					highlights.erase(highlights.begin() + i);
-					--i;
+					goto eraseHighlight;
 				}
 			}
 			else if (highlights[i].startRow > rowOffset + rows)
@@ -272,48 +220,44 @@ namespace SyntaxHighlight
 			}
 			else if (highlights[i].endRow < rowOffset)
 			{
-				highlights.erase(highlights.begin() + i);
-				--i;
+				goto eraseHighlight;
 			}
 			else if (highlights[i].startRow == fileCursorY)
 			{
-				highlights.erase(highlights.begin() + i);
-				--i;
+				goto eraseHighlight;
 			}
 			else if (highlights[i].endRow == fileCursorY && highlights[i].endFound)
 			{
 				if (highlights[i].highlightType == HighlightType::String || highlights[i].highlightType == HighlightType::MultilineComment)
 				{
-					if (highlights[i].startRow < rowOffset && rowToStart == -1)
+					if (highlights[i].startRow < rowOffset && rowToStart == std::numeric_limits<size_t>::max())
 					{
 						rowToStart = highlights[i].startRow;
 						startColOffset = highlights[i].startCol;
 					}
 				}
-				highlights.erase(highlights.begin() + i);
-				--i;
+				goto eraseHighlight;
 			}
 			else if (!highlights[i].endFound)
 			{
-				if (highlights[i].startRow < rowOffset && rowToStart == -1)
+				if (highlights[i].startRow < rowOffset && rowToStart == std::numeric_limits<size_t>::max())
 				{
 					rowToStart = highlights[i].startRow;
 					startColOffset = highlights[i].startCol;
 				}
-				highlights.erase(highlights.begin() + i);
-				--i;
+				goto eraseHighlight;
 			}
+
+		eraseHighlight:
+			highlights.erase(highlights.begin() + i);
+
+			if (i == 0) goto startover;
+			--i;
 		}
 
 		return std::tuple<int64_t, int64_t>(rowToStart, startColOffset);
 	}
 
-	/// <summary>
-	/// Adds the highlight sections for keywords and numbers, since they don't need any special treatment
-	/// </summary>
-	/// <param name="currentWord"></param>
-	/// <param name="i"></param>
-	/// <param name="posOffset"></param>
 	void highlightKeywordNumberCheck(std::string_view& currentWord, size_t i, size_t posOffset)
 	{
 		if (currentWord.find_first_not_of("0123456789") == std::string::npos)

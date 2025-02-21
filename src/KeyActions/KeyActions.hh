@@ -30,7 +30,7 @@ SOFTWARE.
 namespace KeyActions
 {
 	/// <summary>
-	/// The list of action keys and their unique input value, as retrieved from _getch() in Input
+	/// The list of action keys and their unique input value
 	/// </summary>
 	enum class KeyAction
 	{
@@ -47,7 +47,7 @@ namespace KeyActions
 #elif defined(__linux__) || defined(__APPLE__) //For some reason, these are reverse from each other
 		Backspace = 127, CtrlBackspace = 8,
 #endif
-		ArrowLeft = 1000,	CtrlArrowLeft,
+		ArrowLeft = 1000,	CtrlArrowLeft, //Just give these an arbitrary, unused value to make them unique
 		ArrowRight,			CtrlArrowRight,
 		ArrowUp,			CtrlArrowUp,
 		ArrowDown,			CtrlArrowDown,
