@@ -23,6 +23,8 @@ SOFTWARE.
 */
 
 #include "SyntaxHighlight.hpp"
+
+#include <limits>
 #include <array>
 
 namespace SyntaxHighlight

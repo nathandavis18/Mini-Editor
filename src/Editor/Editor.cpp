@@ -38,6 +38,7 @@ SOFTWARE.
 #include <fstream>
 #include <tuple>
 #include <algorithm>
+#include <limits>
 #include <format> //C++20 is required. MSVC/GCC-13/Clang-14/17/AppleClang-15
 
 #define NotVimVersion "0.5.1a"

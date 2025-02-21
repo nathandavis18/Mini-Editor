@@ -37,11 +37,12 @@ namespace Console
 {
 	static termios defaultMode; //Unix console settings struct
 	bool rawModeEnabled = false;
+	WindowSize windowSize;
 
 	void initConsole()
 	{
 		detail::setDefaultMode();
-		detail::setWindowSize(statusMessageRows);
+		detail::setWindowSize();
 		if (!enableRawInput())
 		{
 			std::cerr << "Error enabling raw input mode";

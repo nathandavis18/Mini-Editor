@@ -41,7 +41,7 @@ namespace FileHandler
 		if (str.length() > 0)
 		{
 			size_t lineBreak = 0;
-			while ((lineBreak = str.find('\r\n')) != std::string::npos)
+			while ((lineBreak = str.find("\r\n")) != std::string::npos)
 			{
 				_fileContents.emplace_back(str.substr(0, lineBreak));
 				str.erase(str.begin(), str.begin() + lineBreak + 2);
