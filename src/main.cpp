@@ -28,6 +28,7 @@ SOFTWARE.
 
 #include <iostream>
 #include <thread>
+#include <cstdlib>
 
 /// <summary>
 /// Makes sure that if the user changes the size of the console, the screen updates accordingly

@@ -26,6 +26,7 @@ SOFTWARE.
 
 #include <Windows.h>
 #include <iostream>
+#include <cstdlib>
 
 namespace Console
 {

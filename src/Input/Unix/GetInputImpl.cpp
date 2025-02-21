@@ -25,6 +25,9 @@ SOFTWARE.
 #include "KeyActions/KeyActions.hh"
 #include "Input/GetInputImpl.hpp"
 
+#include <unistd.h>
+#include <cstdlib>
+
 using KeyActions::KeyAction;
 
 namespace InputImpl
