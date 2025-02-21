@@ -33,7 +33,7 @@ SOFTWARE.
 #include <vector>
 #include <string>
 #include <string_view>
-#include <cstdint> //uint8_t
+#include <cstdint>
 #include <unordered_set>
 
 namespace SyntaxHighlight{
@@ -53,9 +53,17 @@ namespace SyntaxHighlight{
 		char escapeChar;
 	};
 
+	/// <summary>
+	/// Returns whether or not there is an active highlight syntax being used
+	/// </summary>
+	/// <returns></returns>
 	const bool hasSyntax();
 
-	void initSyntax(const std::string_view& fName);
+	/// <summary>
+	/// Initializes the syntax highlight functionality. Should only be called by the editor, and only called on initialization.
+	/// </summary>
+	/// <param name="fName"></param>
+	void initSyntax(const std::string_view fName);
 
 	/// <summary>
 	/// The different types of highlights
@@ -73,7 +81,12 @@ namespace SyntaxHighlight{
 		EnumCount //A hacky way to get the number of items in an enum if each item in enum is default assigned
 	};
 
-	uint8_t color(HighlightType);
+	/// <summary>
+	/// Returns the color code of a specific highlight type
+	/// </summary>
+	/// <param name=""></param>
+	/// <returns></returns>
+	uint8_t color(HighlightType hlType);
 
 	/// <summary>
 	/// The structure for how highlight locations are stored
@@ -81,18 +94,64 @@ namespace SyntaxHighlight{
 	/// </summary>
 	struct HighlightLocations
 	{
-		HighlightType highlightType;
-		size_t startRow, startCol, endRow, endCol;
+		HighlightType highlightType = HighlightType::Normal;
+		size_t startRow = 0, startCol = 0, endRow = 0, endCol = 0;
 		bool endFound = true, drawColor = true;
 	};
 	
+	/// <summary>
+	/// Returns a const reference to the internal highlight locations
+	/// Should only be called one time by the Editor, and that is on program load
+	/// </summary>
+	/// <returns></returns>
 	const std::vector<HighlightLocations>& highlightLocations();
+
+	/// <summary>
+	/// Called when a multiline comment or string highlight location is started
+	/// </summary>
+	/// <param name="fileRows"></param>
+	/// <param name="currentWord"></param>
+	/// <param name="row"></param>
+	/// <param name="posOffset"></param>
+	/// <param name="findPos"></param>
+	/// <param name="startRow"></param>
+	/// <param name="startCol"></param>
+	/// <param name="strToFind"></param>
+	/// <param name=""></param>
 	void findEndMarker(std::vector<FileHandler::Row>& fileRows, std::string_view& currentWord, size_t& row, size_t& posOffset, size_t& findPos, size_t startRow, size_t startCol, const std::string_view& strToFind, const HighlightType);
+
+	/// <summary>
+	/// Checks the type of comment highlight currently found, if one is found
+	/// </summary>
+	/// <param name="fileRows"></param>
+	/// <param name="currentWord"></param>
+	/// <param name="row"></param>
+	/// <param name="findPos"></param>
+	/// <param name="posOffset"></param>
+	/// <param name="i"></param>
+	/// <returns></returns>
 	bool highlightCommentCheck(std::vector<FileHandler::Row>& fileRows, std::string_view& currentWord, FileHandler::Row* row, size_t findPos, size_t& posOffset, size_t& i);
+
+	/// <summary>
+	/// Removes all the un-needed highlights that are off-screen, and returns the position of the rowOffset to start checking for highlights on again.
+	/// </summary>
+	/// <param name="rowOffset"></param>
+	/// <param name="rows"></param>
+	/// <param name="fileCursorY"></param>
+	/// <returns></returns>
 	std::tuple<int64_t, int64_t> removeOffScreenHighlights(size_t rowOffset, size_t rows, size_t fileCursorY);
+
+	/// <summary>
+	/// Checks if the current word is a number or keyword, since they dont need any other special treatment like comments and strings
+	/// </summary>
+	/// <param name="currentWord"></param>
+	/// <param name="i"></param>
+	/// <param name="posOffset"></param>
 	void highlightKeywordNumberCheck(std::string_view& currentWord, size_t i, size_t posOffset);
 
 	//================================================ CPP KEYWORDS =================================================================\\
+
+	//Planning to move this to a config file, but for now these live here.
 
 	static const std::unordered_set<std::string_view> cppFiletypes{ ".cpp", ".cc", ".cxx", ".hpp", ".h", ".hxx", ".hh" };
 	static const std::unordered_set<std::string_view> cppBuiltInTypes{

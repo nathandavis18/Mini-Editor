@@ -23,87 +23,80 @@ SOFTWARE.
 */
 
 #include "File.hpp"
+
+#include <exception>
+#include <sstream>
+#include <iostream>
 #include <filesystem>
 #include <fstream>
-#include <exception>
-#include <iostream>
 
 namespace FileHandler
 {
-	std::string _fileName = "";
+	std::string _fileName;
+	std::filesystem::path _path;
+	std::vector<Row> _fileContents;
 
-	/// <summary>
-	/// Gets and sets the _fileName property
-	/// </summary>
-	/// <param name="fName"></param>
-	/// <returns></returns>
-	std::string& fileName(const std::string_view& fName)
+	void detail::loadRows(std::string&& str)
 	{
-		if (!fName.empty())
-		{
-			_fileName = fName;
-		}
-		return _fileName;
-	}
-
-	/// <summary>
-	/// Loads a stringstream with file contents and returns the vector of rows built from the file
-	/// </summary>
-	/// <returns></returns>
-	std::vector<Row> loadFileContents()
-	{
-		try
-		{
-			std::filesystem::path path = std::filesystem::current_path() / _fileName;
-			std::ifstream file(path);
-			std::stringstream ss;
-			ss << file.rdbuf();
-			file.close();
-
-			return loadRows(std::move(ss.str()));
-		}
-		catch (std::exception ex)
-		{
-			std::cerr << "Error opening file. ERROR: " << ex.what() << std::endl;
-			exit(EXIT_FAILURE);
-		}
-	}
-
-	/// <summary>
-	/// Builds a vector of rows from the file
-	/// </summary>
-	/// <param name="str"></param>
-	std::vector<Row> loadRows(std::string&& str)
-	{
-		std::vector<Row> contents;
 		if (str.length() > 0)
 		{
 			size_t lineBreak = 0;
 			while ((lineBreak = str.find('\r\n')) != std::string::npos)
 			{
-				contents.emplace_back(str.substr(0, lineBreak));
+				_fileContents.emplace_back(str.substr(0, lineBreak));
 				str.erase(str.begin(), str.begin() + lineBreak + 2);
 			}
-			contents.emplace_back(str);
+			_fileContents.emplace_back(str);
 			str.clear();
 		}
-		return contents;
 	}
 
-	/// <summary>
-	/// Writes the current contents to the file
-	/// </summary>
-	/// <param name="newContents"></param>
-	void saveFile(const std::string_view& newContents)
+	void detail::loadFileContents()
 	{
+		std::ifstream file(_path);
 		try
 		{
-			std::filesystem::path path = std::filesystem::current_path() / _fileName;
-			std::ofstream file(path);
+			std::stringstream ss;
+			ss << file.rdbuf();
+
+			detail::loadRows(std::move(ss.str()));
+		}
+		catch (std::exception ex)
+		{
+			file.close();
+			std::cerr << "Error opening file. ERROR: " << ex.what() << std::endl;
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	void initFileHandler(const std::string_view fName)
+	{
+		_fileName = fName;
+		_path = std::filesystem::current_path() / _fileName;
+		detail::loadFileContents();
+	}
+
+	const std::string_view fileName()
+	{
+		return _fileName;
+	}
+
+
+	std::vector<Row>&& getFileContents()
+	{
+		return std::move(_fileContents);
+	}
+
+	void saveFile(const std::string_view newContents)
+	{
+		std::ofstream file(_path);
+		try
+		{
 			file << newContents;
 		}
 		catch (std::exception ex)
 		{
+			file.close();
 			std::cerr << "Error saving file. ERROR: " << ex.what() << std::endl;
 		}
 	}

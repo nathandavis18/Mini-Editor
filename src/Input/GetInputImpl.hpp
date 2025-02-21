@@ -1,4 +1,4 @@
-﻿/**
+/**
 * MIT License
 
 Copyright (c) 2024 Nathan Davis
@@ -23,28 +23,16 @@ SOFTWARE.
 */
 
 #pragma once
-#include "KeyActions/KeyActions.hh"
 
-namespace InputHandler
+#include "KeyActions/KeyActions.hh"
+#include <cstdint>
+
+namespace InputImpl
 {
 	/// <summary>
-	/// Calls the implementation-specific getInput.
-	/// Called on every input
+	/// Windows provides a handy _getch() function, while other OS's don't provide this natively (as far as I could find)
+	/// The implementations have to be separated because of this.
 	/// </summary>
 	/// <returns></returns>
 	const KeyActions::KeyAction getInput();
-
-	/// <summary>
-	/// Handles the input while in EDIT mode. As such, is only called while in EDIT mode
-	/// </summary>
-	/// <param name=""></param>
-	void handleInput(const KeyActions::KeyAction);
-
-	/// <summary>
-	/// Handles inputs while in command/read mode
-	/// Current options include:
-	///		i = Enter edit mode (like VIM)
-	///		: = Enter command mode (like VIM)
-	/// </summary>
-	void doCommand(const KeyActions::KeyAction);
 }

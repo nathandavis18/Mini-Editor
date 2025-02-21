@@ -23,20 +23,23 @@ SOFTWARE.
 */
 
 #include "Input/Input.hpp"
+#include "Editor/Editor.hpp"
 #include "Console/Console.hpp"
 
 #include <iostream>
 #include <thread>
 
-static std::atomic<bool> runThread = true; //Main thread will update this bool, while secondary thread reads from it
-
-void updateScreen() //Makes sure the screen stays up to date with the size
+/// <summary>
+/// Makes sure that if the user changes the size of the console, the screen updates accordingly
+/// </summary>
+/// <param name="runThread"></param>
+void updateScreen(std::atomic<bool>& runThread)
 {
 	while (runThread)
 	{
-		if (Console::setWindowSize()) //Only update if the terminal screen actually got updated
+		if (Editor::windowSizeHasChanged()) //Only update if the terminal screen actually got updated
 		{
-			Console::refreshScreen();
+			Editor::refreshScreen(true);
 		}
 	}
 }
@@ -53,48 +56,39 @@ int main(int argc, const char** argv)
 		return EXIT_FAILURE;
 	}
 
-	Console::initConsole(argv[1]);
+	Editor::initEditor(argv[1]);
 
-	std::thread t(updateScreen);
-	t.detach();
+	std::atomic<bool> runThread = true; //Main thread will update this bool, while secondary thread reads from it
+	std::thread t(updateScreen, std::ref(runThread));
 
 	while (true)
 	{
-		while (Console::mode() == Mode::CommandMode || Console::mode() == Mode::ReadMode)
+		if (Editor::mode() == Editor::Mode::ExitMode)
 		{
-			Console::prepRenderedString();
-			Console::refreshScreen();
-			const KeyActions::KeyAction inputCode = InputHandler::getInput();
-			if (inputCode != KeyActions::KeyAction::None)
-			{
-				InputHandler::doCommand(inputCode);
-				Console::prepRenderedString();
-			}
-		}
-		while (Console::mode() == Mode::EditMode)
-		{
-			Console::prepRenderedString();
-			Console::refreshScreen();
-			const KeyActions::KeyAction inputCode = InputHandler::getInput();
-			if (inputCode != KeyActions::KeyAction::None)
-			{
-				InputHandler::handleInput(inputCode);
-			}
-		}
-		if (Console::mode() == Mode::ExitMode)
-		{
-			Console::disableRawInput();
-#ifdef _WIN32
-			system("cls");
-#else
-			system("clear");
-#endif
+			runThread = false;
+			while (!t.joinable()); //Wait for secondary thread to finish what it is doing, then join the thread
+			t.join();
+
+			Editor::clearScreen();
 			break;
 		}
+		else
+		{
+			Editor::refreshScreen();
+			const KeyActions::KeyAction inputCode = InputHandler::getInput();
+			if (inputCode != KeyActions::KeyAction::None)
+			{
+				if (Editor::mode() == Editor::Mode::CommandMode || Editor::mode() == Editor::Mode::ReadMode)
+				{
+					InputHandler::doCommand(inputCode);
+				}
+				else if (Editor::mode() == Editor::Mode::EditMode)
+				{
+					InputHandler::handleInput(inputCode);
+				}
+			}
+		}
 	}
-
-	runThread = false;
-	if(t.joinable()) t.join();
 	
 	return EXIT_SUCCESS;
 }
