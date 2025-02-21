@@ -27,6 +27,7 @@ SOFTWARE.
 
 #include <unistd.h>
 #include <cstdlib>
+#include <cstdio>
 
 using KeyActions::KeyAction;
 
