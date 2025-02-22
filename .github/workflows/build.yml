@@ -32,20 +32,22 @@ jobs:
     release:
         runs-on: windows-latest
         needs: [ build ]
-
         steps:
-            - uses: actions/checkout@v4.1.7
+            - name: Checkout
+              uses: actions/checkout@v4.1.7
+
             - name: Download artifacts
               uses: actions/download-artifact@v4
               with:
                 name: NotVim-Winx64-Release
                 path: ./out/build/nve.exe
+
             - name: Create Release
-              uses: marvinpinto/action-automatic-releases@latest
+              uses: softprops/action-gh-release@v2
               with:
-                repo_token: ${{ secrets.GITHUB_TOKEN }}
-                automatic_release_tag: v0.5.1a
-                title: v0.5.1a - Refactoring and optimizations
+                token: ${{ secrets.GITHUB_TOKEN }}
                 prerelease: true
+                name: v0.5.1a - Refactoring and optimizations
+                tag_name: v0.5.1a
                 files: |
                     ./out/build/nve.exe
