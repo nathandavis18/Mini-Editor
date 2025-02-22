@@ -71,6 +71,8 @@ the token also stores if the ending position exists, or if the rest of the file 
 Although the C++ values are hard-coded into the syntax highlight system, it is designed to be fully dynamic. All you need to do is add the keywords and comment syntax to the syntax highlight vector.
 You can use the current system as a base to see how it works. Then you can also define some colors using the link provided at the top of SyntaxHighlight.cpp.
 
+![image](https://github.com/user-attachments/assets/c1a5efd0-996f-4f5f-8dae-d87293c9a905)
+
 <hr>
 
 ### Getting Started
