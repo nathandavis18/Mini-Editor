@@ -2,3 +2,4 @@
 /.vs/
 CMakePresets.json
 /CMakeSettings.json
+/.vscode

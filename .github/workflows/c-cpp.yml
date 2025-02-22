@@ -1,9 +1,9 @@
-name: Build
+name: Build And Test
 on:
   push:
-    branches: [ "master" ]
+    branches: [ dev ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ master ]
 jobs:
   build-project:
     name: Build Project
@@ -22,4 +22,7 @@ jobs:
         generator: Ninja
         cxx-compiler: g++-13
         cxx-flags: -std=c++20
-        options: CMAKE_BUILD_TYPE=Release
+        options: CMAKE_BUILD_TYPE=Release BUILD_TESTS=ON
+
+    - name: Run Tests
+      run: cd ./out/build/tests && ./Tests --gtest_filter=-Console*:Editor*:*SavingFile*:*InsertChar*:*InputMode*

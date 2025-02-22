@@ -37,6 +37,7 @@ namespace InputHandler
 	{
 		return InputImpl::getInput();
 	}
+
 	void doCommand(const KeyAction key)
 	{
 		std::string command;
@@ -47,6 +48,7 @@ namespace InputHandler
 			break;
 		case static_cast<KeyAction>(':'):
 			Editor::enableCommandMode();
+			Editor::refreshScreen();
 			std::cout << ":";
 			std::cin >> command;
 

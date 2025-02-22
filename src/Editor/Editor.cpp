@@ -36,8 +36,10 @@ SOFTWARE.
 
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <tuple>
 #include <algorithm>
+#include <limits>
 #include <format> //C++20 is required. MSVC/GCC-13/Clang-14/17/AppleClang-15
 
 #define NotVimVersion "0.5.1a"
@@ -81,7 +83,7 @@ void Editor::prepRenderedString()
 
 void Editor::setRenderedString()
 {
-	for (size_t r = mWindow->rowOffset; r < mWindow->fileRows.size(); ++r)
+	for (size_t r = 0; r < mWindow->fileRows.size(); ++r)
 	{
 		if (r > mWindow->rowOffset + mWindow->rows) return;
 
@@ -245,7 +247,7 @@ void Editor::renderEndOfFile()
 	}
 }
 
-[[noexcept]] void Editor::refreshScreen(bool forceRedrawScreen)
+void Editor::refreshScreen(bool forceRedrawScreen)
 {
 	mMutex.lock(); //Refresh screen may be called from a separate thread
 
@@ -726,19 +728,19 @@ bool Editor::isDirty()
 
 void Editor::save()
 {
-	std::string output;
+	std::stringstream output;
 	for (size_t i = 0; i < mWindow->fileRows.size(); ++i)
 	{
 		if (i == mWindow->fileRows.size() - 1)
 		{
-			output.append(mWindow->fileRows.at(i).line);
+			output << mWindow->fileRows.at(i).line;
 		}
 		else [[ likely ]]
 		{
-			output.append(mWindow->fileRows.at(i).line + "\r\n");
+			output << mWindow->fileRows.at(i).line << std::endl;
 		}
 	}
-	FileHandler::saveFile(output);
+	FileHandler::saveFile(output.str());
 	mWindow->dirty = false;
 }
 
@@ -747,7 +749,6 @@ void Editor::enableCommandMode()
 	Console::disableRawInput();
 	mMode = Mode::CommandMode;
 	mWindow->renderedCursorX = 0; mWindow->renderedCursorY = mWindow->rows + statusMessageRows;
-	std::cout << renderStatusAndCursor();
 }
 
 void Editor::enableEditMode()
