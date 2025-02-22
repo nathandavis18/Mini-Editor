@@ -36,9 +36,9 @@ SOFTWARE.
 
 namespace Console
 {
-	static termios defaultMode; //Unix console settings struct
+	static termios defaultMode; // Unix console settings struct
 	bool rawModeEnabled = false;
-	WindowSize windowSize;
+	static WindowSize windowSize;
 
 	void initConsole()
 	{
@@ -53,7 +53,7 @@ namespace Console
 
 	void detail::setDefaultMode()
 	{
-		if (tcgetattr(STDOUT_FILENO, &defaultMode) == -1) //If the settings can't be retrieved
+		if (tcgetattr(STDOUT_FILENO, &defaultMode) == -1) // If the settings can't be retrieved
 		{
 			std::cerr << "Error retrieving current console mode";
 			exit(EXIT_FAILURE);
@@ -68,11 +68,9 @@ namespace Console
 
 	void detail::setWindowSize()
 	{
-		winsize ws; //Unix console size struct
-		int rows, cols;
+		winsize ws; // Unix console size struct
 
-		WindowSize windowSize;
-		ioctl(fileno(stdout), TIOCGWINSZ, &ws); //Get the console size from the OS
+		ioctl(fileno(stdout), TIOCGWINSZ, &ws); // Get the console size from the OS
 		windowSize.cols = ws.ws_col;
 		windowSize.rows = ws.ws_row;
 	}
@@ -89,27 +87,28 @@ namespace Console
 
 	bool enableRawInput()
 	{
-		if (rawModeEnabled) return true;
+		if (rawModeEnabled)
+			return true;
 
 		termios raw;
 
-		//Disabling some console processing flags
+		// Disabling some console processing flags
 		raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
 		raw.c_oflag &= ~(OPOST);
 		raw.c_cflag |= (CS8);
 		raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
 
-		//Setting the timeout timer for read() so the screen doesn't appear frozen when getting input from user
+		// Setting the timeout timer for read() so the screen doesn't appear frozen when getting input from user
 		raw.c_cc[VMIN] = 0;
 		raw.c_cc[VTIME] = 1;
 
-		if (tcsetattr(STDOUT_FILENO, TCSAFLUSH, &raw) < 0) //If setting raw mode fails
+		if (tcsetattr(STDOUT_FILENO, TCSAFLUSH, &raw) < 0) // If setting raw mode fails
 		{
-			return rawModeEnabled; //Setting raw mode failed, so return the current status
+			return rawModeEnabled; // Setting raw mode failed, so return the current status
 		}
 		else
 		{
-			atexit(disableRawInput); //Make sure raw input mode gets disabled if the program exits due to an error
+			atexit(disableRawInput); // Make sure raw input mode gets disabled if the program exits due to an error
 			rawModeEnabled = true;
 		}
 

@@ -23,9 +23,9 @@ SOFTWARE.
 */
 
 /**
-* @file SyntaxHighlight.hpp
-* @brief Provides the interface for how syntax highlight is stored
-*/
+ * @file SyntaxHighlight.hpp
+ * @brief Provides the interface for how syntax highlight is stored
+ */
 
 #pragma once
 #include "File/File.hpp"
@@ -36,7 +36,8 @@ SOFTWARE.
 #include <cstdint>
 #include <unordered_set>
 
-namespace SyntaxHighlight{
+namespace SyntaxHighlight
+{
 
 	/// <summary>
 	/// The structure to store what file types match with each keyword, comment, or string type.
@@ -78,7 +79,7 @@ namespace SyntaxHighlight{
 		KeywordOther,
 		String,
 		Number,
-		EnumCount //A hacky way to get the number of items in an enum if each item in enum is default assigned
+		EnumCount // A hacky way to get the number of items in an enum if each item in enum is default assigned
 	};
 
 	/// <summary>
@@ -98,7 +99,7 @@ namespace SyntaxHighlight{
 		size_t startRow = 0, startCol = 0, endRow = 0, endCol = 0;
 		bool endFound = true, drawColor = true;
 	};
-	
+
 	/// <summary>
 	/// Returns a const reference to the internal highlight locations
 	/// Should only be called one time by the Editor, and that is on program load
@@ -139,7 +140,7 @@ namespace SyntaxHighlight{
 	/// <param name="rows"></param>
 	/// <param name="fileCursorY"></param>
 	/// <returns></returns>
-	std::tuple<int64_t, int64_t> removeOffScreenHighlights(size_t rowOffset, size_t rows, size_t fileCursorY);
+	std::tuple<size_t, size_t> removeOffScreenHighlights(size_t rowOffset, size_t rows, size_t fileCursorY);
 
 	/// <summary>
 	/// Checks if the current word is a number or keyword, since they dont need any other special treatment like comments and strings
@@ -151,11 +152,11 @@ namespace SyntaxHighlight{
 
 	//================================================ CPP KEYWORDS =================================================================\\
 
-	//Planning to move this to a config file, but for now these live here.
+	// Planning to move this to a config file, but for now these live here.
 
-	static const std::unordered_set<std::string_view> cppFiletypes{ ".cpp", ".cc", ".cxx", ".hpp", ".h", ".hxx", ".hh" };
+	static const std::unordered_set<std::string_view> cppFiletypes{".cpp", ".cc", ".cxx", ".hpp", ".h", ".hxx", ".hh"};
 	static const std::unordered_set<std::string_view> cppBuiltInTypes{
-		//Built-in types and main keywords
+		// Built-in types and main keywords
 		"alignas", "alignof", "asm", "_asm", "auto", "bool", "char", "char8_t", "char16_t", "char32_t", "class",
 		"compl", "concept", "const", "consteval", "constexpr", "constinit", "const_cast", "decltype", "delete", "double",
 		"dynamic_cast", "enum", "explicit", "export", "extern", "false", "float", "friend", "inline", "int", "long",
@@ -165,12 +166,12 @@ namespace SyntaxHighlight{
 		"void", "volatile", "wchar_t"
 	};
 	static const std::unordered_set<std::string_view> cppControlKeywords{
-		//Loop/Control keywords
+		// Loop/Control keywords
 		"and", "and_eq", "bitand", "bitor", "break", "case", "catch", "continue", "co_await", "co_return", "co_yield", "default",
 		"do", "else", "for", "goto", "if", "not", "not_eq", "or", "or_eq", "return", "switch", "throw", "try", "while", "xor", "xor_eq"
 	};
 	static const std::unordered_set<std::string_view> cppOtherKeywords{
-		//Some other keywords, such as macro definitions
+		// Some other keywords, such as macro definitions
 		"#define", "#ifdef", "#ifndef", "#if", "defined", "#include", "#elif", "#endif"
-	}; 
+	};
 }

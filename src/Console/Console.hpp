@@ -47,7 +47,8 @@ namespace Console
 	/// </summary>
 	struct WindowSize
 	{
-		int rows = 0, cols = 0;
+		WindowSize() : rows(0), cols(0) {}
+		int rows, cols;
 	};
 
 	/// <summary>
@@ -77,7 +78,7 @@ namespace Console
 	bool enableRawInput();
 
 	/// <summary>
-	/// Disables raw input mode by using the OS-specific API to return to default mode. 
+	/// Disables raw input mode by using the OS-specific API to return to default mode.
 	/// </summary>
 	void disableRawInput();
 }
