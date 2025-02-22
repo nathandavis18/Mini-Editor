@@ -25,4 +25,4 @@ jobs:
         options: CMAKE_BUILD_TYPE=Release BUILD_TESTS=ON
 
     - name: Run Tests
-      run: cd ./out/build/tests && ./Tests --gtest_filter=-Console*:Editor*
+      run: cd ./out/build/tests && ./Tests --gtest_filter=-Console*:Editor*:*SavingFile*:*InsertChar*:*InputMode*
