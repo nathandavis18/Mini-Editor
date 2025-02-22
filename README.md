@@ -82,6 +82,10 @@ To build with the Python script, run
 
 This will build the project into the folder path ./out/build
 
+To build this project with the tests, run 
+
+	python build.py --build-tests
+
 To build manually, run
 
 	cmake -B {buildDir} -G {buildGenerator} -S {pathToCMakeScript} -DCMAKE_BUILD_TYPE=Release
@@ -93,6 +97,16 @@ To build manually, run
 	cmake -B ./out -G Ninja -DCMAKE_BUILD_TYPE=Release
 
 	cmake --build ./out --config Release
+
+To build manually with tests, run the following instead
+
+	cmake -B {buildDir} -G {buildGenerator} -S {pathToCMakeScript} -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON
+	
+	EXAMPLE:
+	
+	cmake -B ./out -G Ninja _DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON
+	
+	cmake--build ./out --config Release
 
 <hr>
 
@@ -111,6 +125,16 @@ To use, navigate to the executable (either in {buildDir} or {buildDir}/bin most 
 	./nve test.cpp
 
 This executable is a standalone executable, so you may also add this file to your system path and use it from anywhere
+
+To run the tests, navigate to the Tests executable (located in {buildDir}/tests, or {buildDir}/tests/Release).
+
+Run it by doing
+
+	./Tests
+
+	OR IF USING COMMAND PROMPT
+
+	Tests
 
 <hr>
 

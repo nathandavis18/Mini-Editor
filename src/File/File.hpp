@@ -44,6 +44,7 @@ namespace FileHandler
 		/// </summary>
 		void loadFileContents();
 	}
+
 	/// <summary>
 	/// The structure of each row in the file.
 	/// line is what is actually stored, including \t and other characters

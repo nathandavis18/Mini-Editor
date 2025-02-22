@@ -1,0 +1,45 @@
+cmake_minimum_required (VERSION 3.12)
+
+project(Tests)
+
+include(FetchContent)
+FetchContent_Declare(
+	googletest
+	GIT_REPOSITORY https://github.com/google/googletest
+	GIT_TAG v1.16.0
+)
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(googletest)
+
+enable_testing()
+
+set(SOURCES
+	"testsMain.cpp"
+	"ConsoleTests/ConsoleTests.cpp"
+	"EditorTests/EditorTests.cpp"
+	"FileTests/FileTests.cpp"
+	"InputTests/InputTests.cpp"
+	"SyntaxHighlightTests/SyntaxHighlightTests.cpp"
+)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
+
+add_executable(Tests ${SOURCES})
+target_link_libraries(Tests PUBLIC
+	gtest_main
+	nve_project
+)
+
+
+add_test(
+	NAME Tests
+	COMMAND Tests
+)
+
+add_custom_command(
+	TARGET Tests
+	COMMENT "Copying testFile.txt"
+	PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/testFile.txt $<TARGET_FILE_DIR:Tests>
+	VERBATIM
+)

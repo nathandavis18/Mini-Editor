@@ -36,36 +36,54 @@ namespace FileHandler
 	std::filesystem::path _path;
 	std::vector<Row> _fileContents;
 
-	void detail::loadRows(std::string&& str)
+	namespace detail
 	{
-		if (str.length() > 0)
+		void loadRows(std::string&& str)
 		{
-			size_t lineBreak = 0;
-			while ((lineBreak = str.find("\r\n")) != std::string::npos)
+			if (str.length() > 0)
 			{
-				_fileContents.emplace_back(str.substr(0, lineBreak));
-				str.erase(str.begin(), str.begin() + lineBreak + 2);
+				size_t lineBreak = 0;
+				while (lineBreak < str.length())
+				{
+					if (str.at(lineBreak) == '\n')
+					{
+						if (lineBreak > 0 && str.at(lineBreak - 1) == '\r')
+						{
+							_fileContents.emplace_back(str.substr(0, lineBreak - 1)); //Remove the carriage return as well
+						}
+						else
+						{
+							_fileContents.emplace_back(str.substr(0, lineBreak));
+						}
+						str.erase(str.begin(), str.begin() + lineBreak + 1);
+						lineBreak = 0;
+					}
+					else
+					{
+						++lineBreak;
+					}
+				}
+				_fileContents.emplace_back(str);
+				str.clear();
 			}
-			_fileContents.emplace_back(str);
-			str.clear();
 		}
-	}
 
-	void detail::loadFileContents()
-	{
-		std::ifstream file(_path);
-		try
+		void loadFileContents()
 		{
-			std::stringstream ss;
-			ss << file.rdbuf();
+			std::ifstream file(_path);
+			try
+			{
+				std::stringstream ss;
+				ss << file.rdbuf();
 
-			detail::loadRows(std::move(ss.str()));
-		}
-		catch (std::exception ex)
-		{
-			file.close();
-			std::cerr << "Error opening file. ERROR: " << ex.what() << std::endl;
-			exit(EXIT_FAILURE);
+				loadRows(std::move(ss.str()));
+			}
+			catch (std::exception ex)
+			{
+				file.close();
+				std::cerr << "Error opening file. ERROR: " << ex.what() << std::endl;
+				exit(EXIT_FAILURE);
+			}
 		}
 	}
 
@@ -73,7 +91,8 @@ namespace FileHandler
 	{
 		_fileName = fName;
 		_path = std::filesystem::current_path() / _fileName;
-		detail::loadFileContents();
+		_fileContents.clear();
+		detail::loadFileContents();		
 	}
 
 	const std::string_view fileName()
