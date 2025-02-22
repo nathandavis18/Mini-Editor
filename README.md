@@ -21,7 +21,7 @@ If you would like to use a stable release, check out the releases tab. Releases 
 
 <hr>
 
-### Controls/Features
+### Controls
 
 Controls are listed as follows:
 
@@ -58,6 +58,20 @@ Controls are listed as follows:
   	- Ctrl+Y: Redo most recent undo.
 
 More key functionality will be added as this project progresses.
+
+<hr>
+
+### Syntax Highlighting
+
+Currently syntax highlighting only supports C++ files (.cc, .cpp, .hpp, .h, .hh, etc.). This is currently hard-coded into the syntax highlight, but a config file will be implemented in the near future!
+
+Syntax highlights are generated using a custom token system, which stores the highlight type, starting position, and ending position. For multiline highlights, including strings and multiline comments,
+the token also stores if the ending position exists, or if the rest of the file should just have the same highlight.
+
+Although the C++ values are hard-coded into the syntax highlight system, it is designed to be fully dynamic. All you need to do is add the keywords and comment syntax to the syntax highlight vector.
+You can use the current system as a base to see how it works. Then you can also define some colors using the link provided at the top of SyntaxHighlight.cpp.
+
+![image](https://github.com/user-attachments/assets/c1a5efd0-996f-4f5f-8dae-d87293c9a905)
 
 <hr>
 
