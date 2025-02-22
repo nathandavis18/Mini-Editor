@@ -737,7 +737,7 @@ void Editor::save()
 		}
 		else [[ likely ]]
 		{
-			output << mWindow->fileRows.at(i).line << std::endl;
+			output << mWindow->fileRows.at(i).line << '\n';
 		}
 	}
 	FileHandler::saveFile(output.str());
