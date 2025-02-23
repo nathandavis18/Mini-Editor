@@ -43,7 +43,7 @@ endif()
 
 target_include_directories(nve PRIVATE src)
 
-#if(BUILD_TESTS)
+if(BUILD_TESTS)
 	add_library(nve_project ${SOURCES} ${HEADERS})
 
 	if(WIN32)
@@ -60,4 +60,4 @@ target_include_directories(nve PRIVATE src)
 
 	target_include_directories(nve_project PUBLIC src)
 	add_subdirectory(tests)
-#endif(BUILD_TESTS)
+endif(BUILD_TESTS)
