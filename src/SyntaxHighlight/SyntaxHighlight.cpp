@@ -31,24 +31,54 @@ SOFTWARE.
 
 using JsonParser::JsonValue;
 using JsonParser::JsonObject;
+using JsonParser::JsonValue_t;
+using JsonParser::JsonSet;
 
 const bool SyntaxHighlight::hasSyntax()
 {
 	return mCurrentSyntax != nullptr;
 }
 
-void SyntaxHighlight::setSyntax(const std::vector<JsonObject> mp)
+void SyntaxHighlight::setSyntax(const std::vector<JsonObject> mp, const std::string_view extension)
 {
 	for (const auto& syntax : mp)
 	{
 		JsonValue currentSyntax = (*syntax.begin()).second;
-		setColors(currentSyntax);
+		if (currentSyntax.contains("fileExtensions"))
+		{
+			if (currentSyntax.get<JsonSet>("fileExtensions").contains(extension))
+			{
+				setColors(currentSyntax);
+				setEditorSyntax(currentSyntax);
+				break;
+			}
+		}
 	}
+}
+
+void SyntaxHighlight::setEditorSyntax(const JsonValue& syntax)
+{
+	EditorSyntax s;
+	s.builtInTypeKeywords = syntax.at("builtInKeywords").get<JsonSet>("keywords");
+	s.controlKeywords = syntax.at("controlKeywords").get<JsonSet>("keywords");
+	s.otherKeywords = syntax.at("otherKeywords").get<JsonSet>("keywords");
+	s.multilineCommentStart = syntax.at("multiLineComment").get<std::string>("start");
+	s.multilineCommentEnd = syntax.at("multiLineComment").get<std::string>("end");
+	s.singlelineComment = syntax.at("singleLineComment").get<std::string>("identifier");
+	s.escapeChar = syntax.get<std::string>("escapeChar")[0];
+	mCurrentSyntax = std::make_unique<EditorSyntax>(s);
 }
 
 void SyntaxHighlight::setColors(const JsonValue& syntax)
 {
-	int z = 3;
+	mColors[static_cast<uint8_t>(HighlightType::Normal)] = mColorKeys.at(syntax.get<std::string>("defaultColor"));
+	mColors[static_cast<uint8_t>(HighlightType::Comment)] = mColorKeys.at(syntax.at("singleLineComment").get<std::string>("color"));
+	mColors[static_cast<uint8_t>(HighlightType::MultilineComment)] = mColorKeys.at(syntax.at("multiLineComment").get<std::string>("color"));
+	mColors[static_cast<uint8_t>(HighlightType::KeywordBuiltInType)] = mColorKeys.at(syntax.at("builtInKeywords").get<std::string>("color"));
+	mColors[static_cast<uint8_t>(HighlightType::KeywordControl)] = mColorKeys.at(syntax.at("controlKeywords").get<std::string>("color"));
+	mColors[static_cast<uint8_t>(HighlightType::KeywordOther)] = mColorKeys.at(syntax.at("otherKeywords").get<std::string>("color"));
+	mColors[static_cast<uint8_t>(HighlightType::String)] = mColorKeys.at(syntax.at("string").get<std::string>("color"));
+	mColors[static_cast<uint8_t>(HighlightType::Number)] = mColorKeys.at(syntax.at("number").get<std::string>("color"));
 }
 
 SyntaxHighlight::SyntaxHighlight(const std::string_view fName) : mColors{ 0 }
@@ -69,7 +99,7 @@ SyntaxHighlight::SyntaxHighlight(const std::string_view fName) : mColors{ 0 }
 	fContents << file.rdbuf();
 	mFileContents = fContents.str();
 	std::vector<JsonParser::JsonObject> mp = JsonParser::parseJson(mFileContents);
-	setSyntax(mp);
+	setSyntax(mp, extension);
 }
 
 const std::vector<SyntaxHighlight::HighlightLocations>& SyntaxHighlight::highlights()
@@ -177,7 +207,7 @@ void SyntaxHighlight::highlightKeywordNumberCheck(std::string_view& currentWord,
 			mHighlights.emplace_back(HighlightType::KeywordBuiltInType, i, posOffset, i, posOffset + currentWord.length());
 			return;
 		}
-		else if (mCurrentSyntax->loopKeywords.contains(std::string(currentWord)))
+		else if (mCurrentSyntax->controlKeywords.contains(std::string(currentWord)))
 		{
 			mHighlights.emplace_back(HighlightType::KeywordControl, i, posOffset, i, posOffset + currentWord.length());
 			return;

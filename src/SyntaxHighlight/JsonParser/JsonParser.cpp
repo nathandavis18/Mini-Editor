@@ -24,8 +24,10 @@ SOFTWARE.
 #include "JsonParser.hpp"
 namespace JsonParser
 {
+	using iter = std::string_view::iterator;
+
 	JsonObject startParsing(std::string_view, iter&, bool initial = false);
-	std::unordered_set<std::string> findEndArray(std::string_view, iter&);
+	JsonSet findEndArray(std::string_view, iter&);
 	const std::pair<std::string, JsonValue> getKeyValuePair(std::string_view contents, iter& currentPos, bool initial = false);
 
 	JsonObject startParsing(std::string_view contents, iter& currentPos, bool initial)
@@ -40,10 +42,10 @@ namespace JsonParser
 		return map;
 	}
 
-	std::unordered_set<std::string> findEndArray(std::string_view contents, iter& currentPos)
+	JsonSet findEndArray(std::string_view contents, iter& currentPos)
 	{
 		++currentPos;
-		std::unordered_set<std::string> allStrings;
+		JsonSet allStrings;
 		iter valueStartIter;
 		do
 		{
@@ -53,7 +55,7 @@ namespace JsonParser
 				++currentPos;
 				valueStartIter = currentPos;
 				while (*currentPos != '\"') ++currentPos;
-				allStrings.insert(std::string(contents.substr(valueStartIter - contents.begin(), currentPos - valueStartIter)));
+				allStrings.insert(contents.substr(valueStartIter - contents.begin(), currentPos - valueStartIter));
 				++currentPos;
 			}
 		} while (*currentPos != ']');

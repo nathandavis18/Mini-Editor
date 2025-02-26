@@ -27,6 +27,7 @@ SOFTWARE.
 #include <unordered_set>
 #include <variant>
 #include <vector>
+#include <array>
 #include <string>
 #include <string_view>
 
@@ -34,29 +35,36 @@ namespace JsonParser
 {
 	struct JsonValue;
 
-	using JsonSomething = std::variant<std::nullptr_t, std::string, std::unordered_set<std::string>, std::unordered_map<std::string, JsonValue>>;
+	using JsonObject = std::unordered_map<std::string, JsonValue>;
+	using JsonValue_t = std::variant<std::string, std::unordered_set<std::string_view>, JsonObject>;
+	using JsonSet = std::unordered_set<std::string_view>;
 
 	struct JsonValue
 	{
-		JsonSomething value;
+		JsonValue_t value;
+		
+		const bool contains(const std::string& key) const
+		{
+			const JsonObject& obj = std::get<JsonObject>(value);
+			return obj.contains(key);
+		}
 		const JsonValue& at(const std::string& key) const
 		{
-			const std::unordered_map<std::string, JsonValue>& x = std::get<std::unordered_map<std::string, JsonValue>>(value);
+			const JsonObject& x = std::get<JsonObject>(value);
 			return x.at(key);
 		}
-		const JsonValue& operator[](const std::string& key) const
+		operator const JsonValue_t& () const
 		{
-			const std::unordered_map<std::string, JsonValue>& x = std::get<std::unordered_map<std::string, JsonValue>>(value);
-			return x.at(key);
+			return value;
 		}
-		const std::string& getValue() const
+
+		template <class T>
+		const T& get(const std::string& key) const
 		{
-			const std::string& finalValue = std::get<std::string>(value);
-			return finalValue;
+			const JsonValue& x = at(key);
+			return std::get<T>(x.value);
 		}
 	};
-	using JsonObject = std::unordered_map<std::string, JsonValue>;
-	using iter = std::string_view::iterator;
 
 
 	std::vector<JsonObject> parseJson(std::string_view contents);

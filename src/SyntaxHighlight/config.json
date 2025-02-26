@@ -123,7 +123,7 @@
       "color": "darkpurple"
     },
 
-    "multilineComment": {
+    "multiLineComment": {
       "start": "/*",
       "end": "*/",
       "color": "darkgreen"
@@ -133,10 +133,13 @@
       "identifier": "//",
       "color": "lightgreen"
     },
-
+    "number": {
+      "color": "blue"
+    },
     "string": {
       "color": "orange"
-    }
+    },
+    "escapeChar": "\\"
   }, //Testing 2 things
   //Python going here
   "python": {

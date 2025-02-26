@@ -49,11 +49,11 @@ public:
 	{
 		std::unordered_set<std::string_view> filematch;
 		std::unordered_set<std::string_view> builtInTypeKeywords;
-		std::unordered_set<std::string_view> loopKeywords;
+		std::unordered_set<std::string_view> controlKeywords;
 		std::unordered_set<std::string_view> otherKeywords;
-		std::string_view singlelineComment;
-		std::string_view multilineCommentStart;
-		std::string_view multilineCommentEnd;
+		std::string singlelineComment;
+		std::string multilineCommentStart;
+		std::string multilineCommentEnd;
 		char escapeChar;
 	};
 
@@ -153,15 +153,16 @@ public:
 	/// <param name="posOffset"></param>
 	void highlightKeywordNumberCheck(std::string_view& currentWord, size_t i, size_t posOffset);
 
-	void setColors(const JsonParser::JsonValue& syntax);
 
 	private:
-		void setSyntax(const std::vector<JsonParser::JsonObject> mp);
+		void setSyntax(const std::vector<JsonParser::JsonObject> mp, const std::string_view extension);
+		void setColors(const JsonParser::JsonValue& syntax);
+		void setEditorSyntax(const JsonParser::JsonValue& syntax);
 
 	private:
 		// Color IDs correspond to the IDs found at this link: https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797#:~:text=Where%20%7BID%7D%20should%20be%20replaced%20with%20the%20color%20index%20from%200%20to%20255%20of%20the%20following%20color%20table%3A
 		// If you would like to add/change colors, just find the color ID you want and add it. There is a list of colors chosen here for your convenience
-		inline static const std::unordered_map<const char*, uint8_t> mColorKeys{
+		inline static const std::unordered_map<std::string, uint8_t> mColorKeys{
 			{"pink", 13}, {"magenta", 207}, {"hotpink", 5}, {"rosered", 204},
 			{"lightred", 1}, {"red", 160}, {"darkred", 52}, {"darkorange", 130},
 			{"peach", 209}, {"orange", 202}, {"lightorange", 208}, {"lightyellow", 11},
@@ -172,8 +173,7 @@ public:
 			{"gray", 8}, {"white", 15}, {"black", 16}
 		};
 		std::array<uint8_t, static_cast<uint8_t>(HighlightType::EnumCount)> mColors;
-		std::vector<EditorSyntax> mSyntaxContents;
 		std::vector<HighlightLocations> mHighlights;
-		EditorSyntax* mCurrentSyntax = nullptr;
+		std::unique_ptr<EditorSyntax> mCurrentSyntax;
 		std::string mFileContents;
 };
