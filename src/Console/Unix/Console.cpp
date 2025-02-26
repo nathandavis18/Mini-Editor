@@ -34,90 +34,88 @@ SOFTWARE.
 #include <signal.h>
 #include <cstdlib>
 
-namespace Console
+static termios defaultMode; // Unix console settings struct
+
+Console::Console()
 {
-	static termios defaultMode; // Unix console settings struct
-	bool rawModeEnabled = false;
-	static WindowSize windowSize;
-
-	void initConsole()
+	setDefaultMode();
+	setWindowSize();
+	enableRawInput();
+	if (!rawModeEnabled)
 	{
-		detail::setDefaultMode();
-		detail::setWindowSize();
-		if (!enableRawInput())
-		{
-			std::cerr << "Error enabling raw input mode";
-			exit(EXIT_FAILURE);
-		}
+		std::cerr << "Error enabling raw input mode";
+		exit(EXIT_FAILURE);
 	}
+}
 
-	void detail::setDefaultMode()
+void Console::setDefaultMode()
+{
+	if (tcgetattr(STDOUT_FILENO, &defaultMode) == -1) // If the settings can't be retrieved
 	{
-		if (tcgetattr(STDOUT_FILENO, &defaultMode) == -1) // If the settings can't be retrieved
-		{
-			std::cerr << "Error retrieving current console mode";
-			exit(EXIT_FAILURE);
-		}
-		signal(SIGWINCH, nullptr);
+		std::cerr << "Error retrieving current console mode";
+		exit(EXIT_FAILURE);
 	}
+	signal(SIGWINCH, nullptr);
+}
 
-	WindowSize getWindowSize()
+Console::WindowSize Console::getWindowSize()
+{
+	return mWindowSize;
+}
+
+void Console::setWindowSize()
+{
+	winsize ws; // Unix console size struct
+
+	ioctl(fileno(stdout), TIOCGWINSZ, &ws); // Get the console size from the OS
+	mWindowSize.cols = ws.ws_col;
+	mWindowSize.rows = ws.ws_row;
+}
+
+bool Console::mWindowSizeHasChanged(const int prevRows, const int prevCols)
+{
+	setWindowSize();
+	if (prevRows != mWindowSize.rows || prevCols != mWindowSize.cols)
 	{
-		return windowSize;
+		return true;
 	}
+	return false;
+}
 
-	void detail::setWindowSize()
+void Console::enableRawInput()
+{
+	if (rawModeEnabled) return;
+
+	termios raw;
+
+	// Disabling some console processing flags
+	raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
+	raw.c_oflag &= ~(OPOST);
+	raw.c_cflag |= (CS8);
+	raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
+
+	// Setting the timeout timer for read() so the screen doesn't appear frozen when getting input from user
+	raw.c_cc[VMIN] = 0;
+	raw.c_cc[VTIME] = 1;
+
+	if (tcsetattr(STDOUT_FILENO, TCSAFLUSH, &raw) < 0) // If setting raw mode fails
 	{
-		winsize ws; // Unix console size struct
-
-		ioctl(fileno(stdout), TIOCGWINSZ, &ws); // Get the console size from the OS
-		windowSize.cols = ws.ws_col;
-		windowSize.rows = ws.ws_row;
+		return rawModeEnabled; // Setting raw mode failed, so return the current status
 	}
-
-	bool windowSizeHasChanged(const int prevRows, const int prevCols)
+	else
 	{
-		detail::setWindowSize();
-		if (prevRows != windowSize.rows || prevCols != windowSize.cols)
-		{
-			return true;
-		}
-		return false;
+		atexit(forceDisableRawInput); // Make sure raw input mode gets disabled if the program exits due to an error
+		rawModeEnabled = true;
 	}
+}
 
-	bool enableRawInput()
-	{
-		if (rawModeEnabled)
-			return true;
+void Console::disableRawInput()
+{
+	tcsetattr(STDOUT_FILENO, TCSAFLUSH, &defaultMode);
+	rawModeEnabled = false;
+}
 
-		termios raw;
-
-		// Disabling some console processing flags
-		raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
-		raw.c_oflag &= ~(OPOST);
-		raw.c_cflag |= (CS8);
-		raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
-
-		// Setting the timeout timer for read() so the screen doesn't appear frozen when getting input from user
-		raw.c_cc[VMIN] = 0;
-		raw.c_cc[VTIME] = 1;
-
-		if (tcsetattr(STDOUT_FILENO, TCSAFLUSH, &raw) < 0) // If setting raw mode fails
-		{
-			return rawModeEnabled; // Setting raw mode failed, so return the current status
-		}
-		else
-		{
-			atexit(disableRawInput); // Make sure raw input mode gets disabled if the program exits due to an error
-			rawModeEnabled = true;
-		}
-
-		return rawModeEnabled;
-	}
-
-	void disableRawInput()
-	{
-		tcsetattr(STDOUT_FILENO, TCSAFLUSH, &defaultMode);
-		rawModeEnabled = false;
-	}
+void Console::forceDisableRawInput()
+{
+	tcsetattr(STDOUT_FILENO, TCSAFLUSH, &defaultMode);
 }

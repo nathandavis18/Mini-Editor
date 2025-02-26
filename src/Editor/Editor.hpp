@@ -34,6 +34,7 @@ SOFTWARE.
 #include "SyntaxHighlight/SyntaxHighlight.hpp"
 #include "KeyActions/KeyActions.hh"
 #include "File/File.hpp"
+#include "Console/Console.hpp"
 
 #include <vector>
 #include <string>
@@ -70,7 +71,7 @@ public:
 	/// This will set up everything else for the editor, including the console, file handler, and syntax highlighting
 	/// </summary>
 	/// <param name="fName"> The name of the file grabbed from argv[1] </param>
-	static void initEditor(const std::string_view& fName);
+	static void initEditor(const std::string_view fName);
 
 	/// <summary>
 	/// Called when exiting the program so the screen gets completely cleared
@@ -203,12 +204,13 @@ private:
 		Window();
 		size_t fileCursorX, fileCursorY;
 		size_t renderedCursorX, renderedCursorY;
-		size_t savedRenderedCursorXPos; bool updateSavedPos = true;
+		size_t savedRenderedCursorXPos; 
+		bool updateSavedPos = true;
 		size_t colNumberToDisplay;
 		size_t rowOffset, colOffset;
 		int rows, cols;
 
-		std::vector<FileHandler::Row> fileRows;
+		std::vector<FileHandler::Row>& fileRows;
 
 		bool dirty;
 	};
@@ -336,10 +338,11 @@ private:
 private:
 	inline static std::string mTextRenderBuffer, mPreviousTextRenderBuffer; //Implementing double-buffering so the screen doesn't need to always update
 
-	inline static std::unique_ptr<Window> mWindow;
+	inline static std::unique_ptr<FileHandler> mFile;
+	inline static std::unique_ptr<Console> mConsole;
+	inline static std::unique_ptr<SyntaxHighlight> mSyntax;
 
-	//A const reference to the highlight locations for ease of access
-	inline static const std::vector<SyntaxHighlight::HighlightLocations>& mHighlights = SyntaxHighlight::highlightLocations();
+	inline static std::unique_ptr<Window> mWindow;
 
 	inline static std::stack<FileHistory> mRedoHistory;
 	inline static std::stack<FileHistory> mUndoHistory;

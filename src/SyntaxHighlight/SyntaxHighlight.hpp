@@ -29,16 +29,19 @@ SOFTWARE.
 
 #pragma once
 #include "File/File.hpp"
+#include "JsonParser/JsonParser.hpp"
 
 #include <vector>
+#include <array>
 #include <string>
 #include <string_view>
+#include <unordered_map>
 #include <cstdint>
 #include <unordered_set>
 
-namespace SyntaxHighlight
+class SyntaxHighlight
 {
-
+public:
 	/// <summary>
 	/// The structure to store what file types match with each keyword, comment, or string type.
 	/// </summary>
@@ -64,7 +67,7 @@ namespace SyntaxHighlight
 	/// Initializes the syntax highlight functionality. Should only be called by the editor, and only called on initialization.
 	/// </summary>
 	/// <param name="fName"></param>
-	void initSyntax(const std::string_view fName);
+	SyntaxHighlight(const std::string_view fName);
 
 	/// <summary>
 	/// The different types of highlights
@@ -105,7 +108,7 @@ namespace SyntaxHighlight
 	/// Should only be called one time by the Editor, and that is on program load
 	/// </summary>
 	/// <returns></returns>
-	const std::vector<HighlightLocations>& highlightLocations();
+	const std::vector<HighlightLocations>& highlights();
 
 	/// <summary>
 	/// Called when a multiline comment or string highlight location is started
@@ -119,7 +122,7 @@ namespace SyntaxHighlight
 	/// <param name="startCol"></param>
 	/// <param name="strToFind"></param>
 	/// <param name=""></param>
-	void findEndMarker(std::vector<FileHandler::Row>& fileRows, std::string_view& currentWord, size_t& row, size_t& posOffset, size_t& findPos, size_t startRow, size_t startCol, const std::string_view& strToFind, const HighlightType);
+	void findEndMarker(const std::vector<FileHandler::Row>& fileRows, std::string_view& currentWord, size_t& row, size_t& posOffset, size_t& findPos, size_t startRow, size_t startCol, const std::string_view& strToFind, const HighlightType);
 
 	/// <summary>
 	/// Checks the type of comment highlight currently found, if one is found
@@ -131,7 +134,7 @@ namespace SyntaxHighlight
 	/// <param name="posOffset"></param>
 	/// <param name="i"></param>
 	/// <returns></returns>
-	bool highlightCommentCheck(std::vector<FileHandler::Row>& fileRows, std::string_view& currentWord, FileHandler::Row* row, size_t findPos, size_t& posOffset, size_t& i);
+	bool highlightCommentCheck(const std::vector<FileHandler::Row>& fileRows, std::string_view& currentWord, FileHandler::Row* row, size_t findPos, size_t& posOffset, size_t& i);
 
 	/// <summary>
 	/// Removes all the un-needed highlights that are off-screen, and returns the position of the rowOffset to start checking for highlights on again.
@@ -150,28 +153,27 @@ namespace SyntaxHighlight
 	/// <param name="posOffset"></param>
 	void highlightKeywordNumberCheck(std::string_view& currentWord, size_t i, size_t posOffset);
 
-	//================================================ CPP KEYWORDS =================================================================\\
+	void setColors(const JsonParser::JsonValue& syntax);
 
-	// Planning to move this to a config file, but for now these live here.
+	private:
+		void setSyntax(const std::vector<JsonParser::JsonObject> mp);
 
-	static const std::unordered_set<std::string_view> cppFiletypes{".cpp", ".cc", ".cxx", ".hpp", ".h", ".hxx", ".hh"};
-	static const std::unordered_set<std::string_view> cppBuiltInTypes{
-		// Built-in types and main keywords
-		"alignas", "alignof", "asm", "_asm", "auto", "bool", "char", "char8_t", "char16_t", "char32_t", "class",
-		"compl", "concept", "const", "consteval", "constexpr", "constinit", "const_cast", "decltype", "delete", "double",
-		"dynamic_cast", "enum", "explicit", "export", "extern", "false", "float", "friend", "inline", "int", "long",
-		"mutable", "namespace", "new", "noexcept", "nullptr", "operator", "private", "protected", "public", "register",
-		"reinterpret_cast", "requires", "short", "signed", "sizeof", "static", "static_assert", "static_cast", "struct",
-		"template", "this", "thread_local", "true", "typedef", "typeid", "typename", "union", "unsigned", "using", "virtual",
-		"void", "volatile", "wchar_t"
-	};
-	static const std::unordered_set<std::string_view> cppControlKeywords{
-		// Loop/Control keywords
-		"and", "and_eq", "bitand", "bitor", "break", "case", "catch", "continue", "co_await", "co_return", "co_yield", "default",
-		"do", "else", "for", "goto", "if", "not", "not_eq", "or", "or_eq", "return", "switch", "throw", "try", "while", "xor", "xor_eq"
-	};
-	static const std::unordered_set<std::string_view> cppOtherKeywords{
-		// Some other keywords, such as macro definitions
-		"#define", "#ifdef", "#ifndef", "#if", "defined", "#include", "#elif", "#endif"
-	};
-}
+	private:
+		// Color IDs correspond to the IDs found at this link: https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797#:~:text=Where%20%7BID%7D%20should%20be%20replaced%20with%20the%20color%20index%20from%200%20to%20255%20of%20the%20following%20color%20table%3A
+		// If you would like to add/change colors, just find the color ID you want and add it. There is a list of colors chosen here for your convenience
+		inline static const std::unordered_map<const char*, uint8_t> mColorKeys{
+			{"pink", 13}, {"magenta", 207}, {"hotpink", 5}, {"rosered", 204},
+			{"lightred", 1}, {"red", 160}, {"darkred", 52}, {"darkorange", 130},
+			{"peach", 209}, {"orange", 202}, {"lightorange", 208}, {"lightyellow", 11},
+			{"marigoldyellow", 3}, {"yellow", 226}, {"darkyellow", 178}, {"darklimegreen", 2},
+			{"lightgreen", 46}, {"green", 28}, {"darkgreen", 22}, {"tealgreen", 42},
+			{"teal", 23}, {"tealblue", 6}, {"lightblue", 4}, {"seablue", 14}, {"blue", 20},
+			{"navyblue", 17}, {"darkblue", 18}, {"purple", 93}, {"darkpurple", 57}, {"lightgray", 7},
+			{"gray", 8}, {"white", 15}, {"black", 16}
+		};
+		std::array<uint8_t, static_cast<uint8_t>(HighlightType::EnumCount)> mColors;
+		std::vector<EditorSyntax> mSyntaxContents;
+		std::vector<HighlightLocations> mHighlights;
+		EditorSyntax* mCurrentSyntax = nullptr;
+		std::string mFileContents;
+};

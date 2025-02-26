@@ -28,78 +28,78 @@ SOFTWARE.
 #include <iostream>
 #include <cstdlib>
 
-namespace Console
+DWORD defaultMode; //Windows Console settings is stored in DWORD (an unsigned long)
+
+Console::Console()
 {
-	DWORD defaultMode; //Windows Console settings is stored in DWORD (an unsigned long)
-	bool rawModeEnabled = false;
-	WindowSize windowSize;
-
-	void initConsole()
+	setDefaultMode();
+	setWindowSize();
+	enableRawInput();
+	if (!rawModeEnabled)
 	{
-		detail::setDefaultMode();
-		detail::setWindowSize();
-		if (!enableRawInput())
-		{
-			std::cerr << "Error enabling raw input mode";
-			exit(EXIT_FAILURE);
-		}
+		std::cerr << "Error enabling raw input mode";
+		exit(EXIT_FAILURE);
+	}
+}
+
+void Console::setDefaultMode()
+{
+	if (!GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &defaultMode)) //Try to get the default terminal settings
+	{
+		std::cerr << "Error retrieving current console mode";
+		exit(EXIT_FAILURE);
+	}
+}
+
+Console::WindowSize Console::getWindowSize()
+{
+	return mWindowSize;
+}
+
+void Console::setWindowSize()
+{
+	CONSOLE_SCREEN_BUFFER_INFO screenInfo; //Windows console size struct
+	if (!GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &screenInfo))
+	{
+		std::cerr << "Error getting console screen buffer info";
+		exit(EXIT_FAILURE);
 	}
 
-	void detail::setDefaultMode()
+	mWindowSize.rows = screenInfo.srWindow.Bottom - screenInfo.srWindow.Top + 1;
+	mWindowSize.cols = screenInfo.srWindow.Right - screenInfo.srWindow.Left + 1;
+}
+
+bool Console::windowSizeHasChanged(const int prevRows, const int prevCols)
+{
+	setWindowSize();
+	if (prevRows != mWindowSize.rows || prevCols != mWindowSize.cols)
 	{
-		if (!GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &defaultMode)) //Try to get the default terminal settings
-		{
-			std::cerr << "Error retrieving current console mode";
-			exit(EXIT_FAILURE);
-		}
+		return true;
 	}
+	return false;
+}
 
-	WindowSize getWindowSize()
+void Console::enableRawInput()
+{
+	if (rawModeEnabled) return;
+
+	DWORD rawMode = ENABLE_EXTENDED_FLAGS | (defaultMode & ~ENABLE_LINE_INPUT & ~ENABLE_PROCESSED_INPUT
+		& ~ENABLE_ECHO_INPUT & ~ENABLE_PROCESSED_OUTPUT & ~ENABLE_WRAP_AT_EOL_OUTPUT); //Disabling certain input/output flags to enable raw mode
+
+	if (SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), rawMode))
 	{
-		return windowSize;
+		atexit(forceDisableRawInput); //Make sure raw input mode gets disabled if the program exits due to an error
+		rawModeEnabled = true;
 	}
+}
 
-	void detail::setWindowSize()
-	{
-		CONSOLE_SCREEN_BUFFER_INFO screenInfo; //Windows console size struct
-		if (!GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &screenInfo))
-		{
-			std::cerr << "Error getting console screen buffer info";
-			exit(EXIT_FAILURE);
-		}
+void Console::disableRawInput()
+{
+	SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), defaultMode);
+	rawModeEnabled = false;
+}
 
-		windowSize.rows = screenInfo.srWindow.Bottom - screenInfo.srWindow.Top + 1;
-		windowSize.cols = screenInfo.srWindow.Right - screenInfo.srWindow.Left + 1;
-	}
-
-	bool windowSizeHasChanged(const int prevRows, const int prevCols)
-	{
-		detail::setWindowSize();
-		if (prevRows != windowSize.rows || prevCols != windowSize.cols)
-		{
-			return true;
-		}
-		return false;
-	}
-
-	bool enableRawInput()
-	{
-		if (rawModeEnabled) return true;
-
-		DWORD rawMode = ENABLE_EXTENDED_FLAGS | (defaultMode & ~ENABLE_LINE_INPUT & ~ENABLE_PROCESSED_INPUT
-			& ~ENABLE_ECHO_INPUT & ~ENABLE_PROCESSED_OUTPUT & ~ENABLE_WRAP_AT_EOL_OUTPUT); //Disabling certain input/output flags to enable raw mode
-
-		if (SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), rawMode))
-		{
-			atexit(disableRawInput); //Make sure raw input mode gets disabled if the program exits due to an error
-			rawModeEnabled = true;
-		}
-		return rawModeEnabled;
-	}
-
-	void disableRawInput()
-	{
-		SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), defaultMode);
-		rawModeEnabled = false;
-	}
+void Console::forceDisableRawInput()
+{
+	SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), defaultMode);
 }

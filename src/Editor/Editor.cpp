@@ -32,7 +32,6 @@ SOFTWARE.
 */
 
 #include "Editor.hpp"
-#include "Console/Console.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -45,7 +44,7 @@ SOFTWARE.
 #define NotVimVersion "0.5.1a"
 
 Editor::Window::Window() : fileCursorX(0), fileCursorY(0), cols(0), rows(0), renderedCursorX(0), renderedCursorY(0), colNumberToDisplay(0), savedRenderedCursorXPos(0),
-rowOffset(0), colOffset(0), dirty(false), fileRows(std::move(FileHandler::getFileContents()))
+rowOffset(0), colOffset(0), dirty(false), fileRows(mFile->getFileContents())
 {}
 
 const Editor::Mode Editor::mode()
@@ -53,16 +52,14 @@ const Editor::Mode Editor::mode()
 	return mMode;
 }
 
-void Editor::initEditor(const std::string_view& fName)
+void Editor::initEditor(const std::string_view fName)
 {
-	FileHandler::initFileHandler(fName);
-	SyntaxHighlight::initSyntax(fName);
-
+	mSyntax = std::make_unique<SyntaxHighlight>(SyntaxHighlight(fName));
+	mFile = std::make_unique<FileHandler>(FileHandler(fName));
 	mWindow = std::make_unique<Window>(Window());
+	mConsole = std::make_unique<Console>(Console());
 
-	Console::initConsole();
-
-	Console::WindowSize windowSize = Console::getWindowSize();
+	Console::WindowSize windowSize = mConsole->getWindowSize();
 	mWindow->rows = windowSize.rows - statusMessageRows;
 	mWindow->cols = windowSize.cols;
 }
@@ -141,7 +138,7 @@ std::string Editor::renderStatus()
 	statusBuffer.append("\x1b[7m"); //Set to inverse color mode (white background dark text) for status row
 
 	std::string rStatus, modeToDisplay;
-	std::string status = std::format("{} - {} lines {}", FileHandler::fileName(), mWindow->fileRows.size(), mWindow->dirty ? "(modified)" : "");
+	std::string status = std::format("{} - {} lines {}", mFile->fileName(), mWindow->fileRows.size(), mWindow->dirty ? "(modified)" : "");
 
 	//Set the displayed mode and the cursor position for display
 	size_t currentRowToDisplay = mWindow->rowOffset + mWindow->renderedCursorY + 1; //Add 1 for display only. Rows and cols are 0-indexed internally
@@ -728,25 +725,13 @@ bool Editor::isDirty()
 
 void Editor::save()
 {
-	std::stringstream output;
-	for (size_t i = 0; i < mWindow->fileRows.size(); ++i)
-	{
-		if (i == mWindow->fileRows.size() - 1)
-		{
-			output << mWindow->fileRows.at(i).line;
-		}
-		else [[ likely ]]
-		{
-			output << mWindow->fileRows.at(i).line << '\n';
-		}
-	}
-	FileHandler::saveFile(output.str());
+	mFile->saveFile();
 	mWindow->dirty = false;
 }
 
 void Editor::enableCommandMode()
 {
-	Console::disableRawInput();
+	mConsole->disableRawInput();
 	mMode = Mode::CommandMode;
 	mWindow->renderedCursorX = 0; mWindow->renderedCursorY = mWindow->rows + statusMessageRows;
 }
@@ -758,19 +743,19 @@ void Editor::enableEditMode()
 		mWindow->fileRows.push_back(FileHandler::Row());
 	}
 	mMode = Mode::EditMode;
-	Console::enableRawInput();
+	mConsole->enableRawInput();
 }
 
 void Editor::enableReadMode()
 {
 	mMode = Mode::ReadMode;
-	Console::enableRawInput();
+	mConsole->enableRawInput();
 }
 
 void Editor::enableExitMode()
 {
 	mMode = Mode::ExitMode;
-	Console::disableRawInput();
+	mConsole->disableRawInput();
 }
 
 void Editor::setCursorLinePosition()
@@ -882,7 +867,7 @@ void Editor::updateRenderedColor(const size_t rowOffset, const size_t colOffset)
 	std::string normalColorMode = "\x1b[0m";
 	size_t charactersToAdjust = 0; //The amount of characters to adjust for in the string position based on how many color code escape sequences have been added
 	size_t prevRow = 0;
-	for (const auto& highlight : mHighlights)
+	for (const auto& highlight : mSyntax->highlights())
 	{
 		if (!highlight.drawColor) continue;
 		if (highlight.startRow == highlight.endRow && (highlight.endCol < colOffset || highlight.startCol > colOffset + mWindow->cols)) continue;
@@ -891,7 +876,7 @@ void Editor::updateRenderedColor(const size_t rowOffset, const size_t colOffset)
 		std::string* renderString = &mWindow->fileRows.at(highlight.startRow).renderedLine;
 		if (prevRow != highlight.startRow) charactersToAdjust = 0;
 
-		const uint8_t color = SyntaxHighlight::color(highlight.highlightType);
+		const uint8_t color = mSyntax->color(highlight.highlightType);
 		std::string colorFormat = std::format("\x1b[38;5;{}m", std::to_string(color));
 		if (rowOffset > highlight.startRow)
 		{
@@ -929,9 +914,9 @@ void Editor::updateRenderedColor(const size_t rowOffset, const size_t colOffset)
 
 void Editor::setHighlight()
 {
-	if (!SyntaxHighlight::hasSyntax()) return; //Can't highlight if there is no syntax
+	if (!mSyntax->hasSyntax()) return; //Can't highlight if there is no syntax
 
-	std::tuple<size_t, size_t> offsets = SyntaxHighlight::removeOffScreenHighlights(mWindow->rowOffset, mWindow->rows, mWindow->fileCursorY);
+	std::tuple<size_t, size_t> offsets = mSyntax->removeOffScreenHighlights(mWindow->rowOffset, mWindow->rows, mWindow->fileCursorY);
 	size_t rowToStart = std::get<0>(offsets);
 	size_t colToStart = std::get<1>(offsets);
 
@@ -944,8 +929,6 @@ void Editor::setHighlight()
 
 	while (i < mWindow->fileRows.size() && i <= mWindow->rowOffset + mWindow->rows)
 	{
-		if (i > mWindow->rowOffset + mWindow->rows) return;
-
 		FileHandler::Row* row = &mWindow->fileRows.at(i); //The starting row
 
 		size_t findPos = 0, posOffset = colToStart; //posOffset keeps track of how far into the string we are, since findPos depends on currentWord, which progressively gets smaller
@@ -967,10 +950,10 @@ void Editor::setHighlight()
 
 			if (!wordToCheck.empty())
 			{
-				SyntaxHighlight::highlightKeywordNumberCheck(wordToCheck, i, posOffset);
+				mSyntax->highlightKeywordNumberCheck(wordToCheck, i, posOffset);
 			}
 
-			bool gotoNextRow = SyntaxHighlight::highlightCommentCheck(mWindow->fileRows, currentWord, row, findPos, posOffset, i);
+			bool gotoNextRow = mSyntax->highlightCommentCheck(mWindow->fileRows, currentWord, row, findPos, posOffset, i);
 			if(gotoNextRow)
 			{
 				goto nextrow;
@@ -979,7 +962,7 @@ void Editor::setHighlight()
 
 		if (!currentWord.empty()) //If the last 'word' in the string isn't a separator character/comment/string
 		{
-			SyntaxHighlight::highlightKeywordNumberCheck(currentWord, i, posOffset);
+			mSyntax->highlightKeywordNumberCheck(currentWord, i, posOffset);
 			goto nextrow;
 		}
 	nextrow:
@@ -990,5 +973,5 @@ void Editor::setHighlight()
 
 bool Editor::windowSizeHasChanged()
 {
-	return Console::windowSizeHasChanged(mWindow->rows + statusMessageRows, mWindow->cols);
+	return mConsole->windowSizeHasChanged(mWindow->rows + statusMessageRows, mWindow->cols);
 }
