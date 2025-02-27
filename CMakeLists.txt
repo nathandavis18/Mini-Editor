@@ -12,6 +12,7 @@ set(SOURCES
 	"src/File/File.cpp"
 	"src/Input/Input.cpp"
 	"src/SyntaxHighlight/SyntaxHighlight.cpp"
+	"src/SyntaxHighlight/JsonParser/JsonParser.cpp"
 	"src/main.cpp"
 )
 
@@ -23,6 +24,7 @@ set (HEADERS
 	"src/Input/GetInputImpl.hpp"
 	"src/KeyActions/KeyActions.hh"
 	"src/SyntaxHighlight/SyntaxHighlight.hpp"
+	"src/SyntaxHighlight/JsonParser/JsonParser.hpp"
 )
 
 add_executable (nve ${SOURCES} ${HEADERS})
@@ -39,7 +41,12 @@ else()
 	)
 endif()
 
-
+add_custom_command(
+	TARGET nve
+	COMMENT "Copying Syntax File"
+	PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/config.json $<TARGET_FILE_DIR:nve>
+	VERBATIM
+)
 
 target_include_directories(nve PRIVATE src)
 

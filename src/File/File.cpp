@@ -27,96 +27,94 @@ SOFTWARE.
 #include <exception>
 #include <sstream>
 #include <iostream>
-#include <filesystem>
 #include <fstream>
 
-namespace FileHandler
+FileHandler::FileHandler(const std::string_view fName) : mPath(std::filesystem::current_path() / fName), mFileName(fName)
 {
-	std::string _fileName;
-	std::filesystem::path _path;
-	std::vector<Row> _fileContents;
+	loadFileContents();
+}
 
-	namespace detail
+void FileHandler::loadRows(std::string&& str)
+{
+	if (str.length() > 0)
 	{
-		void loadRows(std::string&& str)
+		size_t lineBreak = 0;
+		while (lineBreak < str.length())
 		{
-			if (str.length() > 0)
+			if (str.at(lineBreak) == '\n')
 			{
-				size_t lineBreak = 0;
-				while (lineBreak < str.length())
+				if (lineBreak > 0 && str.at(lineBreak - 1) == '\r')
 				{
-					if (str.at(lineBreak) == '\n')
-					{
-						if (lineBreak > 0 && str.at(lineBreak - 1) == '\r')
-						{
-							_fileContents.emplace_back(str.substr(0, lineBreak - 1)); //Remove the carriage return as well
-						}
-						else
-						{
-							_fileContents.emplace_back(str.substr(0, lineBreak));
-						}
-						str.erase(str.begin(), str.begin() + lineBreak + 1);
-						lineBreak = 0;
-					}
-					else
-					{
-						++lineBreak;
-					}
+					mRows.emplace_back(str.substr(0, lineBreak - 1)); //Remove the carriage return as well
 				}
-				_fileContents.emplace_back(str);
-				str.clear();
+				else
+				{
+					mRows.emplace_back(str.substr(0, lineBreak));
+				}
+				str.erase(str.begin(), str.begin() + lineBreak + 1);
+				lineBreak = 0;
 			}
-		}
-
-		void loadFileContents()
-		{
-			std::ifstream file(_path);
-			try
+			else
 			{
-				std::stringstream ss;
-				ss << file.rdbuf();
-
-				loadRows(std::move(ss.str()));
-			}
-			catch (std::exception ex)
-			{
-				file.close();
-				std::cerr << "Error opening file. ERROR: " << ex.what() << std::endl;
-				exit(EXIT_FAILURE);
+				++lineBreak;
 			}
 		}
+		mRows.emplace_back(str);
+		str.clear();
 	}
+}
 
-	void initFileHandler(const std::string_view fName)
+const std::string_view FileHandler::fileName()
+{
+	return mFileName;
+}
+
+void FileHandler::loadFileContents()
+{
+	std::ifstream file(mPath);
+	try
 	{
-		_fileName = fName;
-		_path = std::filesystem::current_path() / _fileName;
-		_fileContents.clear();
-		detail::loadFileContents();		
+		std::stringstream ss;
+		ss << file.rdbuf();
+
+		loadRows(std::move(ss.str()));
 	}
-
-	const std::string_view fileName()
+	catch (std::exception ex)
 	{
-		return _fileName;
+		file.close();
+		std::cerr << "Error opening file. ERROR: " << ex.what() << std::endl;
+		exit(EXIT_FAILURE);
 	}
+}
 
+std::vector<FileHandler::Row>& FileHandler::getFileContents()
+{
+	return mRows;
+}
 
-	std::vector<Row>&& getFileContents()
+void FileHandler::saveFile()
+{
+	std::stringstream output;
+	for (size_t i = 0; i < mRows.size(); ++i)
 	{
-		return std::move(_fileContents);
-	}
-
-	void saveFile(const std::string_view newContents)
-	{
-		std::ofstream file(_path);
-		try
+		if (i == mRows.size() - 1)
 		{
-			file << newContents;
+			output << mRows.at(i).line;
 		}
-		catch (std::exception ex)
+		else [[ likely ]]
 		{
-			file.close();
-			std::cerr << "Error saving file. ERROR: " << ex.what() << std::endl;
+			output << mRows.at(i).line << '\n';
 		}
+	}
+	std::ofstream file(mPath);
+
+	try
+	{
+		file << output.str();
+	}
+	catch (std::exception ex)
+	{
+		file.close();
+		std::cerr << "Error saving file. ERROR: " << ex.what() << std::endl;
 	}
 }

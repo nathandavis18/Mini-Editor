@@ -24,38 +24,21 @@ SOFTWARE.
 
 #pragma once
 
-namespace Console
+class Console
 {
-	/// <summary>
-	/// Should only be accessed by the console, not other files
-	/// </summary>
-	namespace detail
-	{
-		/// <summary>
-		/// Gets the default console mode from the OS and sets a local OS-Specific variable with the console settings
-		/// </summary>
-		void setDefaultMode();
-
-		/// <summary>
-		/// Uses the OS API to get console size information and stores it in the local WindowSize object
-		/// </summary>
-		void setWindowSize();
-	}
-
+public:
 	/// <summary>
 	/// Used to maintain the size of the console window
 	/// </summary>
 	struct WindowSize
 	{
-		WindowSize() : rows(0), cols(0) {}
-		int rows, cols;
+		int rows{}, cols{};
 	};
 
 	/// <summary>
-	/// Call on initialization only so the console can get ready for editing
-	/// Calls setDefaultMode(), setWindowSize(), and enableRawInput()
+	/// Initializes the console by setting the window size, getting default mode parameters, and 
 	/// </summary>
-	void initConsole();
+	Console();
 
 	/// <summary>
 	/// Should be called when outside files/classes need access to the console size (i.e. the editor)
@@ -75,10 +58,30 @@ namespace Console
 	/// Enables raw input mode on the console by using the OS-specific functions
 	/// </summary>
 	/// <returns> Returns true if successful </returns>
-	bool enableRawInput();
+	void enableRawInput();
 
 	/// <summary>
 	/// Disables raw input mode by using the OS-specific API to return to default mode.
 	/// </summary>
 	void disableRawInput();
-}
+
+private:
+	/// <summary>
+		/// Gets the default console mode from the OS and sets a local OS-Specific variable with the console settings
+		/// </summary>
+	void setDefaultMode();
+
+	/// <summary>
+	/// Uses the OS API to get console size information and stores it in the local WindowSize object
+	/// </summary>
+	void setWindowSize();
+
+	/// <summary>
+	/// If the program exits due to an error, force it back into default mode
+	/// </summary>
+	static void forceDisableRawInput();
+
+private:
+	bool rawModeEnabled = false;
+	WindowSize mWindowSize;
+};

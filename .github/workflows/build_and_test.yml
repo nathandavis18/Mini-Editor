@@ -5,7 +5,7 @@ on:
 
 jobs:
   build-project:
-    name: Build Project
+    name: Build Project with Tests
     runs-on: ubuntu-24.04
     steps:
     - name: Checkout Project
@@ -14,7 +14,7 @@ jobs:
     - name: Setup Ninja
       uses: seanmiddleditch/gha-setup-ninja@v5
 
-    - name: Build Project
+    - name: Build Project with Tests
       uses: threeal/cmake-action@v2.1.0
       with:
         build-dir: out/build
@@ -23,5 +23,10 @@ jobs:
         cxx-flags: -std=c++20
         options: CMAKE_BUILD_TYPE=Release BUILD_TESTS=ON
 
+  run-tests:
+    name: Run Tests
+    runs-on: ubuntu-24.04
+    needs: [ build-project ]
+    steps:
     - name: Run Tests
       run: cd ./out/build/tests && ./Tests --gtest_filter=-Console*:Editor*:*SavingFile*:*InsertChar*:*InputMode*

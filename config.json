@@ -1,0 +1,147 @@
+{
+  "cpp": {
+    "fileExtensions": [ ".cpp", ".cc", ".cxx", ".hpp", ".h", ".hxx", ".hh" ],
+
+    "defaultColor": "peach",
+
+    "builtInKeywords": {
+      "keywords": [
+        "alignas",
+        "alignof",
+        "asm",
+        "_asm",
+        "auto",
+        "bool",
+        "char",
+        "char8_t",
+        "char16_t",
+        "char32_t",
+        "class",
+        "compl",
+        "concept",
+        "const",
+        "consteval",
+        "constexpr",
+        "constinit",
+        "const_cast",
+        "decltype",
+        "delete",
+        "double",
+        "dynamic_cast",
+        "enum",
+        "explicit",
+        "export",
+        "extern",
+        "false",
+        "float",
+        "friend",
+        "inline",
+        "int",
+        "long",
+        "mutable",
+        "namespace",
+        "new",
+        "noexcept",
+        "nullptr",
+        "operator",
+        "private",
+        "protected",
+        "public",
+        "register",
+        "reinterpret_cast",
+        "requires",
+        "short",
+        "signed",
+        "sizeof",
+        "static",
+        "static_assert",
+        "static_cast",
+        "struct",
+        "template",
+        "this",
+        "thread_local",
+        "true",
+        "typedef",
+        "typeid",
+        "typename",
+        "union",
+        "unsigned",
+        "using",
+        "virtual",
+        "void",
+        "volatile",
+        "wchar_t"
+      ],
+      "color": "red"
+    },
+
+    "controlKeywords": {
+      "keywords": [
+        "and",
+        "and_eq",
+        "bitand",
+        "bitor",
+        "break",
+        "case",
+        "catch",
+        "continue",
+        "co_await",
+        "co_return",
+        "co_yield",
+        "default",
+        "do",
+        "else",
+        "for",
+        "goto",
+        "if",
+        "not",
+        "not_eq",
+        "or",
+        "or_eq",
+        "return",
+        "switch",
+        "throw",
+        "try",
+        "while",
+        "xor",
+        "xor_eq"
+      ],
+      "color": "magenta"
+    },
+
+    "otherKeywords": {
+      "keywords": [
+        "#define",
+        "#ifdef",
+        "#ifndef",
+        "#if",
+        "defined",
+        "#include",
+        "#elif",
+        "#endif"
+      ],
+      "color": "darkpurple"
+    },
+
+    "multiLineComment": {
+      "start": "/*",
+      "end": "*/",
+      "color": "darkgreen"
+    },
+
+    "singleLineComment": {
+      "identifier": "//",
+      "color": "lightgreen"
+    },
+    "number": {
+      "color": "seablue"
+    },
+    "string": {
+      "color": "orange"
+    },
+    "escapeChar": "\\"
+  },
+  "python": {
+
+  }
+}
