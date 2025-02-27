@@ -20,6 +20,7 @@ set(SOURCES
 	"FileTests/FileTests.cpp"
 	"InputTests/InputTests.cpp"
 	"SyntaxHighlightTests/SyntaxHighlightTests.cpp"
+	"JsonParserTests/JsonParserTests.cpp"
 )
 
 set(CMAKE_CXX_STANDARD 20)
@@ -48,5 +49,12 @@ add_custom_command(
 	TARGET Tests
 	COMMENT "Copying config.json"
 	PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/config.json $<TARGET_FILE_DIR:Tests>
+	VERBATIM
+)
+
+add_custom_command(
+	TARGET Tests
+	COMMENT "Copying testJson.json"
+	PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/testJson.json $<TARGET_FILE_DIR:Tests>
 	VERBATIM
 )

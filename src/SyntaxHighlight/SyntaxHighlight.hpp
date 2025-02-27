@@ -47,10 +47,10 @@ public:
 	/// </summary>
 	struct EditorSyntax
 	{
-		std::unordered_set<std::string_view> filematch;
-		std::unordered_set<std::string_view> builtInTypeKeywords;
-		std::unordered_set<std::string_view> controlKeywords;
-		std::unordered_set<std::string_view> otherKeywords;
+		std::unordered_set<std::string> filematch;
+		std::unordered_set<std::string> builtInTypeKeywords;
+		std::unordered_set<std::string> controlKeywords;
+		std::unordered_set<std::string> otherKeywords;
 
 		//These values may need a default/fallback value for when a syntax exists but doesn't define them
 		std::string singlelineComment = "//";
@@ -163,7 +163,7 @@ public:
 		/// </summary>
 		/// <param name="mp"></param>
 		/// <param name="extension"></param>
-		void setSyntax(const std::vector<JsonParser::JsonObject>& mp, const std::string_view extension);
+		void setSyntax(const std::vector<JsonParser::JsonObject>& mp, const std::string& extension);
 
 		/// <summary>
 		/// Sets the colors for the syntax based on what keys are defined.

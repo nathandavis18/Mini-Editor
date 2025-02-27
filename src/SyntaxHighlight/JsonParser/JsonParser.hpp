@@ -37,8 +37,8 @@ namespace JsonParser
 
 	//Creating some typedefs for the Json Objects
 	using JsonObject = std::unordered_map<std::string, JsonValue>;
-	using JsonValue_t = std::variant<std::string, std::unordered_set<std::string_view>, JsonObject>;
-	using JsonSet = std::unordered_set<std::string_view>;
+	using JsonSet = std::unordered_set<std::string>;
+	using JsonValue_t = std::variant<std::string, JsonSet, JsonObject>;
 
 	/// <summary>
 	/// How the parsed Json data is stored and accessed
@@ -80,6 +80,11 @@ namespace JsonParser
 		{
 			const JsonValue& x = at(key);
 			return std::get<T>(x.value);
+		}
+
+		bool operator==(const JsonValue& other) const
+		{
+			return value == other.value;
 		}
 	};
 
