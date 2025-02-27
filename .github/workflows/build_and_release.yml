@@ -51,3 +51,4 @@ jobs:
                 tag: v0.6.0a
                 artifacts: ./out/build/nve.exe
                 bodyFile: config.json
+                makeLatest: true
