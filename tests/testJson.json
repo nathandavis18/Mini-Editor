@@ -1,0 +1,8 @@
+{
+  "test": {
+    "test2": [ "item1", "item2" ],
+    "test3" : {
+      "something": "value"
+    }
+  }
+}

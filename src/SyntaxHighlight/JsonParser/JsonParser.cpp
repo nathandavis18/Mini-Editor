@@ -80,7 +80,7 @@ namespace JsonParser
 				++currentPos;
 				valueStartIter = currentPos;
 				while (*currentPos != '\"') ++currentPos;
-				allStrings.insert(contents.substr(valueStartIter - contents.begin(), currentPos - valueStartIter));
+				allStrings.insert(std::string(contents.substr(valueStartIter - contents.begin(), currentPos - valueStartIter)));
 				++currentPos;
 			}
 		} while (*currentPos != ']');

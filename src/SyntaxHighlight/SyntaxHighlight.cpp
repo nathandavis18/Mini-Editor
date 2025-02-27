@@ -36,7 +36,7 @@ using JsonParser::JsonSet;
 
 SyntaxHighlight::SyntaxHighlight(const std::string_view fName) : mColors{ 0 }
 {
-	std::string_view extension;
+	std::string extension;
 	size_t extensionIndex;
 	if ((extensionIndex = fName.find_last_of('.')) != std::string::npos)
 	{
@@ -51,7 +51,7 @@ SyntaxHighlight::SyntaxHighlight(const std::string_view fName) : mColors{ 0 }
 	std::stringstream fContents;
 	fContents << file.rdbuf();
 	mFileContents = fContents.str();
-	std::vector<JsonParser::JsonObject> mp = JsonParser::parseJson(mFileContents);
+	std::vector<JsonObject> mp = JsonParser::parseJson(mFileContents);
 	setSyntax(mp, extension);
 }
 
@@ -60,7 +60,7 @@ const bool SyntaxHighlight::hasSyntax()
 	return mCurrentSyntax != nullptr;
 }
 
-void SyntaxHighlight::setSyntax(const std::vector<JsonObject>& mp, const std::string_view extension)
+void SyntaxHighlight::setSyntax(const std::vector<JsonObject>& mp, const std::string& extension)
 {
 	for (const auto& syntax : mp) //For each top level key
 	{

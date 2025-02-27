@@ -4,6 +4,12 @@
 #include "Editor/Editor.hpp"
 #include "Input/Input.hpp"
 
+TEST(InputTests, EditorInitializedSuccessfully)
+{
+	Editor::initEditor("TestFile.cpp");
+	EXPECT_NO_FATAL_FAILURE();
+}
+
 TEST(InputTests, EnableInputModeWorks)
 {
 	InputHandler::doCommand(static_cast<KeyActions::KeyAction>('i'));
