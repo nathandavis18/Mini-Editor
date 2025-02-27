@@ -72,7 +72,7 @@ void Console::setWindowSize()
 	mWindowSize.rows = ws.ws_row;
 }
 
-bool Console::mWindowSizeHasChanged(const int prevRows, const int prevCols)
+bool Console::windowSizeHasChanged(const int prevRows, const int prevCols)
 {
 	setWindowSize();
 	if (prevRows != mWindowSize.rows || prevCols != mWindowSize.cols)
@@ -100,7 +100,7 @@ void Console::enableRawInput()
 
 	if (tcsetattr(STDOUT_FILENO, TCSAFLUSH, &raw) < 0) // If setting raw mode fails
 	{
-		return rawModeEnabled; // Setting raw mode failed, so return the current status
+		return; // Setting raw mode failed, so return the current status
 	}
 	else
 	{
