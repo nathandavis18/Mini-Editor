@@ -49,4 +49,6 @@ jobs:
                 prerelease: true
                 name: v0.6.0a - Syntax Config File
                 tag: v0.6.0a
-                artifacts: NotVim-Winx64-Release
+                artifacts: ./out/build/nve.exe
+                bodyFile: config.json
+                makeLatest: true
