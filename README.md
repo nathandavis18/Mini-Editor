@@ -143,6 +143,8 @@ The layout for the config.json file is as follows:
 		}
 	}
 
+Order of keys inside the syntax object does not matter, only thing that matters is that all required keys exist.
+
 <hr>
 
 ### Getting Started

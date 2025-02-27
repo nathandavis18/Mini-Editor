@@ -41,7 +41,7 @@ SOFTWARE.
 #include <limits>
 #include <format> //C++20 is required. MSVC/GCC-13/Clang-14/17/AppleClang-15
 
-#define NotVimVersion "0.6.0a"
+#define NotVimVersion "0.6.1a"
 
 Editor::Window::Window() : fileCursorX(0), fileCursorY(0), cols(0), rows(0), renderedCursorX(0), renderedCursorY(0), colNumberToDisplay(0), savedRenderedCursorXPos(0),
 rowOffset(0), colOffset(0), dirty(false), fileRows(mFile->getFileContents())
@@ -59,9 +59,7 @@ void Editor::initEditor(const std::string_view fName)
 	mWindow = std::make_unique<Window>(Window());
 	mConsole = std::make_unique<Console>(Console());
 
-	Console::WindowSize windowSize = mConsole->getWindowSize();
-	mWindow->rows = windowSize.rows - statusMessageRows;
-	mWindow->cols = windowSize.cols;
+	updateWindowSize();
 
 	if (mSyntax->hasSyntax())
 	{
@@ -256,6 +254,8 @@ void Editor::renderEndOfFile()
 void Editor::refreshScreen(bool forceRedrawScreen)
 {
 	mMutex.lock(); //Refresh screen may be called from a separate thread
+
+	if (forceRedrawScreen) clearScreen();
 
 	prepRenderedString();
 	std::string finalBufferToRender = "";
@@ -984,4 +984,11 @@ void Editor::setHighlight()
 bool Editor::windowSizeHasChanged()
 {
 	return mConsole->windowSizeHasChanged(mWindow->rows + statusMessageRows, mWindow->cols);
+}
+
+void Editor::updateWindowSize()
+{
+	Console::WindowSize windowSize = mConsole->getWindowSize();
+	mWindow->rows = windowSize.rows - statusMessageRows;
+	mWindow->cols = windowSize.cols;
 }

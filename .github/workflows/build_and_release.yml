@@ -47,8 +47,8 @@ jobs:
               with:
                 token: ${{ secrets.GITHUB_TOKEN }}
                 prerelease: true
-                name: v0.6.0a - Syntax Config File
-                tag: v0.6.0a
+                name: v0.6.1a - Window Size not updating fix
+                tag: v0.6.1a
                 artifacts: "config.json,out/build/nve.exe"
                 bodyFile: README.md
                 makeLatest: true

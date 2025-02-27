@@ -40,6 +40,7 @@ void updateScreen(std::atomic<bool>& runThread)
 	{
 		if (Editor::windowSizeHasChanged()) //Only update if the terminal screen actually got updated
 		{
+			Editor::updateWindowSize();
 			Editor::refreshScreen(true);
 		}
 	}

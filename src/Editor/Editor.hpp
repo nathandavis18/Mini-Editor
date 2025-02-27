@@ -195,6 +195,11 @@ public:
 	/// <returns></returns>
 	static bool windowSizeHasChanged();
 
+	/// <summary>
+	/// When the window size has changed, or when first initializing the editor, make sure mWindow->rows and cols are up to date
+	/// </summary>
+	static void updateWindowSize();
+
 private:
 	/// <summary>
 	/// The structure for how the window stores information and tracks current position within the file
