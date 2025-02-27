@@ -49,6 +49,6 @@ jobs:
                 prerelease: true
                 name: v0.6.0a - Syntax Config File
                 tag: v0.6.0a
-                artifacts: ./out/build/nve.exe
-                bodyFile: config.json
+                artifacts: "config.json,out/build/nve.exe"
+                bodyFile: README.md
                 makeLatest: true
