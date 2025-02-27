@@ -23,10 +23,5 @@ jobs:
         cxx-flags: -std=c++20
         options: CMAKE_BUILD_TYPE=Release BUILD_TESTS=ON
 
-  run-tests:
-    name: Run Tests
-    runs-on: ubuntu-24.04
-    needs: [ build-project ]
-    steps:
     - name: Run Tests
       run: cd ./out/build/tests && ./Tests --gtest_filter=-Console*:Editor*:*SavingFile*:*InsertChar*:*InputMode*
