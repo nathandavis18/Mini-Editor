@@ -2,7 +2,7 @@
   "cpp": {
     "fileExtensions": [ ".cpp", ".cc", ".cxx", ".hpp", ".h", ".hxx", ".hh" ],
 
-    "defaultColor": "white",
+    "defaultColor": "peach",
 
     "builtInKeywords": {
       "keywords": [
@@ -134,14 +134,13 @@
       "color": "lightgreen"
     },
     "number": {
-      "color": "blue"
+      "color": "seablue"
     },
     "string": {
       "color": "orange"
     },
     "escapeChar": "\\"
-  }, //Testing 2 things
-  //Python going here
+  },
   "python": {
 
   }

@@ -33,31 +33,48 @@ SOFTWARE.
 
 namespace JsonParser
 {
-	struct JsonValue;
+	struct JsonValue; //Forward declaration so JsonObject can access it
 
+	//Creating some typedefs for the Json Objects
 	using JsonObject = std::unordered_map<std::string, JsonValue>;
 	using JsonValue_t = std::variant<std::string, std::unordered_set<std::string_view>, JsonObject>;
 	using JsonSet = std::unordered_set<std::string_view>;
 
+	/// <summary>
+	/// How the parsed Json data is stored and accessed
+	/// </summary>
 	struct JsonValue
 	{
-		JsonValue_t value;
+		JsonValue_t value; //A variant with a string value, an unordered_set value, or a new JsonObject
 		
+		/// <summary>
+		/// Gets the JsonObject from the variant and checks if it contains a key
+		/// </summary>
+		/// <param name="key"></param>
+		/// <returns></returns>
 		const bool contains(const std::string& key) const
 		{
 			const JsonObject& obj = std::get<JsonObject>(value);
 			return obj.contains(key);
 		}
+
+		/// <summary>
+		/// Gets the sub object from the current object with the specified key
+		/// </summary>
+		/// <param name="key"></param>
+		/// <returns></returns>
 		const JsonValue& at(const std::string& key) const
 		{
 			const JsonObject& x = std::get<JsonObject>(value);
 			return x.at(key);
 		}
-		operator const JsonValue_t& () const
-		{
-			return value;
-		}
 
+		/// <summary>
+		/// A templated function for returning the value at a specific key
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="key"></param>
+		/// <returns></returns>
 		template <class T>
 		const T& get(const std::string& key) const
 		{
@@ -66,6 +83,10 @@ namespace JsonParser
 		}
 	};
 
-
+	/// <summary>
+	/// The entry function into parsing the JSON file contents. Returns a vector of top-level keys
+	/// </summary>
+	/// <param name="contents"></param>
+	/// <returns></returns>
 	std::vector<JsonObject> parseJson(std::string_view contents);
 }

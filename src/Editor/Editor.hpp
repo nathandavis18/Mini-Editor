@@ -341,6 +341,7 @@ private:
 	inline static std::unique_ptr<FileHandler> mFile;
 	inline static std::unique_ptr<Console> mConsole;
 	inline static std::unique_ptr<SyntaxHighlight> mSyntax;
+	inline static std::string normalColorMode;
 
 	inline static std::unique_ptr<Window> mWindow;
 

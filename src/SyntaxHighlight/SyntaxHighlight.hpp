@@ -51,23 +51,25 @@ public:
 		std::unordered_set<std::string_view> builtInTypeKeywords;
 		std::unordered_set<std::string_view> controlKeywords;
 		std::unordered_set<std::string_view> otherKeywords;
-		std::string singlelineComment;
-		std::string multilineCommentStart;
-		std::string multilineCommentEnd;
-		char escapeChar;
+
+		//These values may need a default/fallback value for when a syntax exists but doesn't define them
+		std::string singlelineComment = "//";
+		std::string multilineCommentStart = "/*";
+		std::string multilineCommentEnd = "*/";
+		char escapeChar = '\\';
 	};
+
+	/// <summary>
+	/// Initializes the syntax highlight functionality.
+	/// </summary>
+	/// <param name="fName"></param>
+	SyntaxHighlight(const std::string_view fName);
 
 	/// <summary>
 	/// Returns whether or not there is an active highlight syntax being used
 	/// </summary>
 	/// <returns></returns>
 	const bool hasSyntax();
-
-	/// <summary>
-	/// Initializes the syntax highlight functionality. Should only be called by the editor, and only called on initialization.
-	/// </summary>
-	/// <param name="fName"></param>
-	SyntaxHighlight(const std::string_view fName);
 
 	/// <summary>
 	/// The different types of highlights
@@ -155,8 +157,25 @@ public:
 
 
 	private:
-		void setSyntax(const std::vector<JsonParser::JsonObject> mp, const std::string_view extension);
+		/// <summary>
+		/// Called on syntax initialization. Finds the active syntax, if one exists.
+		/// Calls setColors() and setEditorSyntax() with the active syntax
+		/// </summary>
+		/// <param name="mp"></param>
+		/// <param name="extension"></param>
+		void setSyntax(const std::vector<JsonParser::JsonObject>& mp, const std::string_view extension);
+
+		/// <summary>
+		/// Sets the colors for the syntax based on what keys are defined.
+		/// Called on initialization of syntax only
+		/// </summary>
+		/// <param name="syntax"></param>
 		void setColors(const JsonParser::JsonValue& syntax);
+
+		/// <summary>
+		/// Sets the editor syntax information, including keywords, comment identifiers, etc.
+		/// </summary>
+		/// <param name="syntax"></param>
 		void setEditorSyntax(const JsonParser::JsonValue& syntax);
 
 	private:
@@ -172,6 +191,7 @@ public:
 			{"navyblue", 17}, {"darkblue", 18}, {"purple", 93}, {"darkpurple", 57}, {"lightgray", 7},
 			{"gray", 8}, {"white", 15}, {"black", 16}
 		};
+
 		std::array<uint8_t, static_cast<uint8_t>(HighlightType::EnumCount)> mColors;
 		std::vector<HighlightLocations> mHighlights;
 		std::unique_ptr<EditorSyntax> mCurrentSyntax;

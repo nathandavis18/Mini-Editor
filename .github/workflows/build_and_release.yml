@@ -43,11 +43,10 @@ jobs:
                 path: ./out/build/nve.exe
 
             - name: Create Release
-              uses: softprops/action-gh-release@v2
+              uses: ncipollo/release-action@v1
               with:
                 token: ${{ secrets.GITHUB_TOKEN }}
                 prerelease: true
-                name: v0.5.1a - Refactoring and optimizations
-                tag_name: v0.5.1a
-                files: |
-                    ./out/build/nve.exe
+                name: v0.6.0a - Syntax Config File
+                tag: v0.6.0a
+                bodyFile: ./out/build/nve.exe

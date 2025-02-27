@@ -24,10 +24,35 @@ SOFTWARE.
 #include "JsonParser.hpp"
 namespace JsonParser
 {
-	using iter = std::string_view::iterator;
+	using iter = std::string_view::iterator; //A convenient typedef for the iterator
 
-	JsonObject startParsing(std::string_view, iter&, bool initial = false);
-	JsonSet findEndArray(std::string_view, iter&);
+	/// <summary>
+	/// Starts parsing the current top-level key. 
+	/// Called recursively with getKeyValuePair()
+	/// </summary>
+	/// <param name="contents"> The contents of the current object </param>
+	/// <param name="currentPos"></param>
+	/// <param name="initial"> If this is the top level key or not </param>
+	/// <returns></returns>
+	JsonObject startParsing(std::string_view contents, iter& currentPos, bool initial = false);
+
+	/// <summary>
+	/// Finds the end of the JSON list, and adds all the contents to a JsonSet
+	/// </summary>
+	/// <param name="contents"></param>
+	/// <param name="currentPos"></param>
+	/// <returns></returns>
+	JsonSet findEndArray(std::string_view contents, iter& currentPos);
+
+	/// <summary>
+	/// Gets the key for an object, or creates a default name of 'null'.
+	/// Once key is found, gets value type and returns a pair of (key: string, value: JsonValue)
+	/// Called recursively with startParsing()
+	/// </summary>
+	/// <param name="contents"></param>
+	/// <param name="currentPos"></param>
+	/// <param name="initial"></param>
+	/// <returns></returns>
 	const std::pair<std::string, JsonValue> getKeyValuePair(std::string_view contents, iter& currentPos, bool initial = false);
 
 	JsonObject startParsing(std::string_view contents, iter& currentPos, bool initial)

@@ -41,7 +41,7 @@ SOFTWARE.
 #include <limits>
 #include <format> //C++20 is required. MSVC/GCC-13/Clang-14/17/AppleClang-15
 
-#define NotVimVersion "0.5.1a"
+#define NotVimVersion "0.6.0a"
 
 Editor::Window::Window() : fileCursorX(0), fileCursorY(0), cols(0), rows(0), renderedCursorX(0), renderedCursorY(0), colNumberToDisplay(0), savedRenderedCursorXPos(0),
 rowOffset(0), colOffset(0), dirty(false), fileRows(mFile->getFileContents())
@@ -62,6 +62,15 @@ void Editor::initEditor(const std::string_view fName)
 	Console::WindowSize windowSize = mConsole->getWindowSize();
 	mWindow->rows = windowSize.rows - statusMessageRows;
 	mWindow->cols = windowSize.cols;
+
+	if (mSyntax->hasSyntax())
+	{
+		normalColorMode = std::format("\x1b[38;5;{}m", std::to_string(mSyntax->color(SyntaxHighlight::HighlightType::Normal)));
+	}
+	else
+	{
+		normalColorMode = "\x1b[0m";
+	}
 }
 
 void Editor::clearScreen()
@@ -135,6 +144,7 @@ std::string Editor::renderStatus()
 	std::string statusBuffer = std::format("\x1b[{};{}H", statusRowStart, statusColStart); //Move the cursor to this position to draw the status bar
 	statusBuffer.append("\x1b[0K");
 
+	statusBuffer.append(normalColorMode);
 	statusBuffer.append("\x1b[7m"); //Set to inverse color mode (white background dark text) for status row
 
 	std::string rStatus, modeToDisplay;
@@ -196,7 +206,6 @@ std::string Editor::renderStatus()
 		}
 	}
 
-	statusBuffer.append("\x1b[0m\r\n"); //Set to default mode
 	statusBuffer.append("\x1b[0K");
 
 	return statusBuffer; //Send the status bar to be rendered
@@ -235,7 +244,7 @@ void Editor::renderEndOfFile()
 			}
 			else
 			{
-				mTextRenderBuffer.append("\x1b[0m"); //Make sure color mode is back to normal
+				mTextRenderBuffer.append(normalColorMode); //Make sure color mode is back to normal
 				mTextRenderBuffer.append(emptyRowCharacter);
 				mTextRenderBuffer.append("\x1b[0K\r\n"); //Clear the rest of the row
 			}
@@ -261,7 +270,7 @@ void Editor::refreshScreen(bool forceRedrawScreen)
 		mTextRenderBuffer.append("\x1b[0K\r\n");
 	}
 
-	mTextRenderBuffer.append("\x1b[0m"); //Make sure color mode is back to normal
+	mTextRenderBuffer.append(normalColorMode); //Make sure color mode is back to normal
 
 	if (mWindow->rowOffset + mWindow->rows >= mWindow->fileRows.size())
 	{
@@ -277,7 +286,7 @@ void Editor::refreshScreen(bool forceRedrawScreen)
 	}
 
 	finalBufferToRender.append(renderStatusAndCursor());
-
+	finalBufferToRender.append("\x1b[0m"); //After everything is displayed with its proper color, reset the color mode to default to not break the console
 	std::cout << finalBufferToRender;
 	std::cout.flush(); //Flush the buffer after rendering everything to screen
 
@@ -864,7 +873,8 @@ size_t Editor::getRenderedCursorTabSpaces(const FileHandler::Row& row)
 
 void Editor::updateRenderedColor(const size_t rowOffset, const size_t colOffset)
 {
-	std::string normalColorMode = "\x1b[0m";
+	if (!mSyntax->hasSyntax()) return;
+
 	size_t charactersToAdjust = 0; //The amount of characters to adjust for in the string position based on how many color code escape sequences have been added
 	size_t prevRow = 0;
 	for (const auto& highlight : mSyntax->highlights())

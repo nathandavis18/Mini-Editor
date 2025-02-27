@@ -44,7 +44,7 @@ endif()
 add_custom_command(
 	TARGET nve
 	COMMENT "Copying Syntax File"
-	PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/src/SyntaxHighlight/config.json $<TARGET_FILE_DIR:nve>
+	PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/config.json $<TARGET_FILE_DIR:nve>
 	VERBATIM
 )
 
