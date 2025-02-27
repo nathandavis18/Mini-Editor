@@ -75,6 +75,76 @@ You can use the current system as a base to see how it works. Then you can also 
 
 <hr>
 
+### Configuring Syntax Highlighting
+
+There is a config.json file for configuring the syntax highlighting to your heart's content! All you need to do is make sure the config.json file is in the same directory as 
+the nve executable. From there, all your configurations get loaded, and depending on the file extension, the proper syntax is configured!
+
+The list of pre-selected colors are:
+
+	pink, magenta, hotpink, rosered, lightred, red, darkred, darkorange,
+	peach, orange, lightorange, lightyellow, marigoldyellow, yellow,
+	darkyellow, darklimegreen, lightgreen, green, darkgreen, tealgreen,
+	teal, tealblue, lightblue, seablue, blue, navyblue, darkblue,
+	purple, darkpurple, lightgray, gray, white, and black
+
+If you would like to change/add your own colors, all you need to do is add/change a couple things in the SyntaxHighlight.hpp file.
+
+At the bottom of the file, you will find something that looks like
+
+```
+	inline static const std::unordered_map<std::string, uint8_t> mColorKeys{
+		//Color values here
+	}
+```
+
+To add a new color, just navigate to the [link](https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797#:~:text=Where%20%7BID%7D%20should%20be%20replaced%20with%20the%20color%20index%20from%200%20to%20255%20of%20the%20following%20color%20table%3A),
+find the color id that suits you, give it a unique name, and enter the id found on the site. To change existing colors, just change the number and/or the name.
+
+Make sure that the values you put in the config.json file exist in the colorKey map.
+
+The layout for the config.json file is as follows:
+
+	{
+		syntaxName (can be anything): {
+			"fileExtensions": [ //File extensions. E.g.: ".cpp", ".cc"], (REQUIRED)
+			"defaultColor": "colorValue", (OPTIONAL, DEFAULT IS WHITE)
+			"builtInKeywords": { (OPTIONAL)
+				"keywords": [ (REQUIRED IF builtInKeywords exists)
+					//All keywords for your language
+				],
+				"color": "colorValue" (REQUIRED IF builtInKeywords exists)
+			},
+			"controlKeywords": { (OPTIONAL)
+				//Follows same structure as builtInKeywords
+			},
+			"otherKeywords": { (OPTIONAL)
+				//Follows same structure as builtInKeywords
+			},
+			"multiLineComment" { (OPTIONAL) (DEFAULTS TO "/*" for start marker, and "*/" for end marker, with GREEN default color)
+				"start": "startMarker [such as /*]", (REQUIRED IF multiLineComment exists)
+				"end": "endMarker [such as */]", (REQUIRED IF multiLineComment exists)
+				"color": "colorValue" (REQUIRED IF multiLineComment exists)
+			},
+			"singleLineComment": { (OPTIONAL) (DEFAULTS TO "//" with LIMEGREEN default color)
+				"identifier": "marker [such as //]", (REQUIRED IF singleLineComment exists)
+				"color": "colorValue" (REQUIRED IF singleLineComment exists)
+			},
+			"number": { (OPTIONAL, color defaults to SEABLUE)
+				"color": "colorValue" (REQUIRED IF number EXISTS)
+			},
+			"string": { (OPTIONAL, color defaults to ORANGE)
+				"color": "colorValue" (REQUIRED IF string EXISTS)
+			},
+			"escapeChar": "escapeCharValue [such as \\]" (OPTIONAL, defaults to \\)
+		},
+		"newSyntax": {
+			//Repeat the process
+		}
+	}
+
+<hr>
+
 ### Getting Started
 
 If you are on Windows and would like to try this out right away, head to the releases tab and download the nve.exe file. This is the standalone program executable.
