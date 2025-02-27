@@ -43,3 +43,10 @@ add_custom_command(
 	PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/testFile.txt $<TARGET_FILE_DIR:Tests>
 	VERBATIM
 )
+
+add_custom_command(
+	TARGET Tests
+	COMMENT "Copying config.json"
+	PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/config.json $<TARGET_FILE_DIR:Tests>
+	VERBATIM
+)

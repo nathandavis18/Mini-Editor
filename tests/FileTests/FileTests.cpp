@@ -8,21 +8,21 @@
 
 TEST(FileTest, FileNameGetsSavedProperly)
 {
-	FileHandler::initFileHandler("TestFileName.txt");
-	EXPECT_EQ(FileHandler::fileName(), "TestFileName.txt") << "The file name should be set to TestFileName.txt";
+	FileHandler file("TestFileName.txt");
+	EXPECT_EQ(file.fileName(), "TestFileName.txt") << "The file name should be set to TestFileName.txt";
 }
 
 TEST(FileTest, FileReturnsCorrectNumRows)
 {
-	FileHandler::initFileHandler("testFile.txt");
-	std::vector<FileHandler::Row> rows = FileHandler::getFileContents();
+	FileHandler file("testFile.txt");
+	std::vector<FileHandler::Row> rows = file.getFileContents();
 	EXPECT_EQ(rows.size(), 4) << "rows.size() should return 4";
 }
 
 TEST(FileTest, FileReturnsEmptyWhenFileDoesntExist)
 {
-	FileHandler::initFileHandler("nonexistantFile.txt");
-	std::vector<FileHandler::Row> rows = FileHandler::getFileContents();
+	FileHandler file("nonexistantFile.txt");
+	std::vector<FileHandler::Row> rows = file.getFileContents();
 	EXPECT_EQ(rows.size(), 0) << "New/Nonexistant File should not have any rows";
 }
 
