@@ -68,7 +68,7 @@ namespace InputHandler
 				break;
 			}
 			Editor::enableReadMode(); //Go back to read mode after executing a command
-			Editor::refreshScreen(true);
+			Editor::refreshScreen();
 			break;
 
 		case KeyAction::ArrowDown:
