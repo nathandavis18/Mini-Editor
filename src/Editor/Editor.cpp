@@ -981,11 +981,6 @@ void Editor::setHighlight()
 	}
 }
 
-bool Editor::windowSizeHasChanged()
-{
-	return mConsole->windowSizeHasChanged(mWindow->rows + statusMessageRows, mWindow->cols);
-}
-
 void Editor::updateWindowSize()
 {
 	Console::WindowSize windowSize = mConsole->getWindowSize();

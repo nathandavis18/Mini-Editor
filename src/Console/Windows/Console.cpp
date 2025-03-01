@@ -24,6 +24,8 @@ SOFTWARE.
 
 #include "Console/Console.hpp"
 
+#define WIN32_LEAN_AND_MEAN
+#define VC_EXTRALEAN
 #include <Windows.h>
 #include <iostream>
 #include <cstdlib>
@@ -53,6 +55,7 @@ void Console::setDefaultMode()
 
 Console::WindowSize Console::getWindowSize()
 {
+	setWindowSize();
 	return mWindowSize;
 }
 
@@ -69,21 +72,11 @@ void Console::setWindowSize()
 	mWindowSize.cols = screenInfo.srWindow.Right - screenInfo.srWindow.Left + 1;
 }
 
-bool Console::windowSizeHasChanged(const int prevRows, const int prevCols)
-{
-	setWindowSize();
-	if (prevRows != mWindowSize.rows || prevCols != mWindowSize.cols)
-	{
-		return true;
-	}
-	return false;
-}
-
 void Console::enableRawInput()
 {
 	if (rawModeEnabled) return;
 
-	DWORD rawMode = ENABLE_EXTENDED_FLAGS | (defaultMode & ~ENABLE_LINE_INPUT & ~ENABLE_PROCESSED_INPUT
+	DWORD rawMode = ENABLE_EXTENDED_FLAGS | ENABLE_WINDOW_INPUT | (defaultMode & ~ENABLE_LINE_INPUT & ~ENABLE_PROCESSED_INPUT
 		& ~ENABLE_ECHO_INPUT & ~ENABLE_PROCESSED_OUTPUT & ~ENABLE_WRAP_AT_EOL_OUTPUT); //Disabling certain input/output flags to enable raw mode
 
 	if (SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), rawMode))

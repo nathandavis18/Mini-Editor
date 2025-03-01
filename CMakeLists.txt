@@ -25,6 +25,7 @@ set (HEADERS
 	"src/KeyActions/KeyActions.hh"
 	"src/SyntaxHighlight/SyntaxHighlight.hpp"
 	"src/SyntaxHighlight/JsonParser/JsonParser.hpp"
+	"src/EventHandler/EventHandler.hpp"
 )
 
 add_executable (mini ${SOURCES} ${HEADERS})
@@ -33,11 +34,13 @@ if(WIN32)
 	target_sources(mini
 		PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/Console/Windows/Console.cpp"
 		PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/Input/Windows/GetInputImpl.cpp"
+		PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/EventHandler/Windows/EventHandler.cpp"
 	)
 else()
 	target_sources(mini
 		PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/Console/Unix/Console.cpp"
 		PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/Input/Unix/GetInputImpl.cpp"
+		PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/EventHandler/Unix/EventHandler.cpp"
 	)
 endif()
 

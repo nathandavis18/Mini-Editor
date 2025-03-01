@@ -47,14 +47,6 @@ public:
 	WindowSize getWindowSize();
 
 	/// <summary>
-	/// Called when an outside file needs to know if the window size has changed.
-	/// </summary>
-	/// <param name="prevRows"></param>
-	/// <param name="prevCols"></param>
-	/// <returns></returns>
-	bool windowSizeHasChanged(const int prevRows, const int prevCols);
-
-	/// <summary>
 	/// Enables raw input mode on the console by using the OS-specific functions
 	/// </summary>
 	/// <returns> Returns true if successful </returns>

@@ -25,26 +25,10 @@ SOFTWARE.
 #include "Input/Input.hpp"
 #include "Editor/Editor.hpp"
 #include "Console/Console.hpp"
+#include "EventHandler/EventHandler.hpp"
 
 #include <iostream>
-#include <thread>
-#include <cstdlib>
-
-/// <summary>
-/// Makes sure that if the user changes the size of the console, the screen updates accordingly
-/// </summary>
-/// <param name="runThread"></param>
-void updateScreen(std::atomic<bool>& runThread)
-{
-	while (runThread)
-	{
-		if (Editor::windowSizeHasChanged()) //Only update if the terminal screen actually got updated
-		{
-			Editor::updateWindowSize();
-			Editor::refreshScreen(true);
-		}
-	}
-}
+#include <cstdlib> //EXIT_FAILURE, EXIT_SUCCESS
 
 int main(int argc, const char** argv)
 {
@@ -59,18 +43,12 @@ int main(int argc, const char** argv)
 	}
 
 	Editor::initEditor(argv[1]);
-
-	std::atomic<bool> runThread = true; //Main thread will update this bool, while secondary thread reads from it
-	std::thread t(updateScreen, std::ref(runThread));
+	EventHandler evtHandler;
 
 	while (true)
 	{
 		if (Editor::mode() == Editor::Mode::ExitMode)
 		{
-			runThread = false;
-			while (!t.joinable()); //Wait for secondary thread to finish what it is doing, then join the thread
-			t.join();
-
 			Editor::clearScreen();
 			break;
 		}
@@ -89,6 +67,12 @@ int main(int argc, const char** argv)
 					InputHandler::handleInput(inputCode);
 				}
 			}
+
+			//if (Editor::windowSizeHasChanged()) //Only update if the terminal screen actually got updated
+			//{
+			//	Editor::updateWindowSize();
+			//	Editor::refreshScreen(true);
+			//}
 		}
 	}
 	
