@@ -1,6 +1,6 @@
-# NotVim Editor
+# Mini Editor
 
-NotVim Editor is a WIP, custom, 0 dependencies, cross-platform, console-based text editor, currently tested to work on Windows and Linux.
+Mini (formerly NotVim) Editor is a WIP, custom, 0 dependencies, cross-platform, console-based text editor, currently tested to work on Windows and Linux.
 
 All standard features of a text-editor, with the exception of find/replace, have been implemented and should be bug-free. 
 Be sure to check out [Getting Starting](#getting-started)!
@@ -63,13 +63,11 @@ More key functionality will be added as this project progresses.
 
 ### Syntax Highlighting
 
-Currently syntax highlighting only supports C++ files (.cc, .cpp, .hpp, .h, .hh, etc.). This is currently hard-coded into the syntax highlight, but a config file will be implemented in the near future!
+Currently, the provided config.json only supports C++ files (.cc, .cpp, .hpp, .h, .hh, etc.), but configurations for other languages will be provided soon! Feel free to add your own addition to the config for your favorite language!
 
 Syntax highlights are generated using a custom token system, which stores the highlight type, starting position, and ending position. For multiline highlights, including strings and multiline comments,
 the token also stores if the ending position exists, or if the rest of the file should just have the same highlight.
 
-Although the C++ values are hard-coded into the syntax highlight system, it is designed to be fully dynamic. All you need to do is add the keywords and comment syntax to the syntax highlight vector.
-You can use the current system as a base to see how it works. Then you can also define some colors using the link provided at the top of SyntaxHighlight.cpp.
 
 ![image](https://github.com/user-attachments/assets/c1a5efd0-996f-4f5f-8dae-d87293c9a905)
 
@@ -78,7 +76,7 @@ You can use the current system as a base to see how it works. Then you can also 
 ### Configuring Syntax Highlighting
 
 There is a config.json file for configuring the syntax highlighting to your heart's content! All you need to do is make sure the config.json file is in the same directory as 
-the nve executable. From there, all your configurations get loaded, and depending on the file extension, the proper syntax is configured!
+the mini executable. From there, all your configurations get loaded, and depending on the file extension, the proper syntax is configured!
 
 The list of pre-selected colors are:
 
@@ -149,7 +147,7 @@ Order of keys inside the syntax object does not matter, only thing that matters 
 
 ### Getting Started
 
-If you are on Windows and would like to try this out right away, head to the releases tab and download the nve.exe file. This is the standalone program executable.
+If you are on Windows and would like to try this out right away, head to the releases tab and download the mini.exe file. This is the standalone program executable.
 Check out [Usage](#usage) to learn how to use it!
 
 Be sure to check out [Building](#building) if you would like to build the project for yourself!
@@ -200,15 +198,15 @@ To build manually with tests, run the following instead
 
 To use, navigate to the executable (either in {buildDir} or {buildDir}/bin most commonly). Then, run
 
-	./nve <filename.fileExtension>
+	./mini <filename.fileExtension>
 
 	OR IF USING COMMAND PROMPT
 
-	nve <filename.fileExtension>
+	mini <filename.fileExtension>
 
 	EXAMPLE:
 
-	./nve test.cpp
+	./mini test.cpp
 
 This executable is a standalone executable, so you may also add this file to your system path and use it from anywhere
 

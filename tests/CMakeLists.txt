@@ -29,7 +29,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 add_executable(Tests ${SOURCES})
 target_link_libraries(Tests PUBLIC
 	gtest_main
-	nve_project
+	mini_tests
 )
 
 

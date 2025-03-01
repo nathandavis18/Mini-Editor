@@ -54,7 +54,7 @@ int main(int argc, const char** argv)
 #endif
 	if (argc != 2)
 	{
-		std::cerr << "ERROR: Usage: nve <filename>\n";
+		std::cerr << "ERROR: Usage: mini <filename>\n";
 		return EXIT_FAILURE;
 	}
 
