@@ -41,7 +41,7 @@ SOFTWARE.
 #include <limits>
 #include <format> //C++20 is required. MSVC/GCC-13/Clang-14/17/AppleClang-15
 
-#define NotVimVersion "0.6.1a"
+#define MiniVersion "0.6.1a"
 
 Editor::Window::Window() : fileCursorX(0), fileCursorY(0), cols(0), rows(0), renderedCursorX(0), renderedCursorY(0), colNumberToDisplay(0), savedRenderedCursorXPos(0),
 rowOffset(0), colOffset(0), dirty(false), fileRows(mFile->getFileContents())
@@ -226,7 +226,7 @@ void Editor::renderEndOfFile()
 		{
 			if (mWindow->fileRows.size() == 0 && y == mWindow->rows / 3) //If the file is empty and the current row is at 1/3 height (good display position)
 			{
-				std::string welcome = std::format("NotVim Editor -- version {}\x1b[0K\r\n", NotVimVersion);
+				std::string welcome = std::format("Mini Editor -- version {}\x1b[0K\r\n", MiniVersion);
 				size_t padding = (mWindow->cols - welcome.length()) / 2;
 				if (padding > 0)
 				{
