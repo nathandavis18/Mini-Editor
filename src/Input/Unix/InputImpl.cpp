@@ -23,7 +23,7 @@ SOFTWARE.
 */
 
 #include "KeyActions/KeyActions.hh"
-#include "Input/GetInputImpl.hpp"
+#include "Input/InputImpl.hpp"
 #include "Editor/Editor.hpp"
 
 #include <unistd.h>

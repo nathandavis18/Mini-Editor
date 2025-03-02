@@ -56,7 +56,7 @@ namespace InputHandler
 			if (!shouldExit)
 			{
 				Editor::enableReadMode(); //Go back to read mode after executing a command
-				Editor::refreshScreen();
+				Editor::refreshScreen(true);
 			}
 			break;
 

@@ -264,7 +264,15 @@ void Editor::refreshScreen(bool forceRedrawScreen)
 {
 	mMutex.lock(); //Refresh screen may be called from a separate thread
 
-	if (forceRedrawScreen) clearScreen();
+	if (forceRedrawScreen)
+	{
+		clearScreen();
+		if (mWindow->fileRows.size() > 0) fixRenderedCursorPosition(mWindow->fileRows.at(mWindow->fileCursorY));
+		else
+		{
+			mWindow->renderedCursorX = 0; mWindow->renderedCursorY = 0;
+		}
+	}
 
 	prepRenderedString();
 	std::string finalBufferToRender = "";
