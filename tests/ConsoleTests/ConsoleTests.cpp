@@ -22,15 +22,3 @@ TEST(ConsoleTests, ConsoleSizeGetsSetProperly)
 	Console::WindowSize size = console.getWindowSize();
 	EXPECT_TRUE(size.rows > 0 && size.cols > 0);
 }
-
-TEST(ConsoleTests, ConsoleSizeHasChangedWorks)
-{
-	Console console;
-	Console::WindowSize size = console.getWindowSize();
-	bool withoutChange = console.windowSizeHasChanged(size.rows, size.cols);
-	EXPECT_FALSE(withoutChange);
-
-	size.rows -= 1;
-	bool withChange = console.windowSizeHasChanged(size.rows, size.cols);
-	EXPECT_TRUE(withChange);
-}

@@ -23,8 +23,11 @@ SOFTWARE.
 */
 
 #include "KeyActions/KeyActions.hh"
-#include "Input/GetInputImpl.hpp"
+#include "Input/InputImpl.hpp"
+#include "Editor/Editor.hpp"
 
+#include <iostream>
+#include <string>
 #include <conio.h>
 
 using KeyActions::KeyAction;
@@ -70,5 +73,89 @@ namespace InputImpl
 			}
 		}
 		return static_cast<KeyAction>(input);
+	}
+
+	bool isActionKey(const KeyAction key)
+	{
+		switch (key)
+		{
+		case KeyAction::ArrowDown:
+		case KeyAction::ArrowLeft:
+		case KeyAction::ArrowRight:
+		case KeyAction::ArrowUp:
+		case KeyAction::CtrlArrowDown:
+		case KeyAction::CtrlArrowLeft:
+		case KeyAction::CtrlArrowRight:
+		case KeyAction::CtrlArrowUp:
+		case KeyAction::Home:
+		case KeyAction::End:
+		case KeyAction::CtrlHome:
+		case KeyAction::CtrlEnd:
+		case KeyAction::PageDown:
+		case KeyAction::PageUp:
+		case KeyAction::CtrlPageDown:
+		case KeyAction::CtrlPageUp:
+		case KeyAction::CtrlC:
+		case KeyAction::CtrlX:
+		case KeyAction::CtrlY:
+		case KeyAction::CtrlZ:
+		case KeyAction::Delete:
+		case KeyAction::CtrlDelete:
+		case KeyAction::Tab:
+			return true;
+
+		default:
+			return false;
+		}
+	}
+
+	bool doCommand()
+	{
+		bool shouldExit = false;
+		const char* startStr = "\x1b[2K\x1b[1A\x1b[1E:";
+		std::string command;
+		std::string commandBuffer = startStr;
+		KeyAction commandInput;
+		std::cout << commandBuffer;
+		Editor::updateCommandBuffer(commandBuffer);
+		while ((commandInput = getInput()) != KeyAction::Enter)
+		{
+			if (!isActionKey(commandInput))
+			{
+				if (commandInput == KeyAction::Esc) return shouldExit;
+				if (commandInput == KeyAction::Backspace && command.length() > 0)
+				{
+					command.pop_back();
+				}
+				else if (commandInput == KeyAction::CtrlBackspace)
+				{
+					command.clear();
+				}
+				else if (commandInput != KeyAction::CtrlBackspace && commandInput != KeyAction::Backspace)
+				{
+					command += static_cast<unsigned char>(commandInput);
+				}
+			}
+			commandBuffer = startStr + command;
+			Editor::updateCommandBuffer(commandBuffer);
+			std::cout << commandBuffer;
+		}
+
+		if ((command == "q" && !Editor::isDirty()) || command == "q!") //Quit command - requires changes to be saved if not force quit
+		{
+			Editor::enableExitMode();
+			shouldExit = true;
+		}
+		else if (command == "w" || command == "s") //Save commands ([w]rite / [s]ave)
+		{
+			Editor::save();
+		}
+		else if (command == "wq" || command == "sq") //Save and quit commands ([w]rite [q]uit / [s]ave [q]uit)
+		{
+			Editor::save();
+			Editor::enableExitMode();
+			shouldExit = true;
+		}
+		return shouldExit;
 	}
 }

@@ -21,7 +21,7 @@ set (HEADERS
 	"src/Editor/Editor.hpp"
 	"src/File/File.hpp"
 	"src/Input/Input.hpp"
-	"src/Input/GetInputImpl.hpp"
+	"src/Input/InputImpl.hpp"
 	"src/KeyActions/KeyActions.hh"
 	"src/SyntaxHighlight/SyntaxHighlight.hpp"
 	"src/SyntaxHighlight/JsonParser/JsonParser.hpp"
@@ -33,13 +33,13 @@ add_executable (mini ${SOURCES} ${HEADERS})
 if(WIN32)
 	target_sources(mini
 		PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/Console/Windows/Console.cpp"
-		PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/Input/Windows/GetInputImpl.cpp"
+		PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/Input/Windows/InputImpl.cpp"
 		PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/EventHandler/Windows/EventHandler.cpp"
 	)
 else()
 	target_sources(mini
 		PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/Console/Unix/Console.cpp"
-		PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/Input/Unix/GetInputImpl.cpp"
+		PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/Input/Unix/InputImpl.cpp"
 		PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/EventHandler/Unix/EventHandler.cpp"
 	)
 endif()
@@ -59,12 +59,14 @@ if(BUILD_TESTS)
 	if(WIN32)
 		target_sources(mini_tests
 			PUBLIC "${CMAKE_CURRENT_LIST_DIR}/src/Console/Windows/Console.cpp"
-			PUBLIC "${CMAKE_CURRENT_LIST_DIR}/src/Input/Windows/GetInputImpl.cpp"
+			PUBLIC "${CMAKE_CURRENT_LIST_DIR}/src/Input/Windows/InputImpl.cpp"
+			PUBLIC "${CMAKE_CURRENT_LIST_DIR}/src/EventHandler/Windows/EventHandler.cpp"
 		)
 	else()
 		target_sources(mini_tests
 			PUBLIC "${CMAKE_CURRENT_LIST_DIR}/src/Console/Unix/Console.cpp"
-			PUBLIC "${CMAKE_CURRENT_LIST_DIR}/src/Input/Unix/GetInputImpl.cpp"
+			PUBLIC "${CMAKE_CURRENT_LIST_DIR}/src/Input/Unix/InputImpl.cpp"
+			PUBLIC "${CMAKE_CURRENT_LIST_DIR}/src/EventHandler/Unix/EventHandler.cpp"
 		)
 	endif(WIN32)
 
