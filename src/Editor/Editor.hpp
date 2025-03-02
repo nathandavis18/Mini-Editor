@@ -189,16 +189,11 @@ public:
 	static void enableExitMode();
 
 	/// <summary>
-	/// Intermediary between other files and the console. Only the editor needs to worry about what happens with the console
-	/// Returns true if the console size has changed, false otherwise
-	/// </summary>
-	/// <returns></returns>
-	static bool windowSizeHasChanged();
-
-	/// <summary>
 	/// When the window size has changed, or when first initializing the editor, make sure mWindow->rows and cols are up to date
 	/// </summary>
 	static void updateWindowSize();
+
+	static void updateCommandBuffer(const std::string_view command);
 
 private:
 	/// <summary>
@@ -342,6 +337,7 @@ private:
 
 private:
 	inline static std::string mTextRenderBuffer, mPreviousTextRenderBuffer; //Implementing double-buffering so the screen doesn't need to always update
+	inline static std::string_view mCommandBuffer;
 
 	inline static std::unique_ptr<FileHandler> mFile;
 	inline static std::unique_ptr<Console> mConsole;

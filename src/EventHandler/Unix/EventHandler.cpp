@@ -1,4 +1,4 @@
-﻿/**
+/**
 * MIT License
 
 Copyright (c) 2024 Nathan Davis
@@ -22,29 +22,24 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#pragma once
+#include "EventHandler/EventHandler.hpp"
+#include "Editor/Editor.hpp"
 #include "KeyActions/KeyActions.hh"
 
-namespace InputHandler
+#include <iostream>
+#include <csignal>
+
+void windowSizeChangeEvent(int)
 {
-	/// <summary>
-	/// Calls the implementation-specific getInput.
-	/// Called on every input
-	/// </summary>
-	/// <returns></returns>
-	const KeyActions::KeyAction getInput();
+    Editor::updateWindowSize();
+    Editor::refreshScreen(true);
+}
+EventHandler::EventHandler(std::atomic<bool>& running) : mRunning(running)
+{
+    std::signal(SIGWINCH, windowSizeChangeEvent);
+}
 
-	/// <summary>
-	/// Handles the input while in EDIT mode. As such, is only called while in EDIT mode
-	/// </summary>
-	/// <param name=""></param>
-	void handleInput(const KeyActions::KeyAction);
-
-	/// <summary>
-	/// Handles inputs while in command/read mode
-	/// Current options include:
-	///		i = Enter edit mode (like VIM)
-	///		: = Enter command mode (like VIM)
-	/// </summary>
-	void changeMode(const KeyActions::KeyAction);
+EventHandler::~EventHandler()
+{
+    std::signal(SIGWINCH, nullptr);
 }

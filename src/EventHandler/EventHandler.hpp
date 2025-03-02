@@ -1,4 +1,4 @@
-﻿/**
+/**
 * MIT License
 
 Copyright (c) 2024 Nathan Davis
@@ -23,28 +23,24 @@ SOFTWARE.
 */
 
 #pragma once
-#include "KeyActions/KeyActions.hh"
-
-namespace InputHandler
+#include <functional>
+#include <atomic>
+#include <cstdint>
+class EventHandler
 {
+public:
 	/// <summary>
-	/// Calls the implementation-specific getInput.
-	/// Called on every input
+	/// Initialize the window size event handler. 
+	/// The atomic bool is only for Windows, but may be useful later so it is gonna stay here since its not hurting anything
 	/// </summary>
-	/// <returns></returns>
-	const KeyActions::KeyAction getInput();
+	/// <param name="running"></param>
+	EventHandler(std::atomic<bool>& running);
 
 	/// <summary>
-	/// Handles the input while in EDIT mode. As such, is only called while in EDIT mode
+	/// On Windows, join the thread. On Unix, unset the SIGWINCH callback.
 	/// </summary>
-	/// <param name=""></param>
-	void handleInput(const KeyActions::KeyAction);
+	~EventHandler();
 
-	/// <summary>
-	/// Handles inputs while in command/read mode
-	/// Current options include:
-	///		i = Enter edit mode (like VIM)
-	///		: = Enter command mode (like VIM)
-	/// </summary>
-	void changeMode(const KeyActions::KeyAction);
-}
+private:
+	std::atomic<bool>& mRunning;
+};

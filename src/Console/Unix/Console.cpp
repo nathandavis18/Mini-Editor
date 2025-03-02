@@ -31,8 +31,7 @@ SOFTWARE.
 #include <termios.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
-#include <signal.h>
-#include <cstdlib>
+#include <cstdlib> //exit, EXIT_FAILURE
 
 static termios defaultMode; // Unix console settings struct
 
@@ -55,11 +54,11 @@ void Console::setDefaultMode()
 		std::cerr << "Error retrieving current console mode";
 		exit(EXIT_FAILURE);
 	}
-	signal(SIGWINCH, nullptr);
 }
 
 Console::WindowSize Console::getWindowSize()
 {
+	setWindowSize();
 	return mWindowSize;
 }
 
@@ -70,16 +69,6 @@ void Console::setWindowSize()
 	ioctl(fileno(stdout), TIOCGWINSZ, &ws); // Get the console size from the OS
 	mWindowSize.cols = ws.ws_col;
 	mWindowSize.rows = ws.ws_row;
-}
-
-bool Console::windowSizeHasChanged(const int prevRows, const int prevCols)
-{
-	setWindowSize();
-	if (prevRows != mWindowSize.rows || prevCols != mWindowSize.cols)
-	{
-		return true;
-	}
-	return false;
 }
 
 void Console::enableRawInput()

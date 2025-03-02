@@ -35,4 +35,11 @@ namespace InputImpl
 	/// </summary>
 	/// <returns></returns>
 	const KeyActions::KeyAction getInput();
+
+	/// <summary>
+	/// Handles the command input when in command mode.
+	/// Functionality changed to allow for non busy-looping implementation
+	/// </summary>
+	/// <returns> True if program should exit, false otherwise </returns>
+	bool doCommand();
 }

@@ -47,8 +47,7 @@ jobs:
               with:
                 token: ${{ secrets.GITHUB_TOKEN }}
                 prerelease: true
-                name: v0.6.2a - Name Changed to Mini
+                name: v0.6.2a - Name Changed to Mini | Fixed Busy Looping
                 tag: v0.6.2a
                 artifacts: "config.json,out/build/mini.exe"
-                bodyFile: README.md
                 makeLatest: true

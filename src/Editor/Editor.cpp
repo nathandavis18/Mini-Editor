@@ -41,7 +41,7 @@ SOFTWARE.
 #include <limits>
 #include <format> //C++20 is required. MSVC/GCC-13/Clang-14/17/AppleClang-15
 
-#define MiniVersion "0.6.1a"
+#define MiniVersion "0.6.2a"
 
 Editor::Window::Window() : fileCursorX(0), fileCursorY(0), cols(0), rows(0), renderedCursorX(0), renderedCursorY(0), colNumberToDisplay(0), savedRenderedCursorXPos(0),
 rowOffset(0), colOffset(0), dirty(false), fileRows(mFile->getFileContents())
@@ -128,6 +128,10 @@ void Editor::prepRenderedLineForRender()
 
 std::string Editor::renderCursor()
 {
+	if (mMode == Mode::CommandMode)
+	{
+		mWindow->renderedCursorX = 0; mWindow->renderedCursorY = mWindow->rows + statusMessageRows;
+	}
 	size_t rowToDisplay = mWindow->renderedCursorY + 1; //Add 1 for display only. Actual rows/cols are 0-indexed internally
 	size_t colToDisplay = mWindow->renderedCursorX + 1;
 
@@ -140,7 +144,7 @@ std::string Editor::renderStatus()
 	const uint8_t statusRowStart = mWindow->rows + 1;
 	constexpr uint8_t statusColStart = 0;
 	std::string statusBuffer = std::format("\x1b[{};{}H", statusRowStart, statusColStart); //Move the cursor to this position to draw the status bar
-	statusBuffer.append("\x1b[0K");
+	statusBuffer.append("\x1b[0m\x1b[0K");
 
 	statusBuffer.append(normalColorMode);
 	statusBuffer.append("\x1b[7m"); //Set to inverse color mode (white background dark text) for status row
@@ -190,9 +194,9 @@ std::string Editor::renderStatus()
 	}
 	statusLength += modeToDisplay.length();
 
-	while (statusLength < mWindow->cols)
+	while (statusLength <= mWindow->cols)
 	{
-		if (mWindow->cols - statusLength == rStatus.length())
+		if (mWindow->cols - statusLength - 1 == rStatus.length())
 		{
 			statusBuffer.append(rStatus);
 			break;
@@ -204,7 +208,7 @@ std::string Editor::renderStatus()
 		}
 	}
 
-	statusBuffer.append("\x1b[0K");
+	statusBuffer.append("\x1b[0J");
 
 	return statusBuffer; //Send the status bar to be rendered
 }
@@ -214,6 +218,11 @@ std::string Editor::renderStatusAndCursor()
 	std::string statusAndCursorBuffer = "";
 	statusAndCursorBuffer.append(renderStatus());
 	statusAndCursorBuffer.append(renderCursor());
+	if (mMode == Mode::CommandMode)
+	{
+		statusAndCursorBuffer.append("\x1b[0m");
+		statusAndCursorBuffer.append(mCommandBuffer);
+	}
 	return statusAndCursorBuffer;
 }
 
@@ -255,7 +264,15 @@ void Editor::refreshScreen(bool forceRedrawScreen)
 {
 	mMutex.lock(); //Refresh screen may be called from a separate thread
 
-	if (forceRedrawScreen) clearScreen();
+	if (forceRedrawScreen)
+	{
+		clearScreen();
+		if (mWindow->fileRows.size() > 0) fixRenderedCursorPosition(mWindow->fileRows.at(mWindow->fileCursorY));
+		else
+		{
+			mWindow->renderedCursorX = 0; mWindow->renderedCursorY = 0;
+		}
+	}
 
 	prepRenderedString();
 	std::string finalBufferToRender = "";
@@ -981,14 +998,14 @@ void Editor::setHighlight()
 	}
 }
 
-bool Editor::windowSizeHasChanged()
-{
-	return mConsole->windowSizeHasChanged(mWindow->rows + statusMessageRows, mWindow->cols);
-}
-
 void Editor::updateWindowSize()
 {
 	Console::WindowSize windowSize = mConsole->getWindowSize();
 	mWindow->rows = windowSize.rows - statusMessageRows;
 	mWindow->cols = windowSize.cols;
+}
+
+void Editor::updateCommandBuffer(const std::string_view command)
+{
+	mCommandBuffer = command;
 }

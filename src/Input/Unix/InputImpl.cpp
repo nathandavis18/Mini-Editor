@@ -23,11 +23,14 @@ SOFTWARE.
 */
 
 #include "KeyActions/KeyActions.hh"
-#include "Input/GetInputImpl.hpp"
+#include "Input/InputImpl.hpp"
+#include "Editor/Editor.hpp"
 
 #include <unistd.h>
 #include <cstdlib>
 #include <cstdio>
+#include <string>
+#include <iostream>
 
 using KeyActions::KeyAction;
 
@@ -112,5 +115,31 @@ namespace InputImpl
 			}
 		}
 		return static_cast<KeyAction>(c);
+	}
+
+	bool doCommand()
+	{
+		bool shouldExit = false;
+		std::string command;
+		std::cout << ":";
+		std::cin >> command;
+
+		if ((command == "q" && !Editor::isDirty()) || command == "q!") //Quit command - requires changes to be saved if not force quit
+		{
+			Editor::enableExitMode();
+			shouldExit = true;
+		}
+		else if (command == "w" || command == "s") //Save commands ([w]rite / [s]ave)
+		{
+			Editor::save();
+		}
+		else if (command == "wq" || command == "sq") //Save and quit commands ([w]rite [q]uit / [s]ave [q]uit)
+		{
+			Editor::save();
+			Editor::enableExitMode();
+			shouldExit = true;
+		}
+
+		return shouldExit;
 	}
 }

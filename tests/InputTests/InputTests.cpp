@@ -10,9 +10,9 @@ TEST(InputTests, EditorInitializedSuccessfully)
 	EXPECT_NO_FATAL_FAILURE();
 }
 
-TEST(InputTests, EnableInputModeWorks)
+TEST(InputTests, EnableEditModeWorks)
 {
-	InputHandler::doCommand(static_cast<KeyActions::KeyAction>('i'));
+	InputHandler::changeMode(static_cast<KeyActions::KeyAction>('i'));
 	EXPECT_EQ(Editor::mode(), Editor::Mode::EditMode);
 }
 

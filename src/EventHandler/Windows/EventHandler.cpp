@@ -22,57 +22,49 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "Input/Input.hpp"
-#include "Editor/Editor.hpp"
-#include "Console/Console.hpp"
 #include "EventHandler/EventHandler.hpp"
+#include "Editor/Editor.hpp"
 
-#include <iostream>
-#include <atomic>
-#include <cstdlib> //EXIT_FAILURE, EXIT_SUCCESS
+#define WIN32_LEAN_AND_MEAN
+#define VC_EXTRALEAN
+#include <Windows.h>
+#include <thread>
 
-int main(int argc, const char** argv)
+std::thread t;
+
+/// <summary>
+/// Handles checking and updating the window size using a blocking call on a secondary thread to avoid busy looping
+/// If the Console Input is a user input, put it back into the queue for _getch() to retrieve
+/// </summary>
+/// <param name="running"></param>
+void windowSizeChangeEvent(std::atomic<bool>& running)
 {
-#ifndef NDEBUG
-	argc = 2;
-	argv[1] = "test.cpp";
-#endif
-	if (argc != 2)
+	while (running)
 	{
-		std::cerr << "ERROR: Usage: mini <filename>\n";
-		return EXIT_FAILURE;
-	}
+		INPUT_RECORD input;
+		DWORD numEvents;
 
-	Editor::initEditor(argv[1]);
-
-	std::atomic<bool> running = true;
-	EventHandler evtHandler(running);
-
-	while (true)
-	{
-		if (Editor::mode() == Editor::Mode::ExitMode)
+		ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &input, 1, &numEvents); //Blocks this thread until an event happens
+		if (input.EventType == WINDOW_BUFFER_SIZE_EVENT) //If the event is a window size update
 		{
-			running = false;
-			Editor::clearScreen();
-			break;
+			Editor::updateWindowSize();
+			Editor::refreshScreen(true);
 		}
 		else
 		{
-			Editor::refreshScreen();
-			const KeyActions::KeyAction inputCode = InputHandler::getInput();
-			if (inputCode != KeyActions::KeyAction::None)
-			{
-				if (Editor::mode() == Editor::Mode::CommandMode || Editor::mode() == Editor::Mode::ReadMode)
-				{
-					InputHandler::changeMode(inputCode);
-				}
-				else if (Editor::mode() == Editor::Mode::EditMode)
-				{
-					InputHandler::handleInput(inputCode);
-				}
-			}
+			DWORD _; //Can be ignored, but WriteConsoleInput requires it
+			WriteConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &input, 1, &_);
 		}
 	}
-	
-	return EXIT_SUCCESS;
+}
+
+EventHandler::EventHandler(std::atomic<bool>& running) : mRunning(running)
+{
+	t = std::thread(windowSizeChangeEvent, std::ref(mRunning));
+}
+
+EventHandler::~EventHandler()
+{
+	while (!t.joinable());
+	t.join();
 }

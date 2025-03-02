@@ -24,7 +24,7 @@ SOFTWARE.
 
 #include "Input.hpp"
 #include "Editor/Editor.hpp"
-#include "GetInputImpl.hpp"
+#include "InputImpl.hpp"
 
 #include <iostream>
 #include <string>
@@ -38,9 +38,9 @@ namespace InputHandler
 		return InputImpl::getInput();
 	}
 
-	void doCommand(const KeyAction key)
+	void changeMode(const KeyAction key)
 	{
-		std::string command;
+		bool shouldExit = false;
 		switch (key)
 		{
 		case static_cast<KeyAction>('i'):
@@ -49,26 +49,15 @@ namespace InputHandler
 		case static_cast<KeyAction>(':'):
 			Editor::enableCommandMode();
 			Editor::refreshScreen();
-			std::cout << ":";
-			std::cin >> command;
 
-			if ((command == "q" && !Editor::isDirty()) || command == "q!") //Quit command - requires changes to be saved if not force quit
+			shouldExit = InputImpl::doCommand();
+			Editor::updateCommandBuffer(std::string_view());
+
+			if (!shouldExit)
 			{
-				Editor::enableExitMode();
-				break;
+				Editor::enableReadMode(); //Go back to read mode after executing a command
+				Editor::refreshScreen(true);
 			}
-			else if (command == "w" || command == "s") //Save commands ([w]rite / [s]ave)
-			{
-				Editor::save();
-			}
-			else if (command == "wq" || command == "sq") //Save and quit commands ([w]rite [q]uit / [s]ave [q]uit)
-			{
-				Editor::save();
-				Editor::enableExitMode();
-				break;
-			}
-			Editor::enableReadMode(); //Go back to read mode after executing a command
-			Editor::refreshScreen();
 			break;
 
 		case KeyAction::ArrowDown:
