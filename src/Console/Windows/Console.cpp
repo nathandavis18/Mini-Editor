@@ -51,6 +51,7 @@ void Console::setDefaultMode()
 		std::cerr << "Error retrieving current console mode";
 		exit(EXIT_FAILURE);
 	}
+	defaultMode = ENABLE_EXTENDED_FLAGS | ENABLE_WINDOW_INPUT | defaultMode;
 }
 
 Console::WindowSize Console::getWindowSize()

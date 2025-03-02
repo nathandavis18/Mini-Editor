@@ -28,6 +28,7 @@ SOFTWARE.
 #include "EventHandler/EventHandler.hpp"
 
 #include <iostream>
+#include <atomic>
 #include <cstdlib> //EXIT_FAILURE, EXIT_SUCCESS
 
 int main(int argc, const char** argv)
@@ -43,12 +44,15 @@ int main(int argc, const char** argv)
 	}
 
 	Editor::initEditor(argv[1]);
-	EventHandler evtHandler;
+
+	std::atomic<bool> running = true;
+	EventHandler evtHandler(running);
 
 	while (true)
 	{
 		if (Editor::mode() == Editor::Mode::ExitMode)
 		{
+			running = false;
 			Editor::clearScreen();
 			break;
 		}
@@ -60,19 +64,13 @@ int main(int argc, const char** argv)
 			{
 				if (Editor::mode() == Editor::Mode::CommandMode || Editor::mode() == Editor::Mode::ReadMode)
 				{
-					InputHandler::doCommand(inputCode);
+					InputHandler::changeMode(inputCode);
 				}
 				else if (Editor::mode() == Editor::Mode::EditMode)
 				{
 					InputHandler::handleInput(inputCode);
 				}
 			}
-
-			//if (Editor::windowSizeHasChanged()) //Only update if the terminal screen actually got updated
-			//{
-			//	Editor::updateWindowSize();
-			//	Editor::refreshScreen(true);
-			//}
 		}
 	}
 	

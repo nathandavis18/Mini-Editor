@@ -46,5 +46,5 @@ namespace InputHandler
 	///		i = Enter edit mode (like VIM)
 	///		: = Enter command mode (like VIM)
 	/// </summary>
-	void doCommand(const KeyActions::KeyAction);
+	void changeMode(const KeyActions::KeyAction);
 }
