@@ -170,27 +170,37 @@ To build this project with the tests, run
 
 	python build.py --build-tests
 
+To build only the tests with the python script, run
+
+	python build.py --tests-only
+
 To build manually, run
 
-	cmake -B {buildDir} -G {buildGenerator} -S {pathToCMakeScript} -DCMAKE_BUILD_TYPE=Release
+	cmake -B {buildDir} -G {buildGenerator} -S {pathToCMakeScript}
 
 	cmake --build {buildDir} --config Release
 
 	EXAMPLE (While in root dir):
 
-	cmake -B ./out -G Ninja -DCMAKE_BUILD_TYPE=Release
+	cmake -B ./out -G Ninja
 
 	cmake --build ./out --config Release
 
 To build manually with tests, run the following instead
 
-	cmake -B {buildDir} -G {buildGenerator} -S {pathToCMakeScript} -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON
+	cmake -B {buildDir} -G {buildGenerator} -S {pathToCMakeScript} -DBUILD_TESTS=ON
 	
 	EXAMPLE:
 	
-	cmake -B ./out -G Ninja _DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON
+	cmake -B ./out -G Ninja -DBUILD_TESTS=ON
 	
-	cmake--build ./out --config Release
+	cmake --build ./out --config Release
+
+To build manually with only tests, run
+
+	cmake -B {buildDir} -G {buildGenerator} -S {pathToCMakeScript} -DBUILD_TESTS=ON -DBUILD_PROJECT=OFF
+
+	cmake --build {buildDir} --config Release
 
 <hr>
 

@@ -37,9 +37,9 @@ Editor* editor = nullptr;
 /// If the Console Input is a user input, put it back into the queue for _getch() to retrieve
 /// </summary>
 /// <param name="running"></param>
-void EventHandler::windowSizeChangeEvent()
+void windowSizeChangeEvent(std::atomic<bool>& running)
 {
-	while (mRunning)
+	while (running)
 	{
 		INPUT_RECORD input;
 		DWORD numEvents;
@@ -58,10 +58,10 @@ void EventHandler::windowSizeChangeEvent()
 	}
 }
 
-EventHandler::EventHandler(std::atomic<bool>& running, Editor* ed) : mRunning(running)
+EventHandler::EventHandler(std::atomic<bool>& running, Editor* ed)
 {
 	editor = ed;
-	t = std::thread(&EventHandler::windowSizeChangeEvent, this);
+	t = std::thread(windowSizeChangeEvent, std::ref(running));
 }
 
 EventHandler::~EventHandler()
