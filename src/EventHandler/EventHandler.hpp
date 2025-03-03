@@ -44,8 +44,5 @@ public:
 	~EventHandler();
 
 private:
-	void windowSizeChangeEvent();
-
-private:
 	std::atomic<bool>& mRunning;
 };

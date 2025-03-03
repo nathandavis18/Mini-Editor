@@ -40,6 +40,9 @@ public:
 	/// </summary>
 	Console();
 
+	/// <summary>
+	/// Disables raw input when console is destroyed
+	/// </summary>
 	~Console();
 
 	/// <summary>

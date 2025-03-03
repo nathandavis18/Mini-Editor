@@ -36,6 +36,7 @@ void windowSizeChangeEvent(int)
     editor->updateWindowSize();
     editor->refreshScreen(true);
 }
+
 EventHandler::EventHandler(std::atomic<bool>& running, Editor* ed) : mRunning(running)
 {
     editor = ed;
