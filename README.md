@@ -104,7 +104,7 @@ Make sure that the values you put in the config.json file exist in the colorKey 
 The layout for the config.json file is as follows:
 
 	{
-		syntaxName (can be anything): {
+		"syntaxName" (can be anything, eg "cpp"): {
 			"fileExtensions": [ //File extensions. E.g.: ".cpp", ".cc"], (REQUIRED)
 			"defaultColor": "colorValue", (OPTIONAL, DEFAULT IS WHITE)
 			"builtInKeywords": { (OPTIONAL)
@@ -219,6 +219,8 @@ Run it by doing
 	OR IF USING COMMAND PROMPT
 
 	Tests
+
+> **_NOTE:_** For tests to run properly, you must be in the directory containing the Tests executable. Some tests will fail if you do not run it from the directory, since it requires files relative to the Tests.exe file
 
 <hr>
 

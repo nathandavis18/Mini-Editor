@@ -23,6 +23,8 @@ SOFTWARE.
 */
 
 #pragma once
+#include "Editor/Editor.hpp"
+
 #include <functional>
 #include <atomic>
 #include <cstdint>
@@ -34,7 +36,7 @@ public:
 	/// The atomic bool is only for Windows, but may be useful later so it is gonna stay here since its not hurting anything
 	/// </summary>
 	/// <param name="running"></param>
-	EventHandler(std::atomic<bool>& running);
+	EventHandler(std::atomic<bool>& running, Editor* editor);
 
 	/// <summary>
 	/// On Windows, join the thread. On Unix, unset the SIGWINCH callback.

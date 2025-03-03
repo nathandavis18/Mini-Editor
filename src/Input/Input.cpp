@@ -23,7 +23,6 @@ SOFTWARE.
 */
 
 #include "Input.hpp"
-#include "Editor/Editor.hpp"
 #include "InputImpl.hpp"
 
 #include <iostream>
@@ -38,25 +37,25 @@ namespace InputHandler
 		return InputImpl::getInput();
 	}
 
-	void changeMode(const KeyAction key)
+	void changeMode(const KeyAction key, Editor& editor)
 	{
 		bool shouldExit = false;
 		switch (key)
 		{
 		case static_cast<KeyAction>('i'):
-			Editor::enableEditMode();
+			editor.enableEditMode();
 			break;
 		case static_cast<KeyAction>(':'):
-			Editor::enableCommandMode();
-			Editor::refreshScreen();
+			editor.enableCommandMode();
+			editor.refreshScreen();
 
-			shouldExit = InputImpl::doCommand();
-			Editor::updateCommandBuffer(std::string_view());
+			shouldExit = InputImpl::doCommand(editor);
+			editor.updateCommandBuffer(std::string_view());
 
 			if (!shouldExit)
 			{
-				Editor::enableReadMode(); //Go back to read mode after executing a command
-				Editor::refreshScreen(true);
+				editor.enableReadMode(); //Go back to read mode after executing a command
+				editor.refreshScreen(true);
 			}
 			break;
 
@@ -72,34 +71,34 @@ namespace InputHandler
 		case KeyAction::CtrlEnd:
 		case KeyAction::CtrlPageDown:
 		case KeyAction::CtrlPageUp:
-			Editor::moveCursor(key);
+			editor.moveCursor(key);
 			break;
 
 		case KeyAction::CtrlArrowDown:
 		case KeyAction::CtrlArrowUp:
 		case KeyAction::PageDown:
 		case KeyAction::PageUp:
-			Editor::shiftRowOffset(key);
+			editor.shiftRowOffset(key);
 			break;
 
 		default: //Unknown command. Just go back to read mode
-			Editor::enableReadMode();
+			editor.enableReadMode();
 			break;
 		}
 	}
 
-	void handleInput(KeyAction key)
+	void handleInput(KeyAction key, Editor& editor)
 	{
 		switch (key)
 		{
 		case KeyAction::Esc:
-			Editor::enableReadMode();
+			editor.enableReadMode();
 			break;
 		case KeyAction::Delete:
 		case KeyAction::Backspace:
 		case KeyAction::CtrlBackspace:
 		case KeyAction::CtrlDelete:
-			Editor::deleteChar(key);
+			editor.deleteChar(key);
 			break;
 		case KeyAction::ArrowDown:
 		case KeyAction::ArrowUp:
@@ -115,26 +114,26 @@ namespace InputHandler
 		case KeyAction::PageUp:
 		case KeyAction::CtrlPageDown:
 		case KeyAction::CtrlPageUp:
-			Editor::moveCursor(key);
+			editor.moveCursor(key);
 			break;
 		case KeyAction::CtrlArrowDown:
 		case KeyAction::CtrlArrowUp:
-			Editor::shiftRowOffset(key);
+			editor.shiftRowOffset(key);
 			break;
 		case KeyAction::Enter:
-			Editor::addRow();
+			editor.addRow();
 			break;
 		case KeyAction::CtrlZ:
-			Editor::undoChange();
+			editor.undoChange();
 			break;
 		case KeyAction::CtrlY:
-			Editor::redoChange();
+			editor.redoChange();
 			break;
 		case KeyAction::CtrlC: //Don't need to do anything for this yet
 			break;
 
 		default: [[ likely ]] //This is the most likely scenario
-			Editor::insertChar(static_cast<uint8_t>(key));
+			editor.insertChar(static_cast<uint8_t>(key));
 			break;
 		}
 	}

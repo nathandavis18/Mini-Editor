@@ -47,6 +47,11 @@ Console::Console()
 	}
 }
 
+Console::~Console()
+{
+	disableRawInput();
+}
+
 void Console::setDefaultMode()
 {
 	if (tcgetattr(STDOUT_FILENO, &defaultMode) == -1) // If the settings can't be retrieved

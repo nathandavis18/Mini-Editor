@@ -38,7 +38,6 @@ SOFTWARE.
 
 #include <vector>
 #include <string>
-#include <memory>
 #include <stack>
 #include <mutex>
 #include <cstdint>
@@ -64,27 +63,27 @@ public:
 	/// Used when another file needs to know what mode the editor is in
 	/// </summary>
 	/// <returns> A readonly value for the current Mode </returns>
-	static const Mode mode();
+	const Mode mode();
 
 	/// <summary>
 	/// Initializes the editor. Should only be called on program start.
 	/// This will set up everything else for the editor, including the console, file handler, and syntax highlighting
 	/// </summary>
 	/// <param name="fName"> The name of the file grabbed from argv[1] </param>
-	static void initEditor(const std::string_view fName);
+	Editor(const std::string_view fName);
 
 	/// <summary>
 	/// Called when exiting the program so the screen gets completely cleared
 	/// Does something different than refreshScreen() does to clear the screen, so don't use it there
 	/// </summary>
-	static void clearScreen();
+	void clearScreen();
 
 	/// <summary>
 	/// When you want to display everything to the user, call this function
 	/// Normally the screen only redraws the main text when it has changed. But you can force it to update if needed
 	/// </summary>
 	/// <param name="forceRedrawScreen"> Forces the main text portion to be redrawn if true </param>
-	static void refreshScreen(bool forceRedrawScreen = false);
+	void refreshScreen(bool forceRedrawScreen = false);
 
 	/// <summary>
 	/// When a movement key is pressed, move the cursor.
@@ -94,7 +93,7 @@ public:
 	///		HOME/END					CTRL HOME/END
 	/// </summary>
 	/// <param name="key"></param>
-	static void moveCursor(const KeyActions::KeyAction key);
+	void moveCursor(const KeyActions::KeyAction key);
 
 	/// <summary>
 	/// When a key that offsets the viewport is pressed, update the row offset
@@ -103,13 +102,13 @@ public:
 	///		CTRL-ARROW UP/DOWN
 	/// </summary>
 	/// <param name="key"></param>
-	static void shiftRowOffset(const KeyActions::KeyAction key);
+	void shiftRowOffset(const KeyActions::KeyAction key);
 
 	/// <summary>
 	/// When Enter/Return is pressed, add a new row to the file
 	/// Moves contents beyond the cursor onto the new row
 	/// </summary>
-	static void addRow();
+	void addRow();
 
 	/// <summary>
 	/// When a key that deletes a character/characters gets pressed
@@ -118,41 +117,41 @@ public:
 	///		DELETE		CTRL-DELETE
 	/// </summary>
 	/// <param name="key"></param>
-	static void deleteChar(const KeyActions::KeyAction key);
+	void deleteChar(const KeyActions::KeyAction key);
 
 	/// <summary>
 	/// When a character key is pressed (a non-action key), insert the character at the current position
 	/// Should only be called while in EDIT mode
 	/// </summary>
 	/// <param name="c"></param>
-	static void insertChar(const unsigned char c);
+	void insertChar(const unsigned char c);
 
 	/// <summary>
 	/// When CTRL-Z is pressed, undo the change.
 	/// First adds the current state of the editor to the Redo Change
 	/// Then Un-does the most recent change
 	/// </summary>
-	static void undoChange();
+	void undoChange();
 
 	/// <summary>
 	/// When CTRL-Y is pressed, redo the change.
 	/// First adds the current state of the editor to Undo Change
 	/// Then re-does the most recent undo
 	/// </summary>
-	static void redoChange();
+	void redoChange();
 
 	/// <summary>
 	/// Checks if the file has been updated since last save
 	/// Should be used when trying to exit the program
 	/// </summary>
 	/// <returns></returns>
-	static bool isDirty();
+	bool isDirty();
 
 	/// <summary>
 	/// Sends the current changes to be written to the file.
 	/// Called when either save or save/quit command is used
 	/// </summary>
-	static void save();
+	void save();
 
 	/// <summary>
 	/// When command mode is entered (pressing ':' while in read mode), take necessary steps
@@ -161,7 +160,7 @@ public:
 	///		Move Cursor to status input row
 	///		Set current mode to COMMAND mode
 	/// </summary>
-	static void enableCommandMode();
+	void enableCommandMode();
 
 	/// <summary>
 	/// When changing from read mode to edit mode (when 'i' is pressed while in read mode)
@@ -170,7 +169,7 @@ public:
 	///		Set mode to EDIT Mode
 	///		Enable Raw Input Mode
 	/// </summary>
-	static void enableEditMode();
+	void enableEditMode();
 
 	/// <summary>
 	/// When going from command mode or edit mode to Read mode (when ESC is pressed, or after finishing a command)
@@ -178,7 +177,7 @@ public:
 	///		Set mode to READ Mode
 	///		Enable Raw Input Mode
 	/// </summary>
-	static void enableReadMode();
+	void enableReadMode();
 
 	/// <summary>
 	/// When a quit command is used ('q' when file has been saved, or 'q!' to force quit)
@@ -186,14 +185,14 @@ public:
 	///		Set mode to EXIT Mode
 	///		Disable Raw Input Mode
 	/// </summary>
-	static void enableExitMode();
+	void enableExitMode();
 
 	/// <summary>
 	/// When the window size has changed, or when first initializing the editor, make sure mWindow->rows and cols are up to date
 	/// </summary>
-	static void updateWindowSize();
+	void updateWindowSize();
 
-	static void updateCommandBuffer(const std::string_view command);
+	void updateCommandBuffer(const std::string_view command);
 
 private:
 	/// <summary>
@@ -202,6 +201,7 @@ private:
 	struct Window
 	{
 		Window();
+		Window(FileHandler& file);
 		size_t fileCursorX, fileCursorY;
 		size_t renderedCursorX, renderedCursorY;
 		size_t savedRenderedCursorXPos; 
@@ -210,7 +210,7 @@ private:
 		size_t rowOffset, colOffset;
 		int rows, cols;
 
-		std::vector<FileHandler::Row>& fileRows;
+		std::vector<FileHandler::Row>* fileRows;
 
 		bool dirty;
 	};
@@ -229,46 +229,46 @@ private:
 	/// Steps that need to be taken before refreshScreen() does its thing.
 	/// This sets the rendered string up for each line, including replacing tabs with spaces, and sets the highlight positions.
 	/// </summary>
-	static void prepRenderedString();
+	void prepRenderedString();
 
 	/// <summary>
 	/// Sets the rendered lines that are currently on screen and replaces the tabs with spaces
 	/// </summary>
-	static void setRenderedString();
+	void setRenderedString();
 
 	/// <summary>
 	/// Preps the rendered line to be rendered by making sure the line length < console width
 	/// Also checks the position of the colOffset compared to the rendered line to make sure it should be rendered at all
 	/// </summary>
-	static void prepRenderedLineForRender();
+	void prepRenderedLineForRender();
 
 	/// <summary>
 	/// Sets up the buffer to render the cursor position
 	/// Called by renderStatusAndCursor()
 	/// </summary>
 	/// <returns></returns>
-	static std::string renderCursor();
+	std::string renderCursor();
 
 	/// <summary>
 	/// Sets up the buffer to render the status bar
 	/// Called by renderStatusAndCursor()
 	/// </summary>
 	/// <returns></returns>
-	static std::string renderStatus();
+	std::string renderStatus();
 
 	/// <summary>
 	/// Simplifies the combination of rendering the status and cursor, since they will always render together
 	/// Called on every refresh and when enabling different modes (i.e. command mode)
 	/// </summary>
 	/// <returns></returns>
-	static std::string renderStatusAndCursor();
+	std::string renderStatusAndCursor();
 
 	/// <summary>
 	/// Adds EOF rendering stuff if the console height is not reached but EOF is.
 	/// Adds it to the main text buffer.
 	/// Called on every refresh
 	/// </summary>
-	static void renderEndOfFile();
+	void renderEndOfFile();
 
 	/// <summary>
 	/// When a move cursor left/right operation is done, handles the common situations between them and returns a specific action code
@@ -279,87 +279,87 @@ private:
 	/// </summary>
 	/// <param name="key"></param>
 	/// <returns></returns>
-	static int8_t moveCursorLeftRight(const KeyActions::KeyAction key);
+	int8_t moveCursorLeftRight(const KeyActions::KeyAction key);
 
 	/// <summary>
 	/// Called when the cursor is at the start of the row and Backspace is pressed, or end of the row and Delete is pressed
 	/// </summary>
 	/// <param name="rowNum"></param>
-	static void deleteRow(const size_t rowNum);
+	void deleteRow(const size_t rowNum);
 
 	/// <summary>
 	/// Called when a change is being made and we need to save the current state to be able to undo
 	/// </summary>
-	static void addUndoHistory();
+	void addUndoHistory();
 
 	/// <summary>
 	/// Called when an undo happens and we need to save the current state to be able to redo
 	/// </summary>
-	static void addRedoHistory();
+	void addRedoHistory();
 
 	/// <summary>
 	/// Called when moving the cursor up/down, retaining the cursor's horizontal position
 	/// Accounts for tabs and puts cursor on the closest available spot as it was before
 	/// </summary>
-	static void setCursorLinePosition();
+	void setCursorLinePosition();
 
 	/// <summary>
 	/// Fixes the rendered cursor's x position accounting for tabs, as well as the y position depending on how far way the cursor is from the row offset
 	/// </summary>
 	/// <param name=""></param>
-	static void fixRenderedCursorPosition(const FileHandler::Row&);
+	void fixRenderedCursorPosition(const FileHandler::Row&);
 
 	/// <summary>
 	/// Replaces the tabs in the rendered string with spaces, to the nearest multiple of 8.
 	/// Called on each re-render when the rendered line length is > 0.
 	/// </summary>
 	/// <param name=""></param>
-	static void replaceRenderedStringTabs(std::string&);
+	void replaceRenderedStringTabs(std::string&);
 
 	/// <summary>
 	/// Makes sure the rendered cursor is also accounting for tab spacing so the rendered cursor is always aligned with what is actually rendered
 	/// </summary>
 	/// <param name=""></param>
 	/// <returns> The amount of spaces the rendered cursor needs to move </returns>
-	static size_t getRenderedCursorTabSpaces(const FileHandler::Row&);
+	size_t getRenderedCursorTabSpaces(const FileHandler::Row&);
 
 	/// <summary>
 	/// Adds the colors to the screen to be displayed to the user, utilizing the highlight token system
 	/// </summary>
 	/// <param name="rowOffset"></param>
 	/// <param name="colOffset"></param>
-	static void updateRenderedColor(const size_t rowOffset, const size_t colOffset);
+	void updateRenderedColor(const size_t rowOffset, const size_t colOffset);
 
 	/// <summary>
 	/// Finds highlight keywords and adds them to the token system to be drawn
 	/// </summary>
-	static void setHighlight();
+	void setHighlight();
 
 private:
-	inline static std::string mTextRenderBuffer, mPreviousTextRenderBuffer; //Implementing double-buffering so the screen doesn't need to always update
-	inline static std::string_view mCommandBuffer;
+	std::string mTextRenderBuffer, mPreviousTextRenderBuffer; //Implementing double-buffering so the screen doesn't need to always update
+	std::string_view mCommandBuffer;
 
-	inline static std::unique_ptr<FileHandler> mFile;
-	inline static std::unique_ptr<Console> mConsole;
-	inline static std::unique_ptr<SyntaxHighlight> mSyntax;
-	inline static std::string normalColorMode;
+	Window mWindow;
+	FileHandler mFile;
+	Console mConsole;
+	SyntaxHighlight mSyntax;
+	std::string normalColorMode;
 
-	inline static std::unique_ptr<Window> mWindow;
 
-	inline static std::stack<FileHistory> mRedoHistory;
-	inline static std::stack<FileHistory> mUndoHistory;
-	inline static Mode mMode = Mode::ReadMode; //Default mode is Read Mode.
+	std::stack<FileHistory> mRedoHistory;
+	std::stack<FileHistory> mUndoHistory;
+	Mode mMode = Mode::ReadMode; //Default mode is Read Mode.
 
-	inline static std::mutex mMutex;
+	std::mutex mMutex;
 
 	//Some constants to give specific values an identifying name
 	inline static const std::string_view separators = " \"',.()+-/*=~%;:[]{}<>";
-	static constexpr uint8_t tabSpacing = 8;
-	static constexpr uint8_t maxSpacesForTab = 7;
-	static constexpr uint8_t statusMessageRows = 2;
+	inline static constexpr uint8_t tabSpacing = 8;
+	inline static constexpr uint8_t maxSpacesForTab = 7;
+	inline static constexpr uint8_t statusMessageRows = 2;
 
 	//Return codes from moveCursorLeftRight()
-	static constexpr int8_t cursorCantMove = -1;
-	static constexpr int8_t cursorMovedNewLine = 0;
-	static constexpr int8_t cursorMoveNormal = 1;
+	inline static constexpr int8_t cursorCantMove = -1;
+	inline static constexpr int8_t cursorMovedNewLine = 0;
+	inline static constexpr int8_t cursorMoveNormal = 1;
 };

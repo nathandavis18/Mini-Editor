@@ -29,17 +29,22 @@ SOFTWARE.
 #include <iostream>
 #include <csignal>
 
+Editor* editor = nullptr;
+
 void windowSizeChangeEvent(int)
 {
-    Editor::updateWindowSize();
-    Editor::refreshScreen(true);
+    editor->updateWindowSize();
+    editor->refreshScreen(true);
 }
-EventHandler::EventHandler(std::atomic<bool>& running) : mRunning(running)
+
+EventHandler::EventHandler(std::atomic<bool>& running, Editor* ed) : mRunning(running)
 {
+    editor = ed;
     std::signal(SIGWINCH, windowSizeChangeEvent);
 }
 
 EventHandler::~EventHandler()
 {
+    editor = nullptr;
     std::signal(SIGWINCH, nullptr);
 }

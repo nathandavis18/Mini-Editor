@@ -23,6 +23,7 @@ SOFTWARE.
 */
 
 #pragma once
+#include "Editor/Editor.hpp"
 #include "KeyActions/KeyActions.hh"
 
 namespace InputHandler
@@ -35,16 +36,17 @@ namespace InputHandler
 	const KeyActions::KeyAction getInput();
 
 	/// <summary>
-	/// Handles the input while in EDIT mode. As such, is only called while in EDIT mode
-	/// </summary>
-	/// <param name=""></param>
-	void handleInput(const KeyActions::KeyAction);
-
-	/// <summary>
 	/// Handles inputs while in command/read mode
 	/// Current options include:
 	///		i = Enter edit mode (like VIM)
 	///		: = Enter command mode (like VIM)
 	/// </summary>
-	void changeMode(const KeyActions::KeyAction);
+	void changeMode(const KeyActions::KeyAction, Editor& editor);
+
+	/// <summary>
+	/// Handles the input while in EDIT mode. As such, is only called while in EDIT mode
+	/// </summary>
+	/// <param name=""></param>
+	void handleInput(const KeyActions::KeyAction, Editor& editor);
+
 }
