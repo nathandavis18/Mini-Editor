@@ -42,7 +42,4 @@ public:
 	/// On Windows, join the thread. On Unix, unset the SIGWINCH callback.
 	/// </summary>
 	~EventHandler();
-
-private:
-	std::atomic<bool>& mRunning;
 };
