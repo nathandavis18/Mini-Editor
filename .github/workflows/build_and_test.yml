@@ -5,7 +5,7 @@ on:
 
 jobs:
   build-project:
-    name: Build Project with Tests
+    name: Build Tests
     runs-on: ubuntu-24.04
     steps:
     - name: Checkout Project
@@ -21,7 +21,7 @@ jobs:
         generator: Ninja
         cxx-compiler: g++-13
         cxx-flags: -std=c++20
-        options: CMAKE_BUILD_TYPE=Release BUILD_TESTS=ON
+        options: BUILD_TESTS=ON BUILD_PROJECT=OFF
 
     - name: Run Tests
       run: cd ./out/build/tests && ./Tests --gtest_filter=-Console*:Editor*:*SavingFile*:*InsertChar*:*InputMode*:Input*
