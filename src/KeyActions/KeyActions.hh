@@ -35,18 +35,24 @@ namespace KeyActions
 	enum class KeyAction
 	{
 		None = 0,
+
 		CtrlC = 3,
+		CtrlQ = 17,
+		CtrlS = 19,
 		CtrlX = 24,
 		CtrlY = 25,
 		CtrlZ = 26,
+
 		Tab = 9,
 		Enter = 13,
 		Esc = 27,
+
 #ifdef _WIN32
 		Backspace = 8, CtrlBackspace = 127,
-#elif defined(__linux__) || defined(__APPLE__) //For some reason, these are reverse from each other
+#else
 		Backspace = 127, CtrlBackspace = 8,
 #endif
+
 		ArrowLeft = 1000,	CtrlArrowLeft, //Just give these an arbitrary, unused value to make them unique
 		ArrowRight,			CtrlArrowRight,
 		ArrowUp,			CtrlArrowUp,

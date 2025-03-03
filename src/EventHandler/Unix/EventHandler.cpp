@@ -23,7 +23,6 @@ SOFTWARE.
 */
 
 #include "EventHandler/EventHandler.hpp"
-#include "Editor/Editor.hpp"
 #include "KeyActions/KeyActions.hh"
 
 #include <iostream>

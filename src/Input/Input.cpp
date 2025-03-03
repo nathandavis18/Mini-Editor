@@ -81,8 +81,15 @@ namespace InputHandler
 			editor.shiftRowOffset(key);
 			break;
 
+		case KeyAction::CtrlS:
+			editor.save();
+			break;
+
+		case KeyAction::CtrlQ:
+			editor.enableExitMode();
+			break;
+
 		default: //Unknown command. Just go back to read mode
-			editor.enableReadMode();
 			break;
 		}
 	}
@@ -129,7 +136,17 @@ namespace InputHandler
 		case KeyAction::CtrlY:
 			editor.redoChange();
 			break;
+
+		case KeyAction::CtrlX:
 		case KeyAction::CtrlC: //Don't need to do anything for this yet
+			break;
+
+		case KeyAction::CtrlS:
+			editor.save();
+			break;
+
+		case KeyAction::CtrlQ:
+			editor.enableExitMode();
 			break;
 
 		default: [[ likely ]] //This is the most likely scenario
@@ -179,32 +196,33 @@ namespace InputHandler
 		std::string command;
 		std::string commandBuffer = startStr;
 		KeyAction commandInput;
-		std::cout << commandBuffer;
-		std::cout.flush();
-		editor.updateCommandBuffer(commandBuffer);
-		while ((commandInput = getInput()) != KeyAction::Enter)
+
+		do
 		{
-			if (!isActionKey(commandInput))
-			{
-				if (commandInput == KeyAction::Esc) return shouldExit;
-				if (commandInput == KeyAction::Backspace && command.length() > 0)
-				{
-					command.pop_back();
-				}
-				else if (commandInput == KeyAction::CtrlBackspace)
-				{
-					command.clear();
-				}
-				else if (commandInput != KeyAction::CtrlBackspace && commandInput != KeyAction::Backspace)
-				{
-					command += static_cast<unsigned char>(commandInput);
-				}
-			}
-			commandBuffer = startStr + command;
-			editor.updateCommandBuffer(commandBuffer);
 			std::cout << commandBuffer;
 			std::cout.flush();
-		}
+			editor.updateCommandBuffer(commandBuffer);
+
+			commandInput = getInput();
+
+			if (isActionKey(commandInput)) continue;
+			if (commandInput == KeyAction::Esc) return shouldExit;
+
+			if (commandInput == KeyAction::Backspace && command.length() > 0)
+			{
+				command.pop_back();
+			}
+			else if (commandInput == KeyAction::Backspace && command.length() == 0) continue;
+			else if (commandInput == KeyAction::CtrlBackspace)
+			{
+				command.clear();
+			}
+			else if(commandInput != KeyAction::Enter)
+			{
+				command += static_cast<unsigned char>(commandInput);
+			}
+			commandBuffer = startStr + command;
+		} while (commandInput != KeyAction::Enter);
 
 		if ((command == "q" && !editor.isDirty()) || command == "q!") //Quit command - requires changes to be saved if not force quit
 		{

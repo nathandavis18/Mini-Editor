@@ -4,12 +4,17 @@ def build():
     initialCommand = 'cmake -B ./out/build'
     if(len(argv) == 2):
         if(argv[1] == '--build-tests'):
-            initialCommand += ' -DBUILD_TESTS=ON'
+            initialCommand += ' -DBUILD_TESTS=ON -DBUILD_PROJECT=ON'
         elif(argv[1] == '--tests-only'):
             initialCommand += ' -DBUILD_TESTS=ON -DBUILD_PROJECT=OFF'
         else:
             print("Invalid option. Options include:\n\nNo option: Builds only the project\n--build-tests: Builds project with tests\n--tests-only: Builds only the tests\n")
             exit()
+    elif(len(argv) == 1):
+        initialCommand += ' -DBUILD_PROJECT=ON'
+    else:
+        print("Invalid option. Options include:\n\nNo option: Builds only the project\n--build-tests: Builds project with tests\n--tests-only: Builds only the tests\n")
+        exit()
 
     system(initialCommand)
     system('cmake --build ./out/build --config Release')
