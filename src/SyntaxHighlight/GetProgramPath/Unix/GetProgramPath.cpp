@@ -21,59 +21,19 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+#include "SyntaxHighlight/GetProgramPath/GetProgramPath.hpp"
 
-#include "Input/Input.hpp"
-#include "Editor/Editor.hpp"
-#include "Console/Console.hpp"
-#include "EventHandler/EventHandler.hpp"
-
-#include <iostream>
-#include <atomic>
-#include <cstdlib> //EXIT_FAILURE, EXIT_SUCCESS
+#include <unistd.h>
 #include <string>
-#include <limits>
 
-int main(int argc, const char** argv)
+namespace GetProgramPath
 {
-#ifndef NDEBUG
-	argc = 2;
-	argv[1] = "test.cpp";
-#endif
-	if (argc != 2)
+	std::filesystem::path getPath()
 	{
-		std::cerr << "ERROR: Usage: mini <filename>\n";
-		return EXIT_FAILURE;
+		char path[PATH_MAX];
+		int count = readlink("/proc/self/exe", path, PATH_MAX);
+		if (count == -1) return "";
+		std::string pathStr{ path };
+		return path.substr(0, path.find_last_of("/"));
 	}
-	Editor::initEditor(argv[1]);
-
-	std::atomic<bool> running = true;
-	EventHandler evtHandler(running);
-
-	while (true)
-	{
-		if (Editor::mode() == Editor::Mode::ExitMode)
-		{
-			running = false;
-			Editor::clearScreen();
-			break;
-		}
-		else
-		{
-			Editor::refreshScreen();
-			const KeyActions::KeyAction inputCode = InputHandler::getInput();
-			if (inputCode != KeyActions::KeyAction::None)
-			{
-				if (Editor::mode() == Editor::Mode::CommandMode || Editor::mode() == Editor::Mode::ReadMode)
-				{
-					InputHandler::changeMode(inputCode);
-				}
-				else if (Editor::mode() == Editor::Mode::EditMode)
-				{
-					InputHandler::handleInput(inputCode);
-				}
-			}
-		}
-	}
-	
-	return EXIT_SUCCESS;
 }
