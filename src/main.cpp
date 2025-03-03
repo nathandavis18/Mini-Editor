@@ -44,32 +44,32 @@ int main(int argc, const char** argv)
 		std::cerr << "ERROR: Usage: mini <filename>\n";
 		return EXIT_FAILURE;
 	}
-	Editor::initEditor(argv[1]);
+	Editor editor(argv[1]);
 
 	std::atomic<bool> running = true;
-	EventHandler evtHandler(running);
+	EventHandler evtHandler(running, editor);
 
 	while (true)
 	{
-		if (Editor::mode() == Editor::Mode::ExitMode)
+		if (editor.mode() == Editor::Mode::ExitMode)
 		{
 			running = false;
-			Editor::clearScreen();
+			editor.clearScreen();
 			break;
 		}
 		else
 		{
-			Editor::refreshScreen();
+			editor.refreshScreen();
 			const KeyActions::KeyAction inputCode = InputHandler::getInput();
 			if (inputCode != KeyActions::KeyAction::None)
 			{
-				if (Editor::mode() == Editor::Mode::CommandMode || Editor::mode() == Editor::Mode::ReadMode)
+				if (editor.mode() == Editor::Mode::CommandMode || editor.mode() == Editor::Mode::ReadMode)
 				{
-					InputHandler::changeMode(inputCode);
+					InputHandler::changeMode(inputCode, editor);
 				}
-				else if (Editor::mode() == Editor::Mode::EditMode)
+				else if (editor.mode() == Editor::Mode::EditMode)
 				{
-					InputHandler::handleInput(inputCode);
+					InputHandler::handleInput(inputCode, editor);
 				}
 			}
 		}

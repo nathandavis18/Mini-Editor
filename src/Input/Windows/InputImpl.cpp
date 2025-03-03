@@ -24,7 +24,6 @@ SOFTWARE.
 
 #include "KeyActions/KeyActions.hh"
 #include "Input/InputImpl.hpp"
-#include "Editor/Editor.hpp"
 
 #include <iostream>
 #include <string>
@@ -109,7 +108,7 @@ namespace InputImpl
 		}
 	}
 
-	bool doCommand()
+	bool doCommand(Editor& editor)
 	{
 		bool shouldExit = false;
 		const char* startStr = "\x1b[2K\x1b[1A\x1b[1E:";
@@ -117,7 +116,7 @@ namespace InputImpl
 		std::string commandBuffer = startStr;
 		KeyAction commandInput;
 		std::cout << commandBuffer;
-		Editor::updateCommandBuffer(commandBuffer);
+		editor.updateCommandBuffer(commandBuffer);
 		while ((commandInput = getInput()) != KeyAction::Enter)
 		{
 			if (!isActionKey(commandInput))
@@ -137,23 +136,23 @@ namespace InputImpl
 				}
 			}
 			commandBuffer = startStr + command;
-			Editor::updateCommandBuffer(commandBuffer);
+			editor.updateCommandBuffer(commandBuffer);
 			std::cout << commandBuffer;
 		}
 
-		if ((command == "q" && !Editor::isDirty()) || command == "q!") //Quit command - requires changes to be saved if not force quit
+		if ((command == "q" && !editor.isDirty()) || command == "q!") //Quit command - requires changes to be saved if not force quit
 		{
-			Editor::enableExitMode();
+			editor.enableExitMode();
 			shouldExit = true;
 		}
 		else if (command == "w" || command == "s") //Save commands ([w]rite / [s]ave)
 		{
-			Editor::save();
+			editor.save();
 		}
 		else if (command == "wq" || command == "sq") //Save and quit commands ([w]rite [q]uit / [s]ave [q]uit)
 		{
-			Editor::save();
-			Editor::enableExitMode();
+			editor.save();
+			editor.enableExitMode();
 			shouldExit = true;
 		}
 		return shouldExit;

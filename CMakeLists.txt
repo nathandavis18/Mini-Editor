@@ -56,7 +56,7 @@ add_custom_command(
 
 target_include_directories(mini PRIVATE src)
 
-#if(BUILD_TESTS)
+if(BUILD_TESTS)
 	add_library(mini_tests ${SOURCES} ${HEADERS})
 
 	if(WIN32)
@@ -77,4 +77,4 @@ target_include_directories(mini PRIVATE src)
 
 	target_include_directories(mini_tests PUBLIC src)
 	add_subdirectory(tests)
-#endif(BUILD_TESTS)
+endif(BUILD_TESTS)

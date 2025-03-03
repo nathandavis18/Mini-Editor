@@ -40,10 +40,7 @@ public:
 	/// </summary>
 	Console();
 
-	~Console()
-	{
-		disableRawInput();
-	}
+	~Console();
 
 	/// <summary>
 	/// Should be called when outside files/classes need access to the console size (i.e. the editor)

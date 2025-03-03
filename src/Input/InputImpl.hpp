@@ -25,6 +25,8 @@ SOFTWARE.
 #pragma once
 
 #include "KeyActions/KeyActions.hh"
+#include "Editor/Editor.hpp"
+
 #include <cstdint>
 
 namespace InputImpl
@@ -41,5 +43,5 @@ namespace InputImpl
 	/// Functionality changed to allow for non busy-looping implementation
 	/// </summary>
 	/// <returns> True if program should exit, false otherwise </returns>
-	bool doCommand();
+	bool doCommand(Editor& editor);
 }

@@ -44,6 +44,11 @@ Console::Console()
 	}
 }
 
+Console::~Console()
+{
+	disableRawInput();
+}
+
 void Console::setDefaultMode()
 {
 	if (!GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &defaultMode)) //Try to get the default terminal settings

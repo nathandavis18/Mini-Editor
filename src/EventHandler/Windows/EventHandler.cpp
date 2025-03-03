@@ -23,7 +23,6 @@ SOFTWARE.
 */
 
 #include "EventHandler/EventHandler.hpp"
-#include "Editor/Editor.hpp"
 
 #define WIN32_LEAN_AND_MEAN
 #define VC_EXTRALEAN
@@ -37,9 +36,9 @@ std::thread t;
 /// If the Console Input is a user input, put it back into the queue for _getch() to retrieve
 /// </summary>
 /// <param name="running"></param>
-void windowSizeChangeEvent(std::atomic<bool>& running)
+void EventHandler::windowSizeChangeEvent()
 {
-	while (running)
+	while (mRunning)
 	{
 		INPUT_RECORD input;
 		DWORD numEvents;
@@ -47,8 +46,8 @@ void windowSizeChangeEvent(std::atomic<bool>& running)
 		ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &input, 1, &numEvents); //Blocks this thread until an event happens
 		if (input.EventType == WINDOW_BUFFER_SIZE_EVENT) //If the event is a window size update
 		{
-			Editor::updateWindowSize();
-			Editor::refreshScreen(true);
+			mEditor.updateWindowSize();
+			mEditor.refreshScreen(true);
 		}
 		else
 		{
@@ -58,9 +57,9 @@ void windowSizeChangeEvent(std::atomic<bool>& running)
 	}
 }
 
-EventHandler::EventHandler(std::atomic<bool>& running) : mRunning(running)
+EventHandler::EventHandler(std::atomic<bool>& running, Editor& editor) : mRunning(running), mEditor(editor)
 {
-	t = std::thread(windowSizeChangeEvent, std::ref(mRunning));
+	t = std::thread(&EventHandler::windowSizeChangeEvent, this);
 }
 
 EventHandler::~EventHandler()
