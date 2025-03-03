@@ -49,8 +49,8 @@ namespace InputHandler
 			editor.enableCommandMode();
 			editor.refreshScreen();
 
-			shouldExit = InputImpl::doCommand(editor);
-			editor.updateCommandBuffer(std::string_view());
+			shouldExit = doCommand(editor);
+			editor.updateCommandBuffer(std::string());
 
 			if (!shouldExit)
 			{
@@ -136,5 +136,91 @@ namespace InputHandler
 			editor.insertChar(static_cast<uint8_t>(key));
 			break;
 		}
+	}
+
+	bool isActionKey(const KeyAction key)
+	{
+		switch (key)
+		{
+		case KeyAction::ArrowDown:
+		case KeyAction::ArrowLeft:
+		case KeyAction::ArrowRight:
+		case KeyAction::ArrowUp:
+		case KeyAction::CtrlArrowDown:
+		case KeyAction::CtrlArrowLeft:
+		case KeyAction::CtrlArrowRight:
+		case KeyAction::CtrlArrowUp:
+		case KeyAction::Home:
+		case KeyAction::End:
+		case KeyAction::CtrlHome:
+		case KeyAction::CtrlEnd:
+		case KeyAction::PageDown:
+		case KeyAction::PageUp:
+		case KeyAction::CtrlPageDown:
+		case KeyAction::CtrlPageUp:
+		case KeyAction::CtrlC:
+		case KeyAction::CtrlX:
+		case KeyAction::CtrlY:
+		case KeyAction::CtrlZ:
+		case KeyAction::Delete:
+		case KeyAction::CtrlDelete:
+		case KeyAction::Tab:
+			return true;
+
+		default:
+			return false;
+		}
+	}
+
+	bool doCommand(Editor& editor)
+	{
+		bool shouldExit = false;
+		const char* startStr = "\r\x1b[0K:";
+		std::string command;
+		std::string commandBuffer = startStr;
+		KeyAction commandInput;
+		std::cout << commandBuffer;
+		std::cout.flush();
+		editor.updateCommandBuffer(commandBuffer);
+		while ((commandInput = getInput()) != KeyAction::Enter)
+		{
+			if (!isActionKey(commandInput))
+			{
+				if (commandInput == KeyAction::Esc) return shouldExit;
+				if (commandInput == KeyAction::Backspace && command.length() > 0)
+				{
+					command.pop_back();
+				}
+				else if (commandInput == KeyAction::CtrlBackspace)
+				{
+					command.clear();
+				}
+				else if (commandInput != KeyAction::CtrlBackspace && commandInput != KeyAction::Backspace)
+				{
+					command += static_cast<unsigned char>(commandInput);
+				}
+			}
+			commandBuffer = startStr + command;
+			editor.updateCommandBuffer(commandBuffer);
+			std::cout << commandBuffer;
+			std::cout.flush();
+		}
+
+		if ((command == "q" && !editor.isDirty()) || command == "q!") //Quit command - requires changes to be saved if not force quit
+		{
+			editor.enableExitMode();
+			shouldExit = true;
+		}
+		else if (command == "w" || command == "s") //Save commands ([w]rite / [s]ave)
+		{
+			editor.save();
+		}
+		else if (command == "wq" || command == "sq") //Save and quit commands ([w]rite [q]uit / [s]ave [q]uit)
+		{
+			editor.save();
+			editor.enableExitMode();
+			shouldExit = true;
+		}
+		return shouldExit;
 	}
 }

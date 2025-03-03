@@ -133,6 +133,7 @@ std::string Editor::renderCursor()
 	{
 		mWindow.renderedCursorX = 0; mWindow.renderedCursorY = mWindow.rows + statusMessageRows;
 	}
+
 	size_t rowToDisplay = mWindow.renderedCursorY + 1; //Add 1 for display only. Actual rows/cols are 0-indexed internally
 	size_t colToDisplay = mWindow.renderedCursorX + 1;
 
@@ -209,8 +210,6 @@ std::string Editor::renderStatus()
 		}
 	}
 
-	statusBuffer.append("\x1b[0J");
-
 	return statusBuffer; //Send the status bar to be rendered
 }
 
@@ -219,11 +218,13 @@ std::string Editor::renderStatusAndCursor()
 	std::string statusAndCursorBuffer = "";
 	statusAndCursorBuffer.append(renderStatus());
 	statusAndCursorBuffer.append(renderCursor());
+	statusAndCursorBuffer.append("\x1b[0m");
+
 	if (mMode == Mode::CommandMode)
 	{
-		statusAndCursorBuffer.append("\x1b[0m");
 		statusAndCursorBuffer.append(mCommandBuffer);
 	}
+
 	return statusAndCursorBuffer;
 }
 
@@ -304,7 +305,6 @@ void Editor::refreshScreen(bool forceRedrawScreen)
 	}
 
 	finalBufferToRender.append(renderStatusAndCursor());
-	finalBufferToRender.append("\x1b[0m"); //After everything is displayed with its proper color, reset the color mode to default to not break the console
 	std::cout << finalBufferToRender;
 	std::cout.flush(); //Flush the buffer after rendering everything to screen
 
@@ -758,7 +758,6 @@ void Editor::save()
 
 void Editor::enableCommandMode()
 {
-	mConsole.disableRawInput();
 	mMode = Mode::CommandMode;
 	mWindow.renderedCursorX = 0; mWindow.renderedCursorY = mWindow.rows + statusMessageRows;
 }
@@ -770,13 +769,11 @@ void Editor::enableEditMode()
 		mWindow.fileRows->push_back(FileHandler::Row());
 	}
 	mMode = Mode::EditMode;
-	mConsole.enableRawInput();
 }
 
 void Editor::enableReadMode()
 {
 	mMode = Mode::ReadMode;
-	mConsole.enableRawInput();
 }
 
 void Editor::enableExitMode()
@@ -1006,7 +1003,7 @@ void Editor::updateWindowSize()
 	mWindow.cols = windowSize.cols;
 }
 
-void Editor::updateCommandBuffer(const std::string_view command)
+void Editor::updateCommandBuffer(const std::string& command)
 {
 	mCommandBuffer = command;
 }
