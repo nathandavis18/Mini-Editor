@@ -47,7 +47,7 @@ int main(int argc, const char** argv)
 	Editor editor(argv[1]);
 
 	std::atomic<bool> running = true;
-	EventHandler evtHandler(running, editor);
+	EventHandler evtHandler(running, &editor);
 
 	while (true)
 	{

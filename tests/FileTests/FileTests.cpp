@@ -15,26 +15,26 @@ TEST(FileTest, FileNameGetsSavedProperly)
 TEST(FileTest, FileReturnsCorrectNumRows)
 {
 	FileHandler file("testFile.txt");
-	std::vector<FileHandler::Row> rows = file.getFileContents();
+	std::vector<FileHandler::Row> rows = *file.getFileContents();
 	EXPECT_EQ(rows.size(), 4) << "rows.size() should return 4";
 }
 
 TEST(FileTest, FileReturnsEmptyWhenFileDoesntExist)
 {
 	FileHandler file("nonexistantFile.txt");
-	std::vector<FileHandler::Row> rows = file.getFileContents();
+	std::vector<FileHandler::Row> rows = *file.getFileContents();
 	EXPECT_EQ(rows.size(), 0) << "New/Nonexistant File should not have any rows";
 }
 
 TEST(FileTest, SavingFileDoesntCorruptFile)
 {
-	Editor::initEditor("testFile.txt");
+	Editor editor("testFile.txt");
 	std::stringstream stream1;
 	std::ifstream file("testFile.txt");
 	stream1 << file.rdbuf();
 	file.close();
 
-	Editor::save();
+	editor.save();
 
 	std::stringstream stream2;
 	file.open("testFile.txt");
