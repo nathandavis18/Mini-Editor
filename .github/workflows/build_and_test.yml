@@ -5,7 +5,7 @@ on:
 
 jobs:
   build-project:
-    name: Build Tests
+    name: Build Project with Tests
     runs-on: ubuntu-24.04
     steps:
     - name: Checkout Project
@@ -14,7 +14,7 @@ jobs:
     - name: Setup Ninja
       uses: seanmiddleditch/gha-setup-ninja@v5
 
-    - name: Build Project with Tests
+    - name: Build Tests
       uses: threeal/cmake-action@v2.1.0
       with:
         build-dir: out/build
