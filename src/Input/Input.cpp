@@ -180,6 +180,7 @@ namespace InputHandler
 		std::string commandBuffer = startStr;
 		KeyAction commandInput;
 		std::cout << commandBuffer;
+		std::cout.flush();
 		editor.updateCommandBuffer(commandBuffer);
 		while ((commandInput = getInput()) != KeyAction::Enter)
 		{
@@ -202,6 +203,7 @@ namespace InputHandler
 			commandBuffer = startStr + command;
 			editor.updateCommandBuffer(commandBuffer);
 			std::cout << commandBuffer;
+			std::cout.flush();
 		}
 
 		if ((command == "q" && !editor.isDirty()) || command == "q!") //Quit command - requires changes to be saved if not force quit
