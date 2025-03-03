@@ -24,6 +24,7 @@ set (HEADERS
 	"src/Input/InputImpl.hpp"
 	"src/KeyActions/KeyActions.hh"
 	"src/SyntaxHighlight/SyntaxHighlight.hpp"
+	"src/SyntaxHighlight/GetProgramPath/GetProgramPath.hpp"
 	"src/SyntaxHighlight/JsonParser/JsonParser.hpp"
 	"src/EventHandler/EventHandler.hpp"
 )
@@ -35,12 +36,14 @@ if(WIN32)
 		PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/Console/Windows/Console.cpp"
 		PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/Input/Windows/InputImpl.cpp"
 		PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/EventHandler/Windows/EventHandler.cpp"
+		PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/SyntaxHighlight/GetProgramPath/Windows/GetProgramPath.cpp"
 	)
 else()
 	target_sources(mini
 		PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/Console/Unix/Console.cpp"
 		PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/Input/Unix/InputImpl.cpp"
 		PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/EventHandler/Unix/EventHandler.cpp"
+		PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/SyntaxHighlight/GetProgramPath/Unix/GetProgramPath.cpp"
 	)
 endif()
 
@@ -53,7 +56,7 @@ add_custom_command(
 
 target_include_directories(mini PRIVATE src)
 
-if(BUILD_TESTS)
+#if(BUILD_TESTS)
 	add_library(mini_tests ${SOURCES} ${HEADERS})
 
 	if(WIN32)
@@ -61,15 +64,17 @@ if(BUILD_TESTS)
 			PUBLIC "${CMAKE_CURRENT_LIST_DIR}/src/Console/Windows/Console.cpp"
 			PUBLIC "${CMAKE_CURRENT_LIST_DIR}/src/Input/Windows/InputImpl.cpp"
 			PUBLIC "${CMAKE_CURRENT_LIST_DIR}/src/EventHandler/Windows/EventHandler.cpp"
+			PUBLIC "${CMAKE_CURRENT_LIST_DIR}/src/SyntaxHighlight/GetProgramPath/Windows/GetProgramPath.cpp"
 		)
 	else()
 		target_sources(mini_tests
 			PUBLIC "${CMAKE_CURRENT_LIST_DIR}/src/Console/Unix/Console.cpp"
 			PUBLIC "${CMAKE_CURRENT_LIST_DIR}/src/Input/Unix/InputImpl.cpp"
 			PUBLIC "${CMAKE_CURRENT_LIST_DIR}/src/EventHandler/Unix/EventHandler.cpp"
+			PUBLIC "${CMAKE_CURRENT_LIST_DIR}/src/SyntaxHighlight/GetProgramPath/Unix/GetProgramPath.cpp"
 		)
 	endif(WIN32)
 
 	target_include_directories(mini_tests PUBLIC src)
 	add_subdirectory(tests)
-endif(BUILD_TESTS)
+#endif(BUILD_TESTS)

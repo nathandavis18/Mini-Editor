@@ -23,15 +23,16 @@ SOFTWARE.
 */
 
 #include "SyntaxHighlight.hpp"
+#include "SyntaxHighlight/GetProgramPath/GetProgramPath.hpp"
 
 #include <limits>
 #include <array>
 #include <fstream>
 #include <sstream>
+#include <iostream>
 
 using JsonParser::JsonValue;
 using JsonParser::JsonObject;
-using JsonParser::JsonValue_t;
 using JsonParser::JsonSet;
 
 SyntaxHighlight::SyntaxHighlight(const std::string_view fName) : mColors{ 0 }
@@ -47,7 +48,8 @@ SyntaxHighlight::SyntaxHighlight(const std::string_view fName) : mColors{ 0 }
 		return; //With no file extension we can't get syntax highlight info
 	}
 
-	std::ifstream file("config.json");
+	std::filesystem::path configPath = GetProgramPath::getPath() / "config.json";
+	std::ifstream file(configPath);
 	std::stringstream fContents;
 	fContents << file.rdbuf();
 	mFileContents = fContents.str();
