@@ -24,6 +24,7 @@ SOFTWARE.
 #include "SyntaxHighlight/GetProgramPath/GetProgramPath.hpp"
 
 #include <unistd.h>
+#include <limits.h> //PATH_MAX
 #include <string>
 
 namespace GetProgramPath
