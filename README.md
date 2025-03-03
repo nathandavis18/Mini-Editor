@@ -57,6 +57,10 @@ Controls are listed as follows:
  	- Ctrl+Z: Undo most recent change.
   	- Ctrl+Y: Redo most recent undo.
 
+	OTHER CONTROLS:
+	- Ctrl+S: Saves the file while not in command mode.
+	- Ctrl+Q: Force quits the program while not in command mode (WARNING: DOES NOT SAVE FILE).
+
 More key functionality will be added as this project progresses.
 
 <hr>
