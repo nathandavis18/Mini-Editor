@@ -192,7 +192,7 @@ public:
 	/// </summary>
 	void updateWindowSize();
 
-	void updateCommandBuffer(const std::string_view command);
+	void updateCommandBuffer(const std::string& command);
 
 private:
 	/// <summary>
@@ -337,7 +337,7 @@ private:
 
 private:
 	std::string mTextRenderBuffer, mPreviousTextRenderBuffer; //Implementing double-buffering so the screen doesn't need to always update
-	std::string_view mCommandBuffer;
+	std::string mCommandBuffer;
 
 	Window mWindow;
 	FileHandler mFile;
