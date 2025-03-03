@@ -33,9 +33,9 @@ namespace GetProgramPath
 {
 	std::filesystem::path getPath()
 	{
-		char path[MAX_PATH];
-		GetModuleFileName(NULL, path, MAX_PATH);
-		std::string pathStr{ path };
+		char pathToBin[MAX_PATH];
+		GetModuleFileName(NULL, pathToBin, MAX_PATH);
+		std::string pathStr{ pathToBin };
 		return pathStr.substr(0, pathStr.find_last_of("\\/"));
 	}
 }

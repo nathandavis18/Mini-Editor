@@ -30,10 +30,10 @@ namespace GetProgramPath
 {
 	std::filesystem::path getPath()
 	{
-		char path[PATH_MAX];
-		int count = readlink("/proc/self/exe", path, PATH_MAX);
+		char pathToBin[PATH_MAX];
+		int count = readlink("/proc/self/exe", pathToBin, PATH_MAX);
 		if (count == -1) return "";
-		std::string pathStr{ path };
-		return path.substr(0, path.find_last_of("/"));
+		std::string pathStr{ pathToBin };
+		return pathStr.substr(0, pathStr.find_last_of("/"));
 	}
 }
