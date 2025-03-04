@@ -25,9 +25,6 @@ SOFTWARE.
 #pragma once
 
 #include "KeyActions/KeyActions.hh"
-#include "Editor/Editor.hpp"
-
-#include <cstdint>
 
 namespace InputImpl
 {

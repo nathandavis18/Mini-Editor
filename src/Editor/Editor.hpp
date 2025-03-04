@@ -38,6 +38,7 @@ SOFTWARE.
 
 #include <vector>
 #include <string>
+#include <string_view>
 #include <stack>
 #include <mutex>
 #include <cstdint>
@@ -63,7 +64,7 @@ public:
 	/// Used when another file needs to know what mode the editor is in
 	/// </summary>
 	/// <returns> A readonly value for the current Mode </returns>
-	const Mode mode();
+	const Mode mode() const;
 
 	/// <summary>
 	/// Initializes the editor. Should only be called on program start.
@@ -145,7 +146,7 @@ public:
 	/// Should be used when trying to exit the program
 	/// </summary>
 	/// <returns></returns>
-	bool isDirty();
+	const bool isDirty() const;
 
 	/// <summary>
 	/// Sends the current changes to be written to the file.
@@ -321,7 +322,7 @@ private:
 	/// </summary>
 	/// <param name=""></param>
 	/// <returns> The amount of spaces the rendered cursor needs to move </returns>
-	size_t getRenderedCursorTabSpaces(const FileHandler::Row&);
+	const size_t getRenderedCursorTabSpaces(const FileHandler::Row&) const;
 
 	/// <summary>
 	/// Adds the colors to the screen to be displayed to the user, utilizing the highlight token system

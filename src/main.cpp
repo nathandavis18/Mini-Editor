@@ -24,14 +24,12 @@ SOFTWARE.
 
 #include "Input/Input.hpp"
 #include "Editor/Editor.hpp"
-#include "Console/Console.hpp"
 #include "EventHandler/EventHandler.hpp"
+#include "KeyActions/KeyActions.hh"
 
 #include <iostream>
 #include <atomic>
 #include <cstdlib> //EXIT_FAILURE, EXIT_SUCCESS
-#include <string>
-#include <limits>
 
 int main(int argc, const char** argv)
 {

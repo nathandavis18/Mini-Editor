@@ -25,9 +25,8 @@ SOFTWARE.
 #include "KeyActions/KeyActions.hh"
 #include "Input/InputImpl.hpp"
 
-#include <iostream>
-#include <string>
 #include <conio.h>
+#include <cstdint>
 
 using KeyActions::KeyAction;
 

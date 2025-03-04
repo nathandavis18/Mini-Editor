@@ -57,7 +57,7 @@ SyntaxHighlight::SyntaxHighlight(const std::string_view fName) : mColors{ 0 }
 	setSyntax(mp, extension);
 }
 
-const bool SyntaxHighlight::hasSyntax()
+const bool SyntaxHighlight::hasSyntax() const
 {
 	return mCurrentSyntax != nullptr;
 }
@@ -109,7 +109,7 @@ void SyntaxHighlight::setEditorSyntax(const JsonValue& syntax)
 /// <param name="altColor"></param>
 /// <param name="syntax"></param>
 /// <returns></returns>
-std::string getColor(const std::string& key, const std::string& altColor, const JsonValue& syntax)
+static const std::string getColor(const std::string& key, const std::string& altColor, const JsonValue& syntax)
 {
 	return syntax.contains(key) ? syntax.at(key).get<std::string>("color") : altColor;
 }
@@ -135,12 +135,12 @@ void SyntaxHighlight::setColors(const JsonValue& syntax)
 	mColors[static_cast<uint8_t>(HighlightType::Number)] = mColorKeys.at(getColor("number", "seablue", syntax));
 }
 
-const std::vector<SyntaxHighlight::HighlightLocations>& SyntaxHighlight::highlights()
+const std::vector<SyntaxHighlight::HighlightLocations>& SyntaxHighlight::highlights() const
 {
 	return mHighlights;
 }
 
-uint8_t SyntaxHighlight::color(HighlightType type)
+const uint8_t SyntaxHighlight::color(HighlightType type) const
 {
 	return mColors[static_cast<uint8_t>(type)];
 }
