@@ -57,6 +57,10 @@ Controls are listed as follows:
  	- Ctrl+Z: Undo most recent change.
   	- Ctrl+Y: Redo most recent undo.
 
+	OTHER CONTROLS:
+	- Ctrl+S: Saves the file while not in command mode.
+	- Ctrl+Q: Force quits the program while not in command mode (WARNING: DOES NOT SAVE FILE).
+
 More key functionality will be added as this project progresses.
 
 <hr>
@@ -104,7 +108,7 @@ Make sure that the values you put in the config.json file exist in the colorKey 
 The layout for the config.json file is as follows:
 
 	{
-		syntaxName (can be anything): {
+		"syntaxName" (can be anything, eg "cpp"): {
 			"fileExtensions": [ //File extensions. E.g.: ".cpp", ".cc"], (REQUIRED)
 			"defaultColor": "colorValue", (OPTIONAL, DEFAULT IS WHITE)
 			"builtInKeywords": { (OPTIONAL)
@@ -170,27 +174,37 @@ To build this project with the tests, run
 
 	python build.py --build-tests
 
+To build only the tests with the python script, run
+
+	python build.py --tests-only
+
 To build manually, run
 
-	cmake -B {buildDir} -G {buildGenerator} -S {pathToCMakeScript} -DCMAKE_BUILD_TYPE=Release
+	cmake -B {buildDir} -G {buildGenerator} -S {pathToCMakeScript}
 
 	cmake --build {buildDir} --config Release
 
 	EXAMPLE (While in root dir):
 
-	cmake -B ./out -G Ninja -DCMAKE_BUILD_TYPE=Release
+	cmake -B ./out -G Ninja
 
 	cmake --build ./out --config Release
 
 To build manually with tests, run the following instead
 
-	cmake -B {buildDir} -G {buildGenerator} -S {pathToCMakeScript} -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON
+	cmake -B {buildDir} -G {buildGenerator} -S {pathToCMakeScript} -DBUILD_TESTS=ON
 	
 	EXAMPLE:
 	
-	cmake -B ./out -G Ninja _DCMAKE_BUILD_TYPE=Release -DBUILD_TESTS=ON
+	cmake -B ./out -G Ninja -DBUILD_TESTS=ON
 	
-	cmake--build ./out --config Release
+	cmake --build ./out --config Release
+
+To build manually with only tests, run
+
+	cmake -B {buildDir} -G {buildGenerator} -S {pathToCMakeScript} -DBUILD_TESTS=ON -DBUILD_PROJECT=OFF
+
+	cmake --build {buildDir} --config Release
 
 <hr>
 
@@ -219,6 +233,8 @@ Run it by doing
 	OR IF USING COMMAND PROMPT
 
 	Tests
+
+> **_NOTE:_** For tests to run properly, you must be in the directory containing the Tests executable. Some tests will fail if you do not run it from the directory, since it requires files relative to the Tests.exe file
 
 <hr>
 

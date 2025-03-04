@@ -8,51 +8,55 @@
 
 TEST(EditorTests, EditorInitializesSuccessfully)
 {
-	Editor::initEditor("testFile.txt");
+	Editor editor("testFile.txt");
 	EXPECT_NO_FATAL_FAILURE();
 }
 
 TEST(EditorTests, EditorRendersText)
 {
+	Editor editor("testFile.txt");
 	testing::internal::CaptureStdout();
-	Editor::refreshScreen(true);
+	editor.refreshScreen(true);
 	EXPECT_NE(testing::internal::GetCapturedStdout(), std::string()) << "Testing to make sure refreshScreen prints to the console";
 }
 
 TEST(EditorTests, EditorModeChangesAsExpected)
 {
-	Editor::enableCommandMode();
-	EXPECT_EQ(Editor::mode(), Editor::Mode::CommandMode);
+	Editor editor("testFile.txt");
+	editor.enableCommandMode();
+	EXPECT_EQ(editor.mode(), Editor::Mode::CommandMode);
 
-	Editor::enableEditMode();
-	EXPECT_EQ(Editor::mode(), Editor::Mode::EditMode);
+	editor.enableEditMode();
+	EXPECT_EQ(editor.mode(), Editor::Mode::EditMode);
 
-	Editor::enableReadMode();
-	EXPECT_EQ(Editor::mode(), Editor::Mode::ReadMode);
+	editor.enableReadMode();
+	EXPECT_EQ(editor.mode(), Editor::Mode::ReadMode);
 
-	Editor::enableExitMode();
-	EXPECT_EQ(Editor::mode(), Editor::Mode::ExitMode);
+	editor.enableExitMode();
+	EXPECT_EQ(editor.mode(), Editor::Mode::ExitMode);
 }
 
 TEST(EditorTests, FileBecomesDirtyAfterChange)
 {
-	bool notDirty = Editor::isDirty();
+	Editor editor("testFile.txt");
+	bool notDirty = editor.isDirty();
 	EXPECT_FALSE(notDirty);
-	Editor::insertChar('c');
-	bool isDirty = Editor::isDirty();
+	editor.insertChar('c');
+	bool isDirty = editor.isDirty();
 	EXPECT_TRUE(isDirty);
 }
 
 TEST(EditorTests, insertRowAddsNewRow)
 {
+	Editor editor("testFile.txt");
 	testing::internal::CaptureStdout();
-	Editor::refreshScreen(true);
+	editor.refreshScreen(true);
 	std::string beforeRowAddition = testing::internal::GetCapturedStdout();
 
-	Editor::addRow();
+	editor.addRow();
 
 	testing::internal::CaptureStdout();
-	Editor::refreshScreen(true);
+	editor.refreshScreen(true);
 	std::string afterRowAddition = testing::internal::GetCapturedStdout();
 
 	EXPECT_NE(beforeRowAddition, afterRowAddition) << "Adding row should change the output";

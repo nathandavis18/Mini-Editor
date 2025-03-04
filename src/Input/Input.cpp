@@ -23,7 +23,6 @@ SOFTWARE.
 */
 
 #include "Input.hpp"
-#include "Editor/Editor.hpp"
 #include "InputImpl.hpp"
 
 #include <iostream>
@@ -38,25 +37,25 @@ namespace InputHandler
 		return InputImpl::getInput();
 	}
 
-	void changeMode(const KeyAction key)
+	void changeMode(const KeyAction key, Editor& editor)
 	{
 		bool shouldExit = false;
 		switch (key)
 		{
 		case static_cast<KeyAction>('i'):
-			Editor::enableEditMode();
+			editor.enableEditMode();
 			break;
 		case static_cast<KeyAction>(':'):
-			Editor::enableCommandMode();
-			Editor::refreshScreen();
+			editor.enableCommandMode();
+			editor.refreshScreen();
 
-			shouldExit = InputImpl::doCommand();
-			Editor::updateCommandBuffer(std::string_view());
+			shouldExit = doCommand(editor);
+			editor.updateCommandBuffer(std::string());
 
 			if (!shouldExit)
 			{
-				Editor::enableReadMode(); //Go back to read mode after executing a command
-				Editor::refreshScreen(true);
+				editor.enableReadMode(); //Go back to read mode after executing a command
+				editor.refreshScreen(true);
 			}
 			break;
 
@@ -72,34 +71,41 @@ namespace InputHandler
 		case KeyAction::CtrlEnd:
 		case KeyAction::CtrlPageDown:
 		case KeyAction::CtrlPageUp:
-			Editor::moveCursor(key);
+			editor.moveCursor(key);
 			break;
 
 		case KeyAction::CtrlArrowDown:
 		case KeyAction::CtrlArrowUp:
 		case KeyAction::PageDown:
 		case KeyAction::PageUp:
-			Editor::shiftRowOffset(key);
+			editor.shiftRowOffset(key);
+			break;
+
+		case KeyAction::CtrlS:
+			editor.save();
+			break;
+
+		case KeyAction::CtrlQ:
+			editor.enableExitMode();
 			break;
 
 		default: //Unknown command. Just go back to read mode
-			Editor::enableReadMode();
 			break;
 		}
 	}
 
-	void handleInput(KeyAction key)
+	void handleInput(KeyAction key, Editor& editor)
 	{
 		switch (key)
 		{
 		case KeyAction::Esc:
-			Editor::enableReadMode();
+			editor.enableReadMode();
 			break;
 		case KeyAction::Delete:
 		case KeyAction::Backspace:
 		case KeyAction::CtrlBackspace:
 		case KeyAction::CtrlDelete:
-			Editor::deleteChar(key);
+			editor.deleteChar(key);
 			break;
 		case KeyAction::ArrowDown:
 		case KeyAction::ArrowUp:
@@ -115,27 +121,124 @@ namespace InputHandler
 		case KeyAction::PageUp:
 		case KeyAction::CtrlPageDown:
 		case KeyAction::CtrlPageUp:
-			Editor::moveCursor(key);
+			editor.moveCursor(key);
 			break;
 		case KeyAction::CtrlArrowDown:
 		case KeyAction::CtrlArrowUp:
-			Editor::shiftRowOffset(key);
+			editor.shiftRowOffset(key);
 			break;
 		case KeyAction::Enter:
-			Editor::addRow();
+			editor.addRow();
 			break;
 		case KeyAction::CtrlZ:
-			Editor::undoChange();
+			editor.undoChange();
 			break;
 		case KeyAction::CtrlY:
-			Editor::redoChange();
+			editor.redoChange();
 			break;
+
+		case KeyAction::CtrlX:
 		case KeyAction::CtrlC: //Don't need to do anything for this yet
 			break;
 
+		case KeyAction::CtrlS:
+			editor.save();
+			break;
+
+		case KeyAction::CtrlQ:
+			editor.enableExitMode();
+			break;
+
 		default: [[ likely ]] //This is the most likely scenario
-			Editor::insertChar(static_cast<uint8_t>(key));
+			editor.insertChar(static_cast<uint8_t>(key));
 			break;
 		}
+	}
+
+	bool isActionKey(const KeyAction key)
+	{
+		switch (key)
+		{
+		case KeyAction::ArrowDown:
+		case KeyAction::ArrowLeft:
+		case KeyAction::ArrowRight:
+		case KeyAction::ArrowUp:
+		case KeyAction::CtrlArrowDown:
+		case KeyAction::CtrlArrowLeft:
+		case KeyAction::CtrlArrowRight:
+		case KeyAction::CtrlArrowUp:
+		case KeyAction::Home:
+		case KeyAction::End:
+		case KeyAction::CtrlHome:
+		case KeyAction::CtrlEnd:
+		case KeyAction::PageDown:
+		case KeyAction::PageUp:
+		case KeyAction::CtrlPageDown:
+		case KeyAction::CtrlPageUp:
+		case KeyAction::CtrlC:
+		case KeyAction::CtrlX:
+		case KeyAction::CtrlY:
+		case KeyAction::CtrlZ:
+		case KeyAction::Delete:
+		case KeyAction::CtrlDelete:
+		case KeyAction::Tab:
+			return true;
+
+		default:
+			return false;
+		}
+	}
+
+	bool doCommand(Editor& editor)
+	{
+		bool shouldExit = false;
+		const char* startStr = "\r\x1b[0K:";
+		std::string command;
+		std::string commandBuffer = startStr;
+		KeyAction commandInput;
+
+		do
+		{
+			std::cout << commandBuffer;
+			std::cout.flush();
+			editor.updateCommandBuffer(commandBuffer);
+
+			commandInput = getInput();
+
+			if (isActionKey(commandInput)) continue;
+			if (commandInput == KeyAction::Esc) return shouldExit;
+
+			if (commandInput == KeyAction::Backspace && command.length() > 0)
+			{
+				command.pop_back();
+			}
+			else if (commandInput == KeyAction::Backspace && command.length() == 0) continue;
+			else if (commandInput == KeyAction::CtrlBackspace)
+			{
+				command.clear();
+			}
+			else if(commandInput != KeyAction::Enter)
+			{
+				command += static_cast<unsigned char>(commandInput);
+			}
+			commandBuffer = startStr + command;
+		} while (commandInput != KeyAction::Enter);
+
+		if ((command == "q" && !editor.isDirty()) || command == "q!") //Quit command - requires changes to be saved if not force quit
+		{
+			editor.enableExitMode();
+			shouldExit = true;
+		}
+		else if (command == "w" || command == "s") //Save commands ([w]rite / [s]ave)
+		{
+			editor.save();
+		}
+		else if (command == "wq" || command == "sq") //Save and quit commands ([w]rite [q]uit / [s]ave [q]uit)
+		{
+			editor.save();
+			editor.enableExitMode();
+			shouldExit = true;
+		}
+		return shouldExit;
 	}
 }

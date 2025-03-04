@@ -47,7 +47,7 @@ public:
 	/// Moves the file contents to the editor since the file handler no longer needs it. 
 	/// </summary>
 	/// <returns></returns>
-	std::vector<Row>& getFileContents();
+	std::vector<Row>* getFileContents();
 
 	const std::string_view fileName();
 

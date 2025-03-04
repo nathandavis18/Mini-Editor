@@ -87,9 +87,9 @@ void FileHandler::loadFileContents()
 	}
 }
 
-std::vector<FileHandler::Row>& FileHandler::getFileContents()
+std::vector<FileHandler::Row>* FileHandler::getFileContents()
 {
-	return mRows;
+	return &mRows;
 }
 
 void FileHandler::saveFile()

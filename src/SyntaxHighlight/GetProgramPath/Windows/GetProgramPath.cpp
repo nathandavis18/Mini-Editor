@@ -21,29 +21,21 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+#include "SyntaxHighlight/GetProgramPath/GetProgramPath.hpp"
 
-#include "EventHandler/EventHandler.hpp"
-#include "KeyActions/KeyActions.hh"
+#define WIN32_LEAN_AND_MEAN
+#define VC_EXTRALEAN
+#include <Windows.h>
 
-#include <iostream>
-#include <csignal>
+#include <string>
 
-Editor* editor = nullptr;
-
-void windowSizeChangeEvent(int)
+namespace GetProgramPath
 {
-    editor->updateWindowSize();
-    editor->refreshScreen(true);
-}
-
-EventHandler::EventHandler(std::atomic<bool>& running, Editor* ed)
-{
-    editor = ed;
-    std::signal(SIGWINCH, windowSizeChangeEvent);
-}
-
-EventHandler::~EventHandler()
-{
-    editor = nullptr;
-    std::signal(SIGWINCH, nullptr);
+	std::filesystem::path getPath()
+	{
+		char pathToBin[MAX_PATH];
+		GetModuleFileName(NULL, pathToBin, MAX_PATH);
+		std::string pathStr{ pathToBin };
+		return pathStr.substr(0, pathStr.find_last_of("\\/"));
+	}
 }

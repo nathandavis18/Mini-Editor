@@ -6,26 +6,30 @@
 
 TEST(InputTests, EditorInitializedSuccessfully)
 {
-	Editor::initEditor("TestFile.cpp");
+	Editor editor("TestFile.cpp");
 	EXPECT_NO_FATAL_FAILURE();
 }
 
 TEST(InputTests, EnableEditModeWorks)
 {
-	InputHandler::changeMode(static_cast<KeyActions::KeyAction>('i'));
-	EXPECT_EQ(Editor::mode(), Editor::Mode::EditMode);
+	Editor editor("TestFile.cpp");
+	InputHandler::changeMode(static_cast<KeyActions::KeyAction>('i'), editor);
+	EXPECT_EQ(editor.mode(), Editor::Mode::EditMode);
 }
 
 TEST(InputTests, EnableReadModeWorks)
 {
-	InputHandler::handleInput(KeyActions::KeyAction::Esc);
-	EXPECT_EQ(Editor::mode(), Editor::Mode::ReadMode);
+	Editor editor("TestFile.cpp");
+	InputHandler::handleInput(KeyActions::KeyAction::Esc, editor);
+	EXPECT_EQ(editor.mode(), Editor::Mode::ReadMode);
 }
 
 TEST(InputTests, InsertCharChangesFile)
 {
-	bool beforeChange = Editor::isDirty();
-	InputHandler::handleInput(static_cast<KeyActions::KeyAction>('c'));
-	bool afterChange = Editor::isDirty();
+	Editor editor("TestFile.cpp");
+	bool beforeChange = editor.isDirty();
+	editor.enableEditMode();
+	InputHandler::handleInput(static_cast<KeyActions::KeyAction>('c'), editor);
+	bool afterChange = editor.isDirty();
 	EXPECT_NE(beforeChange, afterChange);
 }

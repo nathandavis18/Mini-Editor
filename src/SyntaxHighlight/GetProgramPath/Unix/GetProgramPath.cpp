@@ -21,29 +21,20 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
+#include "SyntaxHighlight/GetProgramPath/GetProgramPath.hpp"
 
-#include "EventHandler/EventHandler.hpp"
-#include "KeyActions/KeyActions.hh"
+#include <unistd.h>
+#include <limits.h> //PATH_MAX
+#include <string>
 
-#include <iostream>
-#include <csignal>
-
-Editor* editor = nullptr;
-
-void windowSizeChangeEvent(int)
+namespace GetProgramPath
 {
-    editor->updateWindowSize();
-    editor->refreshScreen(true);
-}
-
-EventHandler::EventHandler(std::atomic<bool>& running, Editor* ed)
-{
-    editor = ed;
-    std::signal(SIGWINCH, windowSizeChangeEvent);
-}
-
-EventHandler::~EventHandler()
-{
-    editor = nullptr;
-    std::signal(SIGWINCH, nullptr);
+	std::filesystem::path getPath()
+	{
+		char pathToBin[PATH_MAX];
+		int count = readlink("/proc/self/exe", pathToBin, PATH_MAX);
+		if (count == -1) return "";
+		std::string pathStr{ pathToBin };
+		return pathStr.substr(0, pathStr.find_last_of("/"));
+	}
 }

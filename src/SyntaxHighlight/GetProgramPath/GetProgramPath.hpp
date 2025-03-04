@@ -22,28 +22,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "EventHandler/EventHandler.hpp"
-#include "KeyActions/KeyActions.hh"
+#pragma once
+#include <filesystem>
 
-#include <iostream>
-#include <csignal>
-
-Editor* editor = nullptr;
-
-void windowSizeChangeEvent(int)
+namespace GetProgramPath
 {
-    editor->updateWindowSize();
-    editor->refreshScreen(true);
-}
-
-EventHandler::EventHandler(std::atomic<bool>& running, Editor* ed)
-{
-    editor = ed;
-    std::signal(SIGWINCH, windowSizeChangeEvent);
-}
-
-EventHandler::~EventHandler()
-{
-    editor = nullptr;
-    std::signal(SIGWINCH, nullptr);
+	/// <summary>
+	/// Returns the absolute path to the directory containing the mini executable
+	/// </summary>
+	/// <returns></returns>
+	std::filesystem::path getPath();
 }

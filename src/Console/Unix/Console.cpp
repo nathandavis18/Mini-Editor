@@ -23,9 +23,7 @@ SOFTWARE.
 */
 
 #include "Console/Console.hpp"
-#include "KeyActions/KeyActions.hh"
 
-#include <string>
 #include <iostream>
 
 #include <termios.h>
@@ -45,6 +43,11 @@ Console::Console()
 		std::cerr << "Error enabling raw input mode";
 		exit(EXIT_FAILURE);
 	}
+}
+
+Console::~Console()
+{
+	disableRawInput();
 }
 
 void Console::setDefaultMode()
