@@ -25,9 +25,7 @@ SOFTWARE.
 #pragma once
 #include "Editor/Editor.hpp"
 
-#include <functional>
 #include <atomic>
-#include <cstdint>
 class EventHandler
 {
 public:

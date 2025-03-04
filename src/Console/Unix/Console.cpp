@@ -23,9 +23,7 @@ SOFTWARE.
 */
 
 #include "Console/Console.hpp"
-#include "KeyActions/KeyActions.hh"
 
-#include <string>
 #include <iostream>
 
 #include <termios.h>

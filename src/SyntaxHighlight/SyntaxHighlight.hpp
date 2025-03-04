@@ -69,7 +69,7 @@ public:
 	/// Returns whether or not there is an active highlight syntax being used
 	/// </summary>
 	/// <returns></returns>
-	const bool hasSyntax();
+	const bool hasSyntax() const;
 
 	/// <summary>
 	/// The different types of highlights
@@ -92,7 +92,7 @@ public:
 	/// </summary>
 	/// <param name=""></param>
 	/// <returns></returns>
-	uint8_t color(HighlightType hlType);
+	const uint8_t color(HighlightType hlType) const;
 
 	/// <summary>
 	/// The structure for how highlight locations are stored
@@ -110,7 +110,7 @@ public:
 	/// Should only be called one time by the Editor, and that is on program load
 	/// </summary>
 	/// <returns></returns>
-	const std::vector<HighlightLocations>& highlights();
+	const std::vector<HighlightLocations>& highlights() const;
 
 	/// <summary>
 	/// Called when a multiline comment or string highlight location is started
@@ -181,7 +181,7 @@ public:
 	private:
 		// Color IDs correspond to the IDs found at this link: https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797#:~:text=Where%20%7BID%7D%20should%20be%20replaced%20with%20the%20color%20index%20from%200%20to%20255%20of%20the%20following%20color%20table%3A
 		// If you would like to add/change colors, just find the color ID you want and add it. There is a list of colors chosen here for your convenience
-		inline static const std::unordered_map<std::string, uint8_t> mColorKeys{
+		static inline const std::unordered_map<std::string, uint8_t> mColorKeys{
 			{"pink", 13}, {"magenta", 207}, {"hotpink", 5}, {"rosered", 204},
 			{"lightred", 1}, {"red", 160}, {"darkred", 52}, {"darkorange", 130},
 			{"peach", 209}, {"orange", 202}, {"lightorange", 208}, {"lightyellow", 11},

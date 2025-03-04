@@ -34,14 +34,12 @@ SOFTWARE.
 #include "Editor.hpp"
 
 #include <iostream>
-#include <fstream>
-#include <sstream>
 #include <tuple>
-#include <algorithm>
 #include <limits>
+#include <utility>
 #include <format> //C++20 is required. MSVC/GCC-13/Clang-14/17/AppleClang-15
 
-#define MiniVersion "0.6.2a"
+constexpr char MiniVersion[7] = "0.6.2a";
 
 Editor::Window::Window() : fileCursorX(0), fileCursorY(0), cols(0), rows(0), renderedCursorX(0), renderedCursorY(0), colNumberToDisplay(0), savedRenderedCursorXPos(0),
 rowOffset(0), colOffset(0), dirty(false), fileRows(nullptr)
@@ -51,7 +49,7 @@ Editor::Window::Window(FileHandler& file) : fileCursorX(0), fileCursorY(0), cols
 rowOffset(0), colOffset(0), dirty(false), fileRows(file.getFileContents())
 {}
 
-const Editor::Mode Editor::mode()
+const Editor::Mode Editor::mode() const
 {
 	return mMode;
 }
@@ -745,7 +743,7 @@ void Editor::redoChange()
 	mRedoHistory.pop();
 }
 
-bool Editor::isDirty()
+const bool Editor::isDirty() const
 {
 	return mWindow.dirty;
 }
@@ -872,7 +870,7 @@ void Editor::replaceRenderedStringTabs(std::string& renderedLine)
 	}
 }
 
-size_t Editor::getRenderedCursorTabSpaces(const FileHandler::Row& row)
+const size_t Editor::getRenderedCursorTabSpaces(const FileHandler::Row& row) const
 {
 	size_t spacesToAdd = 0;
 	for (size_t i = 0; i < mWindow.fileCursorX; ++i)
