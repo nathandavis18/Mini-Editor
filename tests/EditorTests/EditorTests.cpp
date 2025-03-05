@@ -5,7 +5,7 @@
 
 TEST(EditorTests, EditorInitializesSuccessfully)
 {
-	EXPECT_NO_FATAL_FAILURE(Editor editor("testFile.txt"));
+	Editor editor("testFile.txt");
 }
 
 TEST(EditorTests, EditorRendersText)

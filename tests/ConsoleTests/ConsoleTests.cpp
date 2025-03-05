@@ -3,17 +3,15 @@
 
 TEST(ConsoleTests, ConsoleInitializesProperly)
 {
-	EXPECT_NO_FATAL_FAILURE(Console console);
+	Console console;
 }
 
 
 TEST(ConsoleTests, ConsoleEnableAndDisableRawInputDoesntFail)
 {
-	EXPECT_NO_FATAL_FAILURE(
-		Console console,
-		console.enableRawInput(),
-		console.disableRawInput()
-	);
+	Console console;
+	console.enableRawInput();
+	console.disableRawInput();
 }
 
 TEST(ConsoleTests, ConsoleSizeGetsSetProperly)
