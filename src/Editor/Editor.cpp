@@ -50,7 +50,7 @@ const Editor::Mode Editor::mode() const
 	return mMode;
 }
 
-Editor::Editor(SyntaxHighlight&& syntax, FileHandler&& fileHandler, Console&& console) : mSyntax(std::move(syntax)), mFile(fileHandler), mConsole(std::move(console))
+Editor::Editor(SyntaxHighlight&& syntax, FileHandler&& fileHandler, std::unique_ptr<IConsole>&& console) : mSyntax(std::move(syntax)), mFile(fileHandler), mConsole(std::move(console))
 {
 	mWindow = std::make_unique<Window>(Window(mFile));
 	updateWindowSize();
@@ -769,7 +769,7 @@ void Editor::enableReadMode()
 void Editor::enableExitMode()
 {
 	mMode = Mode::ExitMode;
-	mConsole.disableRawInput();
+	mConsole->disableRawInput();
 }
 
 void Editor::setCursorLinePosition()
@@ -991,7 +991,7 @@ void Editor::setHighlight()
 
 void Editor::updateWindowSize()
 {
-	Console::WindowSize windowSize = mConsole.getWindowSize();
+	IConsole::WindowSize windowSize = mConsole->getWindowSize();
 	mWindow->rows = windowSize.rows - statusMessageRows;
 	mWindow->cols = windowSize.cols;
 }

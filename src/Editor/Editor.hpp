@@ -34,7 +34,7 @@ SOFTWARE.
 #include "SyntaxHighlight/SyntaxHighlight.hpp"
 #include "KeyActions/KeyActions.hh"
 #include "File/File.hpp"
-#include "Console/Console.hpp"
+#include "Console/ConsoleInterface.hpp"
 
 #include <vector>
 #include <memory>
@@ -70,7 +70,7 @@ public:
 	/// <summary>
 	/// Initializes the editor. Should only be called on program start.
 	/// </summary>
-	Editor(SyntaxHighlight&& syntax, FileHandler&& fileHandler, Console&& console);
+	Editor(SyntaxHighlight&& syntax, FileHandler&& fileHandler, std::unique_ptr<IConsole>&& console);
 
 	/// <summary>
 	/// Called when exiting the program so the screen gets completely cleared
@@ -343,8 +343,8 @@ private:
 	std::string mCommandBuffer;
 
 	std::unique_ptr<Window> mWindow;
+	std::unique_ptr<IConsole> mConsole;
 	FileHandler mFile;
-	Console mConsole;
 	SyntaxHighlight mSyntax;
 	std::string normalColorMode;
 

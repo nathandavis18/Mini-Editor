@@ -6,18 +6,16 @@
 
 TEST(EditorTests, EditorInitializesSuccessfully)
 {
-	MockConsole console;
 	SyntaxHighlight highlight("testFile.txt");
 	FileHandler file("testFile.txt");
-	Editor editor(std::move(highlight), std::move(file), std::move(console));
+	Editor editor(std::move(highlight), std::move(file), std::make_unique<MockConsole>(MockConsole()));
 }
 
 TEST(EditorTests, EditorRendersText)
 {
-	MockConsole console;
 	SyntaxHighlight highlight("testFile.txt");
 	FileHandler file("testFile.txt");
-	Editor editor(std::move(highlight), std::move(file), std::move(console));
+	Editor editor(std::move(highlight), std::move(file), std::make_unique<MockConsole>(MockConsole()));
 	testing::internal::CaptureStdout();
 	editor.refreshScreen(true);
 	EXPECT_NE(testing::internal::GetCapturedStdout(), std::string()) << "Testing to make sure refreshScreen prints to the console";
@@ -25,10 +23,9 @@ TEST(EditorTests, EditorRendersText)
 
 TEST(EditorTests, EditorModeChangesAsExpected)
 {
-	MockConsole console;
 	SyntaxHighlight highlight("testFile.txt");
 	FileHandler file("testFile.txt");
-	Editor editor(std::move(highlight), std::move(file), std::move(console));
+	Editor editor(std::move(highlight), std::move(file), std::make_unique<MockConsole>(MockConsole()));
 	editor.enableCommandMode();
 	EXPECT_EQ(editor.mode(), Editor::Mode::CommandMode);
 
@@ -44,10 +41,9 @@ TEST(EditorTests, EditorModeChangesAsExpected)
 
 TEST(EditorTests, FileBecomesDirtyAfterChange)
 {
-	MockConsole console;
 	SyntaxHighlight highlight("testFile.txt");
 	FileHandler file("testFile.txt");
-	Editor editor(std::move(highlight), std::move(file), std::move(console));
+	Editor editor(std::move(highlight), std::move(file), std::make_unique<MockConsole>(MockConsole()));
 	bool notDirty = editor.isDirty();
 	EXPECT_FALSE(notDirty);
 	editor.insertChar('c');
@@ -57,10 +53,9 @@ TEST(EditorTests, FileBecomesDirtyAfterChange)
 
 TEST(EditorTests, insertRowAddsNewRow)
 {
-	MockConsole console;
 	SyntaxHighlight highlight("testFile.txt");
 	FileHandler file("testFile.txt");
-	Editor editor(std::move(highlight), std::move(file), std::move(console));
+	Editor editor(std::move(highlight), std::move(file), std::make_unique<MockConsole>(MockConsole()));
 	testing::internal::CaptureStdout();
 	editor.refreshScreen(true);
 	std::string beforeRowAddition = testing::internal::GetCapturedStdout();

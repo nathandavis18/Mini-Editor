@@ -1,10 +1,10 @@
 #pragma once
-#include "Console/Console.hpp"
+#include "Console/ConsoleInterface.hpp"
 
-class MockConsole : public Console
+class MockConsole : public IConsole
 {
 public:
-	MockConsole() : windowSize(WindowSize(10, 10))
+	MockConsole() : mWindowSize(WindowSize(10, 10))
 	{}
 	~MockConsole()
 	{
@@ -20,8 +20,17 @@ public:
 	}
 	WindowSize getWindowSize() override
 	{
-		return windowSize;
+		return mWindowSize;
 	}
 private:
-	WindowSize windowSize;
+	void setDefaultMode() override
+	{
+		return;
+	}
+	void setWindowSize() override
+	{
+		return;
+	}
+private:
+	WindowSize mWindowSize;
 };

@@ -23,18 +23,11 @@ SOFTWARE.
 */
 
 #pragma once
+#include "ConsoleInterface.hpp"
 
-class Console
+class Console : public IConsole
 {
 public:
-	/// <summary>
-	/// Used to maintain the size of the console window
-	/// </summary>
-	struct WindowSize
-	{
-		int rows{}, cols{};
-	};
-
 	/// <summary>
 	/// Initializes the console by setting the window size, getting default mode parameters, and 
 	/// </summary>
@@ -49,29 +42,29 @@ public:
 	/// Should be called when outside files/classes need access to the console size (i.e. the editor)
 	/// </summary>
 	/// <returns> An object containing row and col sizes </returns>
-	virtual WindowSize getWindowSize();
+	WindowSize getWindowSize() override;
 
 	/// <summary>
 	/// Enables raw input mode on the console by using the OS-specific functions
 	/// </summary>
 	/// <returns> Returns true if successful </returns>
-	virtual void enableRawInput();
+	void enableRawInput() override;
 
 	/// <summary>
 	/// Disables raw input mode by using the OS-specific API to return to default mode.
 	/// </summary>
-	virtual void disableRawInput();
+	void disableRawInput() override;
 
 private:
 	/// <summary>
 	/// Gets the default console mode from the OS and sets a local OS-Specific variable with the console settings
 	/// </summary>
-	void setDefaultMode();
+	void setDefaultMode() override;
 
 	/// <summary>
 	/// Uses the OS API to get console size information and stores it in the local WindowSize object
 	/// </summary>
-	void setWindowSize();
+	void setWindowSize() override;
 
 	/// <summary>
 	/// If the program exits due to an error, force it back into default mode

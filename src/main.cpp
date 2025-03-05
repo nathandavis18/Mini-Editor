@@ -27,6 +27,7 @@ SOFTWARE.
 #include "EventHandler/EventHandler.hpp"
 #include "KeyActions/KeyActions.hh"
 #include "File/File.hpp"
+#include "Console/Console.hpp"
 
 #include <iostream>
 #include <atomic>
@@ -47,7 +48,7 @@ int main(int argc, const char** argv)
 	SyntaxHighlight highlight(argv[1]);
 	FileHandler file(argv[1]);
 
-	Editor editor(std::move(highlight), std::move(file), Console());
+	Editor editor(std::move(highlight), std::move(file), std::make_unique<Console>(Console()));
 
 	std::atomic<bool> running = true;
 	EventHandler evtHandler(running, &editor);
