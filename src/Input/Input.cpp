@@ -179,6 +179,8 @@ namespace InputHandler
 		case KeyAction::CtrlX:
 		case KeyAction::CtrlY:
 		case KeyAction::CtrlZ:
+		case KeyAction::CtrlQ:
+		case KeyAction::CtrlS:
 		case KeyAction::Delete:
 		case KeyAction::CtrlDelete:
 		case KeyAction::Tab:

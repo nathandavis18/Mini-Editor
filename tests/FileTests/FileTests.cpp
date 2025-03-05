@@ -4,7 +4,6 @@
 #include <sstream>
 
 #include "File/File.hpp"
-#include "Editor/Editor.hpp"
 
 TEST(FileTest, FileNameGetsSavedProperly)
 {
@@ -28,13 +27,14 @@ TEST(FileTest, FileReturnsEmptyWhenFileDoesntExist)
 
 TEST(FileTest, SavingFileDoesntCorruptFile)
 {
-	Editor editor("testFile.txt");
+	FileHandler fileHandler("testFile.txt");
+
 	std::stringstream stream1;
 	std::ifstream file("testFile.txt");
 	stream1 << file.rdbuf();
 	file.close();
 
-	editor.save();
+	fileHandler.saveFile();
 
 	std::stringstream stream2;
 	file.open("testFile.txt");

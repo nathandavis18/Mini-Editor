@@ -4,12 +4,6 @@
 #include "Editor/Editor.hpp"
 #include "Input/Input.hpp"
 
-TEST(InputTests, EditorInitializedSuccessfully)
-{
-	Editor editor("TestFile.cpp");
-	EXPECT_NO_FATAL_FAILURE();
-}
-
 TEST(InputTests, EnableEditModeWorks)
 {
 	Editor editor("TestFile.cpp");
