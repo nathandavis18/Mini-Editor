@@ -21,6 +21,7 @@ set(SOURCES
 	"InputTests/InputTests.cpp"
 	"SyntaxHighlightTests/SyntaxHighlightTests.cpp"
 	"JsonParserTests/JsonParserTests.cpp"
+	"GetProgramPathTests/GetProgramPathTests.cpp"
 )
 
 set(CMAKE_CXX_STANDARD 20)
