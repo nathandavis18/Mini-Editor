@@ -39,6 +39,8 @@ int main(int argc, const char** argv)
 	argc = 2;
 	argv[1] = "test.cpp";
 #endif
+	argc = 2;
+	argv[1] = "test.cpp";
 	if (argc != 2)
 	{
 		std::cerr << "ERROR: Usage: mini <filename>\n";

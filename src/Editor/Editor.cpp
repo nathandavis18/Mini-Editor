@@ -50,7 +50,7 @@ const Editor::Mode Editor::mode() const
 	return mMode;
 }
 
-Editor::Editor(SyntaxHighlight&& syntax, FileHandler&& fileHandler, std::unique_ptr<IConsole>&& console) : mSyntax(std::move(syntax)), mFile(fileHandler), mConsole(std::move(console))
+Editor::Editor(SyntaxHighlight&& syntax, FileHandler&& fileHandler, std::unique_ptr<IConsole>&& console) : mSyntax(std::move(syntax)), mFile(std::move(fileHandler)), mConsole(std::move(console))
 {
 	mWindow = std::make_unique<Window>(Window(mFile));
 	updateWindowSize();
