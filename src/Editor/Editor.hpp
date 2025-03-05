@@ -69,9 +69,7 @@ public:
 
 	/// <summary>
 	/// Initializes the editor. Should only be called on program start.
-	/// This will set up everything else for the editor, including the console, file handler, and syntax highlighting
 	/// </summary>
-	/// <param name="fName"> The name of the file grabbed from argv[1] </param>
 	Editor(SyntaxHighlight&& syntax, FileHandler&& fileHandler, Console&& console);
 
 	/// <summary>

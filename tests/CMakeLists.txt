@@ -27,12 +27,12 @@ set(SOURCES
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
-add_executable(Tests ${SOURCES})
+add_executable(Tests ${SOURCES} "MockClasses/MockConsole.hpp")
 target_link_libraries(Tests PUBLIC
 	gtest_main
 	mini_tests
 )
-
+target_include_directories(Tests PRIVATE MockClasses)
 
 add_test(
 	NAME Tests

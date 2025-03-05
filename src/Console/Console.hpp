@@ -49,23 +49,23 @@ public:
 	/// Should be called when outside files/classes need access to the console size (i.e. the editor)
 	/// </summary>
 	/// <returns> An object containing row and col sizes </returns>
-	WindowSize getWindowSize();
+	virtual WindowSize getWindowSize();
 
 	/// <summary>
 	/// Enables raw input mode on the console by using the OS-specific functions
 	/// </summary>
 	/// <returns> Returns true if successful </returns>
-	void enableRawInput();
+	virtual void enableRawInput();
 
 	/// <summary>
 	/// Disables raw input mode by using the OS-specific API to return to default mode.
 	/// </summary>
-	void disableRawInput();
+	virtual void disableRawInput();
 
 private:
 	/// <summary>
-		/// Gets the default console mode from the OS and sets a local OS-Specific variable with the console settings
-		/// </summary>
+	/// Gets the default console mode from the OS and sets a local OS-Specific variable with the console settings
+	/// </summary>
 	void setDefaultMode();
 
 	/// <summary>

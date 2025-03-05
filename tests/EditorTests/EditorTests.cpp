@@ -2,15 +2,22 @@
 #include <sstream>
 
 #include "Editor/Editor.hpp"
+#include "MockConsole.hpp"
 
 TEST(EditorTests, EditorInitializesSuccessfully)
 {
-	Editor editor("testFile.txt");
+	MockConsole console;
+	SyntaxHighlight highlight("testFile.txt");
+	FileHandler file("testFile.txt");
+	Editor editor(std::move(highlight), std::move(file), std::move(console));
 }
 
 TEST(EditorTests, EditorRendersText)
 {
-	Editor editor("testFile.txt");
+	MockConsole console;
+	SyntaxHighlight highlight("testFile.txt");
+	FileHandler file("testFile.txt");
+	Editor editor(std::move(highlight), std::move(file), std::move(console));
 	testing::internal::CaptureStdout();
 	editor.refreshScreen(true);
 	EXPECT_NE(testing::internal::GetCapturedStdout(), std::string()) << "Testing to make sure refreshScreen prints to the console";
@@ -18,7 +25,10 @@ TEST(EditorTests, EditorRendersText)
 
 TEST(EditorTests, EditorModeChangesAsExpected)
 {
-	Editor editor("testFile.txt");
+	MockConsole console;
+	SyntaxHighlight highlight("testFile.txt");
+	FileHandler file("testFile.txt");
+	Editor editor(std::move(highlight), std::move(file), std::move(console));
 	editor.enableCommandMode();
 	EXPECT_EQ(editor.mode(), Editor::Mode::CommandMode);
 
@@ -34,7 +44,10 @@ TEST(EditorTests, EditorModeChangesAsExpected)
 
 TEST(EditorTests, FileBecomesDirtyAfterChange)
 {
-	Editor editor("testFile.txt");
+	MockConsole console;
+	SyntaxHighlight highlight("testFile.txt");
+	FileHandler file("testFile.txt");
+	Editor editor(std::move(highlight), std::move(file), std::move(console));
 	bool notDirty = editor.isDirty();
 	EXPECT_FALSE(notDirty);
 	editor.insertChar('c');
@@ -44,7 +57,10 @@ TEST(EditorTests, FileBecomesDirtyAfterChange)
 
 TEST(EditorTests, insertRowAddsNewRow)
 {
-	Editor editor("testFile.txt");
+	MockConsole console;
+	SyntaxHighlight highlight("testFile.txt");
+	FileHandler file("testFile.txt");
+	Editor editor(std::move(highlight), std::move(file), std::move(console));
 	testing::internal::CaptureStdout();
 	editor.refreshScreen(true);
 	std::string beforeRowAddition = testing::internal::GetCapturedStdout();
