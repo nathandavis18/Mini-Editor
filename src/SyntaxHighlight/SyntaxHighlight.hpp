@@ -145,7 +145,7 @@ public:
 	/// <param name="rows"></param>
 	/// <param name="fileCursorY"></param>
 	/// <returns></returns>
-	std::tuple<size_t, size_t> removeOffScreenHighlights(size_t rowOffset, size_t rows, size_t fileCursorY);
+	std::tuple<size_t, size_t, size_t> removeOffScreenHighlights(size_t rowOffset, size_t rows, size_t fileCursorY);
 
 	/// <summary>
 	/// Checks if the current word is a number or keyword, since they dont need any other special treatment like comments and strings
