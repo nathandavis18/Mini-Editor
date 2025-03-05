@@ -193,6 +193,10 @@ public:
 	/// </summary>
 	void updateWindowSize();
 
+	/// <summary>
+	/// When in command mode, make sure the command that the user has typed doesn't get erased when the screen size changes
+	/// </summary>
+	/// <param name="command"></param>
 	void updateCommandBuffer(const std::string& command);
 
 private:

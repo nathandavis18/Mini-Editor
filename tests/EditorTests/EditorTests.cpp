@@ -1,15 +1,11 @@
 #include <gtest/gtest.h>
 #include <sstream>
-#include <iostream>
 
 #include "Editor/Editor.hpp"
-#include "File/File.hpp"
-#include "Input/Input.hpp"
 
 TEST(EditorTests, EditorInitializesSuccessfully)
 {
-	Editor editor("testFile.txt");
-	EXPECT_NO_FATAL_FAILURE();
+	EXPECT_NO_FATAL_FAILURE(Editor editor("testFile.txt"));
 }
 
 TEST(EditorTests, EditorRendersText)

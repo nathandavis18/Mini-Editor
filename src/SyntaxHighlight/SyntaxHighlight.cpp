@@ -23,7 +23,7 @@ SOFTWARE.
 */
 
 #include "SyntaxHighlight.hpp"
-#include "SyntaxHighlight/GetProgramPath/GetProgramPath.hpp"
+#include "Utility/GetProgramPath/GetProgramPath.hpp"
 
 #include <limits>
 #include <array>

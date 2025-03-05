@@ -3,7 +3,7 @@
 #include <fstream>
 #include <sstream>
 
-#include "SyntaxHighlight/JsonParser/JsonParser.hpp"
+#include "Utility/JsonParser/JsonParser.hpp"
 
 using JsonParser::JsonObject;
 using JsonParser::JsonSet;
