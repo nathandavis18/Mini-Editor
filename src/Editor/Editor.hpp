@@ -70,7 +70,7 @@ public:
 	/// <summary>
 	/// Initializes the editor. Should only be called on program start.
 	/// </summary>
-	Editor(SyntaxHighlight&& syntax, FileHandler&& fileHandler, std::unique_ptr<IConsole>&& console);
+	Editor(SyntaxHighlight syntax, FileHandler fileHandler, std::unique_ptr<IConsole> console);
 
 	/// <summary>
 	/// Called when exiting the program so the screen gets completely cleared

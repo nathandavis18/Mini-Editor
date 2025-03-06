@@ -30,6 +30,7 @@ SOFTWARE.
 #include "Console/Console.hpp"
 
 #include <iostream>
+#include <string_view>
 #include <atomic>
 #include <cstdlib> //EXIT_FAILURE, EXIT_SUCCESS
 
@@ -47,10 +48,11 @@ int main(int argc, const char** argv)
 		return EXIT_FAILURE;
 	}
 
-	SyntaxHighlight highlight(argv[1]);
-	FileHandler file(argv[1]);
 
-	Editor editor(std::move(highlight), std::move(file), std::make_unique<Console>(Console()));
+	std::string_view highlightFName = argv[1];
+	std::string_view fileFName = argv[1];
+
+	Editor editor(SyntaxHighlight(highlightFName), FileHandler(fileFName), std::make_unique<Console>(Console()));
 
 	std::atomic<bool> running = true;
 	EventHandler evtHandler(running, &editor);
