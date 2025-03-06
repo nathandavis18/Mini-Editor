@@ -10,27 +10,27 @@
 
 TEST(SyntaxHighlightTests, TextFileHasNoSyntax)
 {
-	SyntaxHighlight highlight("TestFile.txt");
+	SyntaxHighlight highlight(".txt");
 	EXPECT_FALSE(highlight.hasSyntax());
 }
 
 TEST(SyntaxHighlightTests, CppFileHasSyntax)
 {
-	SyntaxHighlight highlight("TestFile.cpp");
+	SyntaxHighlight highlight(".cpp");
 	EXPECT_TRUE(highlight.hasSyntax());
 }
 
 TEST(SyntaxHighlightTests, RemoveHighlightsReturnsCorretlyWithNoHighlights)
 {
 	std::tuple<size_t, size_t, size_t> testValue(std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max(), std::numeric_limits<size_t>::max());
-	SyntaxHighlight highlight("TestFile.cpp");
+	SyntaxHighlight highlight(".cpp");
 	std::tuple<size_t, size_t, size_t> returnValue = highlight.removeOffScreenHighlights(0, 0, 0);
 	EXPECT_EQ(testValue, returnValue);
 }
 
 TEST(SyntaxHighlightTests, ColorCodeReturnsCorrectly)
 {
-	SyntaxHighlight highlight("TestFile.cpp");
+	SyntaxHighlight highlight(".cpp");
 	uint8_t expectedValue = 15;
 
 	uint8_t actualValue = highlight.color(SyntaxHighlight::HighlightType::Normal);
@@ -39,7 +39,7 @@ TEST(SyntaxHighlightTests, ColorCodeReturnsCorrectly)
 
 TEST(SyntaxHighlightTests, KeywordGetsAddedToHighlights)
 {
-	SyntaxHighlight highlight("TestFile.cpp");
+	SyntaxHighlight highlight(".cpp");
 	uint8_t numHighlights = highlight.highlights().size();
 	EXPECT_EQ(numHighlights, 0);
 
@@ -51,7 +51,7 @@ TEST(SyntaxHighlightTests, KeywordGetsAddedToHighlights)
 
 TEST(SyntaxHighlightTests, OffScreenHighlightsGetRemoved)
 {
-	SyntaxHighlight highlight("TestFile.cpp");
+	SyntaxHighlight highlight(".cpp");
 	std::string_view keyword = "int";
 	highlight.highlightKeywordNumberCheck(keyword, 0, 0);
 	uint8_t beforeRemoval = highlight.highlights().size();
@@ -64,7 +64,7 @@ TEST(SyntaxHighlightTests, OffScreenHighlightsGetRemoved)
 
 TEST(SyntaxHighlightTests, MultilineCommentCheckWorks)
 {
-	SyntaxHighlight highlight("TestFile.cpp");
+	SyntaxHighlight highlight(".cpp");
 	std::vector<FileHandler::Row> fileRows{
 		FileHandler::Row("/*Start to a multilineComment", "/*Start to a multilineComment"),
 		FileHandler::Row("End to a multilineComment*/", "End to a multilineComment*/"),
