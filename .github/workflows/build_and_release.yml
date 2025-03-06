@@ -47,7 +47,7 @@ jobs:
               with:
                 token: ${{ secrets.GITHUB_TOKEN }}
                 prerelease: true
-                name: v0.6.3a - Cleanup work
-                tag: v0.6.3a
+                name: v0.6.4a - Bug Fix to Syntax Highlight
+                tag: v0.6.4a
                 artifacts: "config.json,out/build/mini.exe"
                 makeLatest: true
