@@ -1,7 +1,7 @@
 /**
 * MIT License
 
-Copyright (c) 2024 Nathan Davis
+Copyright (c) 2025 Nathan Davis
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -943,6 +943,7 @@ void Editor::setHighlight()
 	}
 
 	size_t rowToEnd = std::get<2>(offsets) == std::numeric_limits<size_t>::max() ? mWindow->rows + mWindow->rowOffset : std::max(mWindow->rows + mWindow->rowOffset, std::get<2>(offsets));
+	rowToEnd += 1; //Add 1 to account for new lines
 	setRenderedString(i, rowToEnd);
 
 	while (i < mWindow->fileRows->size() && i <= mWindow->rowOffset + mWindow->rows)

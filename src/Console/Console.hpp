@@ -1,7 +1,7 @@
 /**
 * MIT License
 
-Copyright (c) 2024 Nathan Davis
+Copyright (c) 2025 Nathan Davis
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,7 @@ class Console : public IConsole
 {
 public:
 	/// <summary>
-	/// Initializes the console by setting the window size, getting default mode parameters, and 
+	/// Initializes the console by setting the window size, getting default mode parameters, and enabling raw mode
 	/// </summary>
 	Console();
 
