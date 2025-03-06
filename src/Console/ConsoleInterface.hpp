@@ -1,7 +1,7 @@
 /**
 * MIT License
 
-Copyright (c) 2024 Nathan Davis
+Copyright (c) 2025 Nathan Davis
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,21 +21,24 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-#include "SyntaxHighlight/GetProgramPath/GetProgramPath.hpp"
+#pragma once
 
-#define WIN32_LEAN_AND_MEAN
-#define VC_EXTRALEAN
-#include <Windows.h>
-
-#include <string>
-
-namespace GetProgramPath
+/// <summary>
+/// Defines the layout of the console class. Needed to make a mock implementation for testing
+/// </summary>
+class IConsole
 {
-	std::filesystem::path getPath()
+public:
+	struct WindowSize
 	{
-		char pathToBin[MAX_PATH];
-		GetModuleFileName(NULL, pathToBin, MAX_PATH);
-		std::string pathStr{ pathToBin };
-		return pathStr.substr(0, pathStr.find_last_of("\\/"));
-	}
-}
+		int rows{}, cols{};
+	};
+
+	virtual WindowSize getWindowSize() = 0;
+	virtual void enableRawInput() = 0;
+	virtual void disableRawInput() = 0;
+
+protected:
+	virtual void setDefaultMode() = 0;
+	virtual void setWindowSize() = 0;
+};

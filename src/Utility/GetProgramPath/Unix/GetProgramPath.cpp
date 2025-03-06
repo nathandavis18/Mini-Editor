@@ -1,4 +1,5 @@
-MIT License
+/**
+* MIT License
 
 Copyright (c) 2025 Nathan Davis
 
@@ -19,3 +20,21 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+*/
+#include "Utility/GetProgramPath/GetProgramPath.hpp"
+
+#include <unistd.h>
+#include <limits.h> //PATH_MAX
+#include <string>
+
+namespace GetProgramPath
+{
+	std::filesystem::path getPath()
+	{
+		char pathToBin[PATH_MAX];
+		int count = readlink("/proc/self/exe", pathToBin, PATH_MAX);
+		if (count == -1) return "";
+		std::string pathStr{ pathToBin };
+		return pathStr.substr(0, pathStr.find_last_of("/"));
+	}
+}

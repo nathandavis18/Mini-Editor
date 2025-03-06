@@ -1,7 +1,7 @@
 /**
 * MIT License
 
-Copyright (c) 2024 Nathan Davis
+Copyright (c) 2025 Nathan Davis
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,8 +26,11 @@ SOFTWARE.
 #include "Editor/Editor.hpp"
 #include "EventHandler/EventHandler.hpp"
 #include "KeyActions/KeyActions.hh"
+#include "File/File.hpp"
+#include "Console/Console.hpp"
 
 #include <iostream>
+#include <string_view>
 #include <atomic>
 #include <cstdlib> //EXIT_FAILURE, EXIT_SUCCESS
 
@@ -42,7 +45,20 @@ int main(int argc, const char** argv)
 		std::cerr << "ERROR: Usage: mini <filename>\n";
 		return EXIT_FAILURE;
 	}
-	Editor editor(argv[1]);
+
+	std::string_view fName = argv[1];
+	std::string_view extension;
+	size_t extensionIndex;
+	if ((extensionIndex = fName.find_last_of('.')) != std::string_view::npos)
+	{
+		extension = fName.substr(extensionIndex);
+	}
+	else
+	{
+		extension = std::string_view();
+	}
+
+	Editor editor(SyntaxHighlight(extension), FileHandler(fName), std::make_unique<Console>(Console()));
 
 	std::atomic<bool> running = true;
 	EventHandler evtHandler(running, &editor);

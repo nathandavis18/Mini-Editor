@@ -1,7 +1,7 @@
 /**
 * MIT License
 
-Copyright (c) 2024 Nathan Davis
+Copyright (c) 2025 Nathan Davis
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -21,20 +21,21 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-#include "SyntaxHighlight/GetProgramPath/GetProgramPath.hpp"
+#include "Utility/GetProgramPath/GetProgramPath.hpp"
 
-#include <unistd.h>
-#include <limits.h> //PATH_MAX
+#define WIN32_LEAN_AND_MEAN
+#define VC_EXTRALEAN
+#include <Windows.h>
+
 #include <string>
 
 namespace GetProgramPath
 {
 	std::filesystem::path getPath()
 	{
-		char pathToBin[PATH_MAX];
-		int count = readlink("/proc/self/exe", pathToBin, PATH_MAX);
-		if (count == -1) return "";
+		char pathToBin[MAX_PATH];
+		GetModuleFileName(NULL, pathToBin, MAX_PATH);
 		std::string pathStr{ pathToBin };
-		return pathStr.substr(0, pathStr.find_last_of("/"));
+		return pathStr.substr(0, pathStr.find_last_of("\\/"));
 	}
 }

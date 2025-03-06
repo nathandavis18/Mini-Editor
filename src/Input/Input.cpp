@@ -1,7 +1,7 @@
 ﻿/**
 * MIT License
 
-Copyright (c) 2024 Nathan Davis
+Copyright (c) 2025 Nathan Davis
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -179,6 +179,8 @@ namespace InputHandler
 		case KeyAction::CtrlX:
 		case KeyAction::CtrlY:
 		case KeyAction::CtrlZ:
+		case KeyAction::CtrlQ:
+		case KeyAction::CtrlS:
 		case KeyAction::Delete:
 		case KeyAction::CtrlDelete:
 		case KeyAction::Tab:

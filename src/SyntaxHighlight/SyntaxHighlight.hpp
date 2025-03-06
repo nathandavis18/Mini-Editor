@@ -1,7 +1,7 @@
 /**
 * MIT License
 
-Copyright (c) 2024 Nathan Davis
+Copyright (c) 2025 Nathan Davis
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,7 @@ SOFTWARE.
 
 #pragma once
 #include "File/File.hpp"
-#include "JsonParser/JsonParser.hpp"
+#include "Utility/JsonParser/JsonParser.hpp"
 
 #include <vector>
 #include <array>
@@ -63,7 +63,7 @@ public:
 	/// Initializes the syntax highlight functionality.
 	/// </summary>
 	/// <param name="fName"></param>
-	SyntaxHighlight(const std::string_view fName);
+	SyntaxHighlight(const std::string_view extension);
 
 	/// <summary>
 	/// Returns whether or not there is an active highlight syntax being used
@@ -145,7 +145,7 @@ public:
 	/// <param name="rows"></param>
 	/// <param name="fileCursorY"></param>
 	/// <returns></returns>
-	std::tuple<size_t, size_t> removeOffScreenHighlights(size_t rowOffset, size_t rows, size_t fileCursorY);
+	std::tuple<size_t, size_t, size_t> removeOffScreenHighlights(size_t rowOffset, size_t rows, size_t fileCursorY);
 
 	/// <summary>
 	/// Checks if the current word is a number or keyword, since they dont need any other special treatment like comments and strings
@@ -163,7 +163,7 @@ public:
 		/// </summary>
 		/// <param name="mp"></param>
 		/// <param name="extension"></param>
-		void setSyntax(const std::vector<JsonParser::JsonObject>& mp, const std::string& extension);
+		void setSyntax(const std::vector<JsonParser::JsonObject>& mp, const std::string extension);
 
 		/// <summary>
 		/// Sets the colors for the syntax based on what keys are defined.

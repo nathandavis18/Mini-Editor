@@ -14,7 +14,7 @@ set(SOURCES
 	"src/File/File.cpp"
 	"src/Input/Input.cpp"
 	"src/SyntaxHighlight/SyntaxHighlight.cpp"
-	"src/SyntaxHighlight/JsonParser/JsonParser.cpp"
+	"src/Utility/JsonParser/JsonParser.cpp"
 )
 
 set (HEADERS
@@ -25,8 +25,8 @@ set (HEADERS
 	"src/Input/InputImpl.hpp"
 	"src/KeyActions/KeyActions.hh"
 	"src/SyntaxHighlight/SyntaxHighlight.hpp"
-	"src/SyntaxHighlight/GetProgramPath/GetProgramPath.hpp"
-	"src/SyntaxHighlight/JsonParser/JsonParser.hpp"
+	"src/Utility/GetProgramPath/GetProgramPath.hpp"
+	"src/Utility/JsonParser/JsonParser.hpp"
 	"src/EventHandler/EventHandler.hpp"
 )
 
@@ -38,14 +38,14 @@ if(BUILD_PROJECT)
 			PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/Console/Windows/Console.cpp"
 			PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/Input/Windows/InputImpl.cpp"
 			PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/EventHandler/Windows/EventHandler.cpp"
-			PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/SyntaxHighlight/GetProgramPath/Windows/GetProgramPath.cpp"
+			PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/Utility/GetProgramPath/Windows/GetProgramPath.cpp"
 		)
 	else()
 		target_sources(mini
 			PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/Console/Unix/Console.cpp"
 			PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/Input/Unix/InputImpl.cpp"
 			PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/EventHandler/Unix/EventHandler.cpp"
-			PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/SyntaxHighlight/GetProgramPath/Unix/GetProgramPath.cpp"
+			PRIVATE "${CMAKE_CURRENT_LIST_DIR}/src/Utility/GetProgramPath/Unix/GetProgramPath.cpp"
 		)
 	endif()
 
@@ -67,14 +67,14 @@ if(BUILD_TESTS)
 			PUBLIC "${CMAKE_CURRENT_LIST_DIR}/src/Console/Windows/Console.cpp"
 			PUBLIC "${CMAKE_CURRENT_LIST_DIR}/src/Input/Windows/InputImpl.cpp"
 			PUBLIC "${CMAKE_CURRENT_LIST_DIR}/src/EventHandler/Windows/EventHandler.cpp"
-			PUBLIC "${CMAKE_CURRENT_LIST_DIR}/src/SyntaxHighlight/GetProgramPath/Windows/GetProgramPath.cpp"
+			PUBLIC "${CMAKE_CURRENT_LIST_DIR}/src/Utility/GetProgramPath/Windows/GetProgramPath.cpp"
 		)
 	else()
 		target_sources(mini_tests
 			PUBLIC "${CMAKE_CURRENT_LIST_DIR}/src/Console/Unix/Console.cpp"
 			PUBLIC "${CMAKE_CURRENT_LIST_DIR}/src/Input/Unix/InputImpl.cpp"
 			PUBLIC "${CMAKE_CURRENT_LIST_DIR}/src/EventHandler/Unix/EventHandler.cpp"
-			PUBLIC "${CMAKE_CURRENT_LIST_DIR}/src/SyntaxHighlight/GetProgramPath/Unix/GetProgramPath.cpp"
+			PUBLIC "${CMAKE_CURRENT_LIST_DIR}/src/Utility/GetProgramPath/Unix/GetProgramPath.cpp"
 		)
 	endif(WIN32)
 
