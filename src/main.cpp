@@ -1,7 +1,7 @@
 /**
 * MIT License
 
-Copyright (c) 2024 Nathan Davis
+Copyright (c) 2025 Nathan Davis
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -46,11 +46,19 @@ int main(int argc, const char** argv)
 		return EXIT_FAILURE;
 	}
 
+	std::string_view fName = argv[1];
+	std::string_view extension;
+	size_t extensionIndex;
+	if ((extensionIndex = fName.find_last_of('.')) != std::string_view::npos)
+	{
+		extension = fName.substr(extensionIndex);
+	}
+	else
+	{
+		extension = std::string_view();
+	}
 
-	std::string_view highlightFName = argv[1];
-	std::string_view fileFName = argv[1];
-
-	Editor editor(SyntaxHighlight(highlightFName), FileHandler(fileFName), std::make_unique<Console>(Console()));
+	Editor editor(SyntaxHighlight(extension), FileHandler(fName), std::make_unique<Console>(Console()));
 
 	std::atomic<bool> running = true;
 	EventHandler evtHandler(running, &editor);

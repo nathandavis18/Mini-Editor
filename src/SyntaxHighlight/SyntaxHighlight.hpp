@@ -1,7 +1,7 @@
 /**
 * MIT License
 
-Copyright (c) 2024 Nathan Davis
+Copyright (c) 2025 Nathan Davis
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -63,7 +63,7 @@ public:
 	/// Initializes the syntax highlight functionality.
 	/// </summary>
 	/// <param name="fName"></param>
-	SyntaxHighlight(const std::string_view fName);
+	SyntaxHighlight(const std::string_view extension);
 
 	/// <summary>
 	/// Returns whether or not there is an active highlight syntax being used
@@ -163,7 +163,7 @@ public:
 		/// </summary>
 		/// <param name="mp"></param>
 		/// <param name="extension"></param>
-		void setSyntax(const std::vector<JsonParser::JsonObject>& mp, const std::string& extension);
+		void setSyntax(const std::vector<JsonParser::JsonObject>& mp, const std::string extension);
 
 		/// <summary>
 		/// Sets the colors for the syntax based on what keys are defined.

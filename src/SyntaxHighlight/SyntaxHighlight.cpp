@@ -1,7 +1,7 @@
 /**
 * MIT License
 
-Copyright (c) 2024 Nathan Davis
+Copyright (c) 2025 Nathan Davis
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -35,18 +35,9 @@ using JsonParser::JsonValue;
 using JsonParser::JsonObject;
 using JsonParser::JsonSet;
 
-SyntaxHighlight::SyntaxHighlight(const std::string_view fName) : mColors{ 0 }
+SyntaxHighlight::SyntaxHighlight(const std::string_view extension) : mColors{ 0 }
 {
-	std::string extension;
-	size_t extensionIndex;
-	if ((extensionIndex = fName.find_last_of('.')) != std::string::npos)
-	{
-		extension = fName.substr(extensionIndex);
-	}
-	else
-	{
-		return; //With no file extension we can't get syntax highlight info
-	}
+	if (extension.length() == 0) return;
 
 	std::filesystem::path configPath = GetProgramPath::getPath() / "config.json";
 	std::ifstream file(configPath);
@@ -54,7 +45,7 @@ SyntaxHighlight::SyntaxHighlight(const std::string_view fName) : mColors{ 0 }
 	fContents << file.rdbuf();
 	mFileContents = fContents.str();
 	std::vector<JsonObject> mp = JsonParser::parseJson(mFileContents);
-	setSyntax(mp, extension);
+	setSyntax(mp, std::string(extension));
 }
 
 const bool SyntaxHighlight::hasSyntax() const
@@ -62,7 +53,7 @@ const bool SyntaxHighlight::hasSyntax() const
 	return mCurrentSyntax != nullptr;
 }
 
-void SyntaxHighlight::setSyntax(const std::vector<JsonObject>& mp, const std::string& extension)
+void SyntaxHighlight::setSyntax(const std::vector<JsonObject>& mp, const std::string extension)
 {
 	for (const auto& syntax : mp) //For each top level key
 	{
@@ -257,6 +248,7 @@ std::tuple<size_t, size_t, size_t> SyntaxHighlight::removeOffScreenHighlights(si
 {
 	size_t rowToStart = std::numeric_limits<size_t>::max();
 	size_t startColOffset = std::numeric_limits<size_t>::max();
+	size_t rowToEnd = std::numeric_limits<size_t>::max();
 
 startover:
 	for (size_t i = 0; i < mHighlights.size(); ++i) // First pass gets rid of all unnecessary syntax highlights (all the off-screen ones)
@@ -270,15 +262,22 @@ startover:
 			}
 		}
 
-		if (mHighlights[i].startRow >= rowOffset)
+		if (mHighlights[i].startRow >= rowOffset && mHighlights[i].startRow < rowOffset + rows)
 		{
+			if (mHighlights[i].highlightType == HighlightType::MultilineComment || mHighlights[i].highlightType == HighlightType::String)
+			{
+				if (mHighlights[i].endRow >= rowOffset + rows)
+				{
+					rowToEnd = mHighlights[i].endRow;
+				}
+			}
 			goto eraseHighlight;
 		}
 		else if (mHighlights[i].startRow < rowOffset && !(mHighlights[i].highlightType == HighlightType::MultilineComment || mHighlights[i].highlightType == HighlightType::String))
 		{ // Can't remove multiline comments and strings just yet, their position may need to be saved
 			goto eraseHighlight;
 		}
-		else if (mHighlights[i].endRow >= rowOffset && mHighlights[i].endRow <= rowOffset + rows)
+		else if (mHighlights[i].endRow >= rowOffset && mHighlights[i].endRow < rowOffset + rows)
 		{
 			if (mHighlights[i].highlightType == HighlightType::String || mHighlights[i].highlightType == HighlightType::MultilineComment)
 			{
@@ -298,11 +297,15 @@ startover:
 				{
 					rowToStart = mHighlights[i].startRow;
 					startColOffset = mHighlights[i].startCol;
-					continue; //Don't erase this highlight, and keep drawing the highlight color
+					if (rowToEnd == std::numeric_limits<size_t>::max() || mHighlights[i].endRow > rowToEnd)
+					{
+						rowToEnd = mHighlights[i].endRow;
+					}
+					goto eraseHighlight;
 				}
 			}
 		}
-		else if (mHighlights[i].startRow > rowOffset + rows)
+		else if (mHighlights[i].startRow >= rowOffset + rows)
 		{
 			mHighlights.erase(mHighlights.begin() + i, mHighlights.end());
 		}
@@ -344,8 +347,7 @@ startover:
 		--i;
 	}
 
-	size_t rowToEnd = std::numeric_limits<size_t>::max();
-	if (mHighlights.size() > 0)
+	if (mHighlights.size() > 0 && (mHighlights.back().endRow > rowToEnd || rowToEnd == std::numeric_limits<size_t>::max()))
 	{
 		rowToEnd = mHighlights.back().endRow;
 	}
