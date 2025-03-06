@@ -26,8 +26,11 @@ SOFTWARE.
 #include "Editor/Editor.hpp"
 #include "EventHandler/EventHandler.hpp"
 #include "KeyActions/KeyActions.hh"
+#include "File/File.hpp"
+#include "Console/Console.hpp"
 
 #include <iostream>
+#include <string_view>
 #include <atomic>
 #include <cstdlib> //EXIT_FAILURE, EXIT_SUCCESS
 
@@ -42,7 +45,12 @@ int main(int argc, const char** argv)
 		std::cerr << "ERROR: Usage: mini <filename>\n";
 		return EXIT_FAILURE;
 	}
-	Editor editor(argv[1]);
+
+
+	std::string_view highlightFName = argv[1];
+	std::string_view fileFName = argv[1];
+
+	Editor editor(SyntaxHighlight(highlightFName), FileHandler(fileFName), std::make_unique<Console>(Console()));
 
 	std::atomic<bool> running = true;
 	EventHandler evtHandler(running, &editor);

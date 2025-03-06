@@ -2,15 +2,16 @@
 #include <sstream>
 
 #include "Editor/Editor.hpp"
+#include "MockConsole.hpp"
 
 TEST(EditorTests, EditorInitializesSuccessfully)
 {
-	Editor editor("testFile.txt");
+	Editor editor(SyntaxHighlight("testFile.txt"), FileHandler("testFile.txt"), std::make_unique<MockConsole>(MockConsole()));
 }
 
 TEST(EditorTests, EditorRendersText)
 {
-	Editor editor("testFile.txt");
+	Editor editor(SyntaxHighlight("testFile.txt"), FileHandler("testFile.txt"), std::make_unique<MockConsole>(MockConsole()));
 	testing::internal::CaptureStdout();
 	editor.refreshScreen(true);
 	EXPECT_NE(testing::internal::GetCapturedStdout(), std::string()) << "Testing to make sure refreshScreen prints to the console";
@@ -18,7 +19,7 @@ TEST(EditorTests, EditorRendersText)
 
 TEST(EditorTests, EditorModeChangesAsExpected)
 {
-	Editor editor("testFile.txt");
+	Editor editor(SyntaxHighlight("testFile.txt"), FileHandler("testFile.txt"), std::make_unique<MockConsole>(MockConsole()));
 	editor.enableCommandMode();
 	EXPECT_EQ(editor.mode(), Editor::Mode::CommandMode);
 
@@ -34,7 +35,7 @@ TEST(EditorTests, EditorModeChangesAsExpected)
 
 TEST(EditorTests, FileBecomesDirtyAfterChange)
 {
-	Editor editor("testFile.txt");
+	Editor editor(SyntaxHighlight("testFile.txt"), FileHandler("testFile.txt"), std::make_unique<MockConsole>(MockConsole()));
 	bool notDirty = editor.isDirty();
 	EXPECT_FALSE(notDirty);
 	editor.insertChar('c');
@@ -44,7 +45,7 @@ TEST(EditorTests, FileBecomesDirtyAfterChange)
 
 TEST(EditorTests, insertRowAddsNewRow)
 {
-	Editor editor("testFile.txt");
+	Editor editor(SyntaxHighlight("testFile.txt"), FileHandler("testFile.txt"), std::make_unique<MockConsole>(MockConsole()));
 	testing::internal::CaptureStdout();
 	editor.refreshScreen(true);
 	std::string beforeRowAddition = testing::internal::GetCapturedStdout();

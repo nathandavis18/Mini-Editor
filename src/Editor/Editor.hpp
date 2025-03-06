@@ -34,9 +34,10 @@ SOFTWARE.
 #include "SyntaxHighlight/SyntaxHighlight.hpp"
 #include "KeyActions/KeyActions.hh"
 #include "File/File.hpp"
-#include "Console/Console.hpp"
+#include "Console/ConsoleInterface.hpp"
 
 #include <vector>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <stack>
@@ -68,10 +69,8 @@ public:
 
 	/// <summary>
 	/// Initializes the editor. Should only be called on program start.
-	/// This will set up everything else for the editor, including the console, file handler, and syntax highlighting
 	/// </summary>
-	/// <param name="fName"> The name of the file grabbed from argv[1] </param>
-	Editor(const std::string_view fName);
+	Editor(SyntaxHighlight syntax, FileHandler fileHandler, std::unique_ptr<IConsole> console);
 
 	/// <summary>
 	/// Called when exiting the program so the screen gets completely cleared
@@ -205,7 +204,6 @@ private:
 	/// </summary>
 	struct Window
 	{
-		Window();
 		Window(FileHandler& file);
 		size_t fileCursorX, fileCursorY;
 		size_t renderedCursorX, renderedCursorY;
@@ -239,7 +237,7 @@ private:
 	/// <summary>
 	/// Sets the rendered lines that are currently on screen and replaces the tabs with spaces
 	/// </summary>
-	void setRenderedString();
+	void setRenderedString(const size_t startRow, const size_t endRow);
 
 	/// <summary>
 	/// Preps the rendered line to be rendered by making sure the line length < console width
@@ -344,9 +342,9 @@ private:
 	std::string mTextRenderBuffer, mPreviousTextRenderBuffer; //Implementing double-buffering so the screen doesn't need to always update
 	std::string mCommandBuffer;
 
-	Window mWindow;
+	std::unique_ptr<Window> mWindow;
+	std::unique_ptr<IConsole> mConsole;
 	FileHandler mFile;
-	Console mConsole;
 	SyntaxHighlight mSyntax;
 	std::string normalColorMode;
 
