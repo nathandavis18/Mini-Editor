@@ -77,6 +77,7 @@ void FileHandler::loadFileContents()
 	file.close();
 
 	const std::string& fileStr = fileContents.str();
+	if (fileStr.length() == 0) return;
 
 	mRows.reserve(fileStr.length() / charactersPerRowAverage); 
 

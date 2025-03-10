@@ -684,7 +684,11 @@ void Editor::insertChar(const unsigned char c)
 void Editor::addUndoHistory()
 {
 	FileHistory history;
-	history.rows = *mWindow->fileRows;
+	history.rows.reserve(mWindow->fileRows->size());
+	for (const FileHandler::Row& row : *mWindow->fileRows)
+	{
+		history.rows.push_back(row.line);
+	}
 	history.fileCursorX = mWindow->fileCursorX;
 	history.fileCursorY = mWindow->fileCursorY;
 	history.colOffset = mWindow->colOffset;
@@ -696,7 +700,11 @@ void Editor::addUndoHistory()
 void Editor::addRedoHistory()
 {
 	FileHistory history;
-	history.rows = *mWindow->fileRows;
+	history.rows.reserve(mWindow->fileRows->size());
+	for (const FileHandler::Row& row : *mWindow->fileRows)
+	{
+		history.rows.push_back(row.line);
+	}
 	history.fileCursorX = mWindow->fileCursorX;
 	history.fileCursorY = mWindow->fileCursorY;
 	history.colOffset = mWindow->colOffset;
@@ -711,7 +719,11 @@ void Editor::undoChange()
 
 	addRedoHistory();
 
-	*mWindow->fileRows = mUndoHistory.top().rows;
+	mWindow->fileRows->resize(mUndoHistory.top().rows.size());
+	for (size_t i = 0; i < mWindow->fileRows->size(); ++i)
+	{
+		mWindow->fileRows->at(i).line = mUndoHistory.top().rows.at(i);
+	}
 	mWindow->fileCursorX = mUndoHistory.top().fileCursorX;
 	mWindow->fileCursorY = mUndoHistory.top().fileCursorY;
 	mWindow->colOffset = mUndoHistory.top().colOffset;
@@ -726,7 +738,11 @@ void Editor::redoChange()
 
 	addUndoHistory();
 
-	*mWindow->fileRows = mRedoHistory.top().rows;
+	mWindow->fileRows->resize(mRedoHistory.top().rows.size());
+	for (size_t i = 0; i < mWindow->fileRows->size(); ++i)
+	{
+		mWindow->fileRows->at(i).line = mRedoHistory.top().rows.at(i);
+	}
 	mWindow->fileCursorX = mRedoHistory.top().fileCursorX;
 	mWindow->fileCursorY = mRedoHistory.top().fileCursorY;
 	mWindow->colOffset = mRedoHistory.top().colOffset;

@@ -223,7 +223,7 @@ private:
 	/// </summary>
 	struct FileHistory
 	{
-		std::vector<FileHandler::Row> rows;
+		std::vector<std::string> rows;
 		size_t fileCursorX = 0, fileCursorY = 0;
 		size_t colOffset = 0, rowOffset = 0;
 	};
