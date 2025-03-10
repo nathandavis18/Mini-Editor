@@ -39,7 +39,7 @@ SOFTWARE.
 #include <utility>
 #include <format> //C++20 is required. MSVC/GCC-13/Clang-14/17/AppleClang-15
 
-constexpr char MiniVersion[7] = "0.6.4a";
+constexpr char MiniVersion[7] = "0.7.0a";
 
 Editor::Window::Window(FileHandler& file) : fileCursorX(0), fileCursorY(0), cols(0), rows(0), renderedCursorX(0), renderedCursorY(0), colNumberToDisplay(0), savedRenderedCursorXPos(0),
 rowOffset(0), colOffset(0), dirty(false), fileRows(file.getFileContents())
