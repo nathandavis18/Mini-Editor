@@ -28,40 +28,16 @@ SOFTWARE.
 #include <sstream>
 #include <iostream>
 #include <fstream>
+#include <thread>
+
+unsigned int maxThreads;
+constexpr uint16_t maxLengthPerThread = 20'000;
+constexpr uint8_t charactersPerRowAverage = 20; //Assume an average of 20 characters per row. This will need some testing to fine-tune
 
 FileHandler::FileHandler(const std::string_view fName) : mPath(std::filesystem::current_path() / fName), mFileName(fName)
 {
+	maxThreads = std::thread::hardware_concurrency();
 	loadFileContents();
-}
-
-void FileHandler::loadRows(std::string&& str)
-{
-	if (str.length() > 0)
-	{
-		size_t lineBreak = 0;
-		while (lineBreak < str.length())
-		{
-			if (str.at(lineBreak) == '\n')
-			{
-				if (lineBreak > 0 && str.at(lineBreak - 1) == '\r')
-				{
-					mRows.emplace_back(str.substr(0, lineBreak - 1)); //Remove the carriage return as well
-				}
-				else
-				{
-					mRows.emplace_back(str.substr(0, lineBreak));
-				}
-				str.erase(str.begin(), str.begin() + lineBreak + 1);
-				lineBreak = 0;
-			}
-			else
-			{
-				++lineBreak;
-			}
-		}
-		mRows.emplace_back(str);
-		str.clear();
-	}
 }
 
 const std::string_view FileHandler::fileName()
@@ -69,21 +45,87 @@ const std::string_view FileHandler::fileName()
 	return mFileName;
 }
 
+void FileHandler::loadRows(const size_t startPos, const size_t endPos, const std::string_view str, std::promise<std::vector<FileHandler::Row>>&& p)
+{
+	std::vector<FileHandler::Row> rows;
+	rows.reserve((endPos - startPos) / charactersPerRowAverage);
+	size_t findPos;
+	std::string_view threadStr = str.substr(startPos, endPos - startPos);
+
+	while ((findPos = threadStr.find('\n')) != std::string_view::npos)
+	{
+		if (findPos > 0 && threadStr.at(findPos - 1) == '\r')
+		{
+			rows.emplace_back(std::string(threadStr.substr(0, findPos - 1)));
+		}
+		else
+		{
+			rows.emplace_back(std::string(threadStr.substr(0, findPos)));
+		}
+		threadStr = threadStr.substr(findPos + 1);
+	}
+	rows.emplace_back(std::string(threadStr));
+	p.set_value(rows);
+}
+
+
 void FileHandler::loadFileContents()
 {
 	std::ifstream file(mPath);
-	try
-	{
-		std::stringstream ss;
-		ss << file.rdbuf();
+	std::stringstream fileContents;
+	fileContents << file.rdbuf();
+	file.close();
 
-		loadRows(std::move(ss.str()));
-	}
-	catch (std::exception ex)
+	const std::string& fileStr = fileContents.str();
+	if (fileStr.length() == 0) return;
+
+	mRows.reserve(fileStr.length() / charactersPerRowAverage); 
+
+	if (fileStr.length() <= maxLengthPerThread)
 	{
-		file.close();
-		std::cerr << "Error opening file. ERROR: " << ex.what() << std::endl;
-		exit(EXIT_FAILURE);
+		std::promise<std::vector<FileHandler::Row>> promise;
+		std::future<std::vector<FileHandler::Row>> value = promise.get_future();
+		loadRows(0, fileStr.length(), fileStr, std::move(promise));
+		mRows = value.get();
+		return;
+	}
+
+	std::vector<std::thread> allThreads;
+	std::vector<std::future<std::vector<FileHandler::Row>>> retValues;
+	unsigned int threads = (fileStr.length() / maxLengthPerThread) + 1;
+	if (threads > maxThreads) threads = maxThreads;
+	const uint16_t lengthPerThread =  maxLengthPerThread / threads; //splitting the work up evenly
+	size_t prevEndPos = 0;
+	for (unsigned int i = 0; i < threads; ++i)
+	{
+		size_t startPos = prevEndPos;
+		if (i > 0) ++startPos;
+
+		size_t endPos = (i == threads - 1) ? fileStr.length() : startPos + lengthPerThread;
+
+		if (startPos > 0)
+		{
+			while (fileStr.at(startPos) != '\n') ++startPos;
+		}
+
+		if (endPos < fileStr.length())
+		{
+			while (fileStr.at(endPos) != '\n') ++endPos;
+		}
+		prevEndPos = endPos;
+
+		std::promise<std::vector<FileHandler::Row>> p;
+		retValues.emplace_back(p.get_future());
+		allThreads.emplace_back(&FileHandler::loadRows, this, startPos, endPos, fileStr, std::move(p));
+	}
+
+	for (unsigned int i = 0; i < threads; ++i)
+	{
+		allThreads.at(i).join();
+		auto& value = retValues.at(i);
+		const std::vector<FileHandler::Row>& threadFileRows = value.get();
+
+		mRows.insert(mRows.end(), threadFileRows.begin(), threadFileRows.end());
 	}
 }
 

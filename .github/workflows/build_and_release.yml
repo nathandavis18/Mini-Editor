@@ -47,7 +47,7 @@ jobs:
               with:
                 token: ${{ secrets.GITHUB_TOKEN }}
                 prerelease: true
-                name: v0.6.4a - Bug Fix to Syntax Highlight
-                tag: v0.6.4a
+                name: v0.7.0a - Massive performance improvement for large files
+                tag: v0.7.0a
                 artifacts: "config.json,out/build/mini.exe"
                 makeLatest: true
