@@ -59,3 +59,10 @@ add_custom_command(
 	PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/testJson.json $<TARGET_FILE_DIR:Tests>
 	VERBATIM
 )
+
+add_custom_command(
+	TARGET Tests
+	COMMENT "Copying testJson.json"
+	PRE_BUILD COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_LIST_DIR}/test.cpp $<TARGET_FILE_DIR:Tests>
+	VERBATIM
+)
