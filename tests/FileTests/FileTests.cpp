@@ -48,10 +48,10 @@ TEST(FileTest, SavingFileDoesntCorruptFile)
 TEST(FileTest, LargeFileOpensQuickly)
 {
 	std::chrono::steady_clock::time_point before = std::chrono::steady_clock::now();
-	FileHandler fileHandler("test.cpp"); //This is a file with > 8 million lines, all getting parsed properly
+	FileHandler fileHandler("test.cpp"); //This is a file with > 500k lines, all getting parsed properly
 	std::chrono::steady_clock::time_point after = std::chrono::steady_clock::now();
 
-	std::chrono::milliseconds expectedMaxTime(5000); //Want it to open and parse in < 5 seconds.
+	std::chrono::milliseconds expectedMaxTime(1000); //Want it to open and parse in < 1 second.
 
 	std::chrono::milliseconds actualTime = std::chrono::duration_cast<std::chrono::milliseconds>(after - before);
 
