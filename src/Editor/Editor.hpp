@@ -35,6 +35,7 @@ SOFTWARE.
 #include "KeyActions/KeyActions.hh"
 #include "File/File.hpp"
 #include "Console/ConsoleInterface.hpp"
+#include "FindString/FindString.hpp"
 
 #include <vector>
 #include <memory>
@@ -198,6 +199,8 @@ public:
 	/// <param name="command"></param>
 	void updateCommandBuffer(const std::string& command);
 
+	void findString(const std::string& strToFind);
+
 private:
 	/// <summary>
 	/// The structure for how the window stores information and tracks current position within the file
@@ -324,7 +327,7 @@ private:
 	/// </summary>
 	/// <param name=""></param>
 	/// <returns> The amount of spaces the rendered cursor needs to move </returns>
-	const size_t getRenderedCursorTabSpaces(const FileHandler::Row&) const;
+	const size_t getRenderedTabSpaces(const FileHandler::Row&, size_t endPos) const;
 
 	/// <summary>
 	/// Adds the colors to the screen to be displayed to the user, utilizing the highlight token system
@@ -341,12 +344,13 @@ private:
 private:
 	std::string mTextRenderBuffer, mPreviousTextRenderBuffer; //Implementing double-buffering so the screen doesn't need to always update
 	std::string mCommandBuffer;
+	std::string normalColorMode;
 
 	std::unique_ptr<Window> mWindow;
 	std::unique_ptr<IConsole> mConsole;
 	FileHandler mFile;
 	SyntaxHighlight mSyntax;
-	std::string normalColorMode;
+	std::vector<FindString::FindLocation> mFindLocations;
 
 
 	std::stack<FileHistory> mRedoHistory;

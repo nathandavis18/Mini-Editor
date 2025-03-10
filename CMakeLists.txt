@@ -15,6 +15,7 @@ set(SOURCES
 	"src/Input/Input.cpp"
 	"src/SyntaxHighlight/SyntaxHighlight.cpp"
 	"src/Utility/JsonParser/JsonParser.cpp"
+	"src/FindString/FindString.cpp"
 )
 
 set (HEADERS
@@ -28,6 +29,7 @@ set (HEADERS
 	"src/Utility/GetProgramPath/GetProgramPath.hpp"
 	"src/Utility/JsonParser/JsonParser.hpp"
 	"src/EventHandler/EventHandler.hpp"
+	"src/FindString/FindString.hpp"
 )
 
 if(BUILD_PROJECT)

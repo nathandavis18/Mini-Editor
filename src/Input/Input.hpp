@@ -56,4 +56,5 @@ namespace InputHandler
 	/// <returns> True if program should exit, false otherwise </returns>
 	bool doCommand(Editor& editor);
 
+	void find(Editor& editor);
 }

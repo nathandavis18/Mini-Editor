@@ -50,7 +50,8 @@ const Editor::Mode Editor::mode() const
 	return mMode;
 }
 
-Editor::Editor(SyntaxHighlight syntax, FileHandler fileHandler, std::unique_ptr<IConsole> console) : mSyntax(std::move(syntax)), mFile(std::move(fileHandler)), mConsole(std::move(console))
+Editor::Editor(SyntaxHighlight syntax, FileHandler fileHandler, std::unique_ptr<IConsole> console) : mSyntax(std::move(syntax)), 
+	mFile(std::move(fileHandler)), mConsole(std::move(console)), mFindLocations()
 {
 	mWindow = std::make_unique<Window>(Window(mFile));
 	updateWindowSize();
@@ -780,11 +781,11 @@ void Editor::setCursorLinePosition()
 		return;
 	}
 	mWindow->fileCursorX = 0;
-	size_t spaces = getRenderedCursorTabSpaces(mWindow->fileRows->at(mWindow->fileCursorY));
+	size_t spaces = getRenderedTabSpaces(mWindow->fileRows->at(mWindow->fileCursorY), mWindow->fileCursorX);
 	while (mWindow->fileCursorX + spaces < mWindow->savedRenderedCursorXPos)
 	{
 		++mWindow->fileCursorX;
-		spaces = getRenderedCursorTabSpaces(mWindow->fileRows->at(mWindow->fileCursorY));
+		spaces = getRenderedTabSpaces(mWindow->fileRows->at(mWindow->fileCursorY), mWindow->fileCursorX);
 	}
 	if (mWindow->fileCursorX + spaces > mWindow->savedRenderedCursorXPos)
 	{
@@ -800,7 +801,7 @@ void Editor::fixRenderedCursorPosition(const FileHandler::Row& row)
 {
 	//Fixing rendered X/Col position
 	mWindow->renderedCursorX = mWindow->fileCursorX;
-	mWindow->renderedCursorX += getRenderedCursorTabSpaces(row);
+	mWindow->renderedCursorX += getRenderedTabSpaces(row, mWindow->fileCursorX);
 	mWindow->colNumberToDisplay = mWindow->renderedCursorX;
 
 	while (mWindow->renderedCursorX - mWindow->colOffset >= mWindow->cols && mWindow->renderedCursorX >= mWindow->colOffset)
@@ -862,10 +863,10 @@ void Editor::replaceRenderedStringTabs(std::string& renderedLine)
 	}
 }
 
-const size_t Editor::getRenderedCursorTabSpaces(const FileHandler::Row& row) const
+const size_t Editor::getRenderedTabSpaces(const FileHandler::Row& row, size_t endPos) const
 {
 	size_t spacesToAdd = 0;
-	for (size_t i = 0; i < mWindow->fileCursorX; ++i)
+	for (size_t i = 0; i < endPos; ++i)
 	{
 		if (i > row.line.length()) return 0;
 
@@ -886,7 +887,7 @@ void Editor::updateRenderedColor(const size_t rowOffset, const size_t colOffset)
 	{
 		if (!highlight.drawColor) continue;
 		if (highlight.startRow == highlight.endRow && (highlight.endCol < colOffset || highlight.startCol > colOffset + mWindow->cols)) continue;
-		if (highlight.startRow > mWindow->rowOffset + mWindow->rows) return;
+		if (highlight.startRow > mWindow->rowOffset + mWindow->rows) break;
 
 		std::string* renderString = &mWindow->fileRows->at(highlight.startRow).renderedLine;
 		if (prevRow != highlight.startRow) charactersToAdjust = 0;
@@ -924,6 +925,12 @@ void Editor::updateRenderedColor(const size_t rowOffset, const size_t colOffset)
 		charactersToAdjust += normalColorMode.length();
 
 		prevRow = highlight.endRow;
+	}
+	for (const auto& findLocation : mFindLocations)
+	{
+		if (findLocation.row < rowOffset || findLocation.row >= rowOffset + mWindow->rows) break;
+
+		std::string highlightColor = std::format("\x1b[48;5;{}m", std::to_string(103));
 	}
 }
 
@@ -1000,4 +1007,9 @@ void Editor::updateWindowSize()
 void Editor::updateCommandBuffer(const std::string& command)
 {
 	mCommandBuffer = command;
+}
+
+void Editor::findString(const std::string& findString)
+{
+	mFindLocations = FindString::find(findString, *mWindow->fileRows);
 }
