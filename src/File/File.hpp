@@ -27,6 +27,7 @@ SOFTWARE.
 #include <string_view>
 #include <vector>
 #include <filesystem>
+#include <future>
 
 class FileHandler
 {
@@ -63,7 +64,7 @@ private:
 	/// Called by loadFileContents()
 	/// </summary>
 	/// <param name=""></param>
-	void loadRows(std::string&&);
+	void loadRows(const size_t startPos, const size_t endPos, const std::string_view str, std::promise<std::vector<Row>>&& p);
 
 	/// <summary>
 	/// Loads the file into a stringstream for loadRows to work with.

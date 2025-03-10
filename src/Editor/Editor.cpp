@@ -39,7 +39,7 @@ SOFTWARE.
 #include <utility>
 #include <format> //C++20 is required. MSVC/GCC-13/Clang-14/17/AppleClang-15
 
-constexpr char MiniVersion[7] = "0.6.4a";
+constexpr char MiniVersion[7] = "0.7.0a";
 
 Editor::Window::Window(FileHandler& file) : fileCursorX(0), fileCursorY(0), cols(0), rows(0), renderedCursorX(0), renderedCursorY(0), colNumberToDisplay(0), savedRenderedCursorXPos(0),
 rowOffset(0), colOffset(0), dirty(false), fileRows(file.getFileContents())
@@ -524,7 +524,7 @@ void Editor::shiftRowOffset(const KeyActions::KeyAction key)
 
 void Editor::addRow()
 {
-	addUndoHistory();
+	addUndoHistory(FileHistory::ChangeType::RowInserted);
 
 	FileHandler::Row& row = mWindow->fileRows->at(mWindow->fileCursorY);
 
@@ -559,18 +559,17 @@ void Editor::deleteRow(const size_t rowNum)
 void Editor::deleteChar(const KeyActions::KeyAction key)
 {
 	FileHandler::Row& row = mWindow->fileRows->at(mWindow->fileCursorY);
-	addUndoHistory();
 	switch (key)
 	{
 	case KeyActions::KeyAction::Backspace:
 		if (mWindow->fileCursorX == 0 && mWindow->fileCursorY == 0)
 		{
-			mUndoHistory.pop();
 			return;
 		}
 
 		if (mWindow->fileCursorX == 0)
 		{
+			addUndoHistory(FileHistory::ChangeType::RowDeleted);
 			mWindow->fileCursorX = mWindow->fileRows->at(mWindow->fileCursorY - 1).line.length();
 			mWindow->fileRows->at(mWindow->fileCursorY - 1).line.append(row.line);
 			deleteRow(mWindow->fileCursorY);
@@ -578,6 +577,7 @@ void Editor::deleteChar(const KeyActions::KeyAction key)
 		}
 		else
 		{
+			addUndoHistory(FileHistory::ChangeType::CharDeleted);
 			row.line.erase(row.line.begin() + mWindow->fileCursorX - 1);
 			--mWindow->fileCursorX;
 		}
@@ -586,17 +586,18 @@ void Editor::deleteChar(const KeyActions::KeyAction key)
 	case KeyActions::KeyAction::Delete:
 		if (mWindow->fileCursorY == mWindow->fileRows->size() - 1 && mWindow->fileCursorX == row.line.length())
 		{
-			mUndoHistory.pop();
 			return;
 		}
 
 		if (mWindow->fileCursorX == row.line.length())
 		{
+			addUndoHistory(FileHistory::ChangeType::RowDeleted);
 			row.line.append(mWindow->fileRows->at(mWindow->fileCursorY + 1).line);
 			deleteRow(mWindow->fileCursorY + 1);
 		}
 		else
 		{
+			addUndoHistory(FileHistory::ChangeType::CharDeleted);
 			row.line.erase(row.line.begin() + mWindow->fileCursorX);
 		}
 		break;
@@ -604,12 +605,12 @@ void Editor::deleteChar(const KeyActions::KeyAction key)
 	case KeyActions::KeyAction::CtrlBackspace:
 		if (mWindow->fileCursorX == 0 && mWindow->fileCursorY == 0)
 		{
-			mUndoHistory.pop();
 			return;
 		}
 
 		if (mWindow->fileCursorX == 0)
 		{
+			addUndoHistory(FileHistory::ChangeType::RowDeleted);
 			mWindow->fileCursorX = mWindow->fileRows->at(mWindow->fileCursorY - 1).line.length();
 			mWindow->fileRows->at(mWindow->fileCursorY - 1).line.append(row.line);
 			deleteRow(mWindow->fileCursorY);
@@ -617,6 +618,7 @@ void Editor::deleteChar(const KeyActions::KeyAction key)
 		}
 		else
 		{
+			addUndoHistory(FileHistory::ChangeType::CharDeleted);
 			size_t findPos;
 			if ((findPos = row.line.substr(0, mWindow->fileCursorX).find_last_of(separators)) == std::string::npos) //Delete everything in the row to the beginning
 			{
@@ -638,17 +640,18 @@ void Editor::deleteChar(const KeyActions::KeyAction key)
 	case KeyActions::KeyAction::CtrlDelete:
 		if (mWindow->fileCursorY == mWindow->fileRows->size() - 1 && mWindow->fileCursorX == row.line.length())
 		{
-			mUndoHistory.pop();
 			return;
 		}
 
 		if (mWindow->fileCursorX == row.line.length())
 		{
+			addUndoHistory(FileHistory::ChangeType::RowDeleted);
 			row.line.append(mWindow->fileRows->at(mWindow->fileCursorY + 1).line);
 			deleteRow(mWindow->fileCursorY + 1);
 		}
 		else
 		{
+			addUndoHistory(FileHistory::ChangeType::CharDeleted);
 			size_t findPos;
 			if ((findPos = row.line.substr(mWindow->fileCursorX).find_first_of(separators)) == std::string::npos) //Delete everything in the row to the beginning
 			{
@@ -673,7 +676,7 @@ void Editor::insertChar(const unsigned char c)
 {
 	FileHandler::Row& row = mWindow->fileRows->at(mWindow->fileCursorY);
 
-	addUndoHistory();
+	addUndoHistory(FileHistory::ChangeType::CharInserted);
 
 	row.line.insert(row.line.begin() + mWindow->fileCursorX, c);
 	++mWindow->fileCursorX;
@@ -681,10 +684,15 @@ void Editor::insertChar(const unsigned char c)
 	mWindow->updateSavedPos = true;
 }
 
-void Editor::addUndoHistory()
+void Editor::addUndoHistory(FileHistory::ChangeType change)
 {
 	FileHistory history;
-	history.rows = *mWindow->fileRows;
+	history.changeType = change;
+	history.rows.push_back(mWindow->fileRows->at(mWindow->fileCursorY).line); //Only need the updated line
+	if (change == FileHistory::ChangeType::RowDeleted)
+	{
+		history.rows.push_back(mWindow->fileRows->at(mWindow->fileCursorY - 1).line);
+	}
 	history.fileCursorX = mWindow->fileCursorX;
 	history.fileCursorY = mWindow->fileCursorY;
 	history.colOffset = mWindow->colOffset;
@@ -693,10 +701,15 @@ void Editor::addUndoHistory()
 	mUndoHistory.push(history);
 }
 
-void Editor::addRedoHistory()
+void Editor::addRedoHistory(FileHistory::ChangeType change)
 {
 	FileHistory history;
-	history.rows = *mWindow->fileRows;
+	history.rows.push_back(mWindow->fileRows->at(mWindow->fileCursorY).line); //Only need the updated line
+	if (change == FileHistory::ChangeType::RowDeleted)
+	{
+		history.rows.push_back(mWindow->fileRows->at(mWindow->fileCursorY - 1).line);
+	}
+	history.changeType = change;
 	history.fileCursorX = mWindow->fileCursorX;
 	history.fileCursorY = mWindow->fileCursorY;
 	history.colOffset = mWindow->colOffset;
@@ -709,9 +722,24 @@ void Editor::undoChange()
 {
 	if (mUndoHistory.size() == 0) return;
 
-	addRedoHistory();
+	FileHistory::ChangeType type;
+	if (mUndoHistory.top().changeType == FileHistory::ChangeType::CharDeleted) type = FileHistory::ChangeType::CharInserted;
+	else if (mUndoHistory.top().changeType == FileHistory::ChangeType::CharInserted) type = FileHistory::ChangeType::CharDeleted;
+	else if (mUndoHistory.top().changeType == FileHistory::ChangeType::RowDeleted) type = FileHistory::ChangeType::RowInserted;
+	else type = FileHistory::ChangeType::RowDeleted;
 
-	*mWindow->fileRows = mUndoHistory.top().rows;
+	addRedoHistory(type);
+
+	if (mUndoHistory.top().changeType == FileHistory::ChangeType::RowInserted)
+	{
+		mWindow->fileRows->erase(mWindow->fileRows->begin() + mUndoHistory.top().fileCursorY + 1);
+	}
+	else if (mUndoHistory.top().changeType == FileHistory::ChangeType::RowDeleted)
+	{
+		mWindow->fileRows->insert(mWindow->fileRows->begin() + mUndoHistory.top().fileCursorY - 1, FileHandler::Row(mUndoHistory.top().rows.at(1)));
+	}
+	mWindow->fileRows->at(mUndoHistory.top().fileCursorY).line = mUndoHistory.top().rows.at(0);
+
 	mWindow->fileCursorX = mUndoHistory.top().fileCursorX;
 	mWindow->fileCursorY = mUndoHistory.top().fileCursorY;
 	mWindow->colOffset = mUndoHistory.top().colOffset;
@@ -724,9 +752,24 @@ void Editor::redoChange()
 {
 	if (mRedoHistory.size() == 0) return;
 
-	addUndoHistory();
+	FileHistory::ChangeType type;
+	if (mRedoHistory.top().changeType == FileHistory::ChangeType::CharDeleted) type = FileHistory::ChangeType::CharInserted;
+	else if (mRedoHistory.top().changeType == FileHistory::ChangeType::CharInserted) type = FileHistory::ChangeType::CharDeleted;
+	else if (mRedoHistory.top().changeType == FileHistory::ChangeType::RowDeleted) type = FileHistory::ChangeType::RowInserted;
+	else type = FileHistory::ChangeType::RowDeleted;
 
-	*mWindow->fileRows = mRedoHistory.top().rows;
+	addUndoHistory(type);
+
+	if (mRedoHistory.top().changeType == FileHistory::ChangeType::RowInserted)
+	{
+		mWindow->fileRows->erase(mWindow->fileRows->begin() + mRedoHistory.top().fileCursorY + 1);
+	}
+	else if (mRedoHistory.top().changeType == FileHistory::ChangeType::RowDeleted)
+	{
+		mWindow->fileRows->insert(mWindow->fileRows->begin() + mRedoHistory.top().fileCursorY - 1, FileHandler::Row(mRedoHistory.top().rows.at(1)));
+	}
+	mWindow->fileRows->at(mRedoHistory.top().fileCursorY).line = mRedoHistory.top().rows.at(0);
+
 	mWindow->fileCursorX = mRedoHistory.top().fileCursorX;
 	mWindow->fileCursorY = mRedoHistory.top().fileCursorY;
 	mWindow->colOffset = mRedoHistory.top().colOffset;

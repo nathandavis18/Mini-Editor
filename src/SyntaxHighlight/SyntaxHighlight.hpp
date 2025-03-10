@@ -98,7 +98,7 @@ public:
 	/// The structure for how highlight locations are stored
 	/// A custom token-based system for highlights
 	/// </summary>
-	struct HighlightLocations
+	struct HighlightLocation
 	{
 		HighlightType highlightType = HighlightType::Normal;
 		size_t startRow = 0, startCol = 0, endRow = 0, endCol = 0;
@@ -110,7 +110,7 @@ public:
 	/// Should only be called one time by the Editor, and that is on program load
 	/// </summary>
 	/// <returns></returns>
-	const std::vector<HighlightLocations>& highlights() const;
+	const std::vector<HighlightLocation>& highlights() const;
 
 	/// <summary>
 	/// Called when a multiline comment or string highlight location is started
@@ -178,6 +178,12 @@ public:
 		/// <param name="syntax"></param>
 		void setEditorSyntax(const JsonParser::JsonValue& syntax);
 
+		/// <summary>
+		/// Erases the highlight at the given index
+		/// </summary>
+		/// <param name="i"> The index of the highlight to erase </param>
+		void eraseHighlight(const size_t i);
+
 	private:
 		// Color IDs correspond to the IDs found at this link: https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797#:~:text=Where%20%7BID%7D%20should%20be%20replaced%20with%20the%20color%20index%20from%200%20to%20255%20of%20the%20following%20color%20table%3A
 		// If you would like to add/change colors, just find the color ID you want and add it. There is a list of colors chosen here for your convenience
@@ -193,7 +199,7 @@ public:
 		};
 
 		std::array<uint8_t, static_cast<uint8_t>(HighlightType::EnumCount)> mColors;
-		std::vector<HighlightLocations> mHighlights;
+		std::vector<HighlightLocation> mHighlights;
 		std::unique_ptr<EditorSyntax> mCurrentSyntax;
 		std::string mFileContents;
 };

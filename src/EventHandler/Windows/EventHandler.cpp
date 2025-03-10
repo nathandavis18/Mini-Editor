@@ -66,6 +66,5 @@ EventHandler::EventHandler(std::atomic<bool>& running, Editor* ed)
 
 EventHandler::~EventHandler()
 {
-	while (!t.joinable());
 	t.join();
 }

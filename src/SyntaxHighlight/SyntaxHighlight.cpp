@@ -126,7 +126,7 @@ void SyntaxHighlight::setColors(const JsonValue& syntax)
 	mColors[static_cast<uint8_t>(HighlightType::Number)] = mColorKeys.at(getColor("number", "seablue", syntax));
 }
 
-const std::vector<SyntaxHighlight::HighlightLocations>& SyntaxHighlight::highlights() const
+const std::vector<SyntaxHighlight::HighlightLocation>& SyntaxHighlight::highlights() const
 {
 	return mHighlights;
 }
@@ -158,15 +158,16 @@ void SyntaxHighlight::findEndMarker(const std::vector<FileHandler::Row>& fileRow
 			}
 			currentWord = fileRows.at(row).renderedLine;
 		}
-		if (endPos >= 1) // If there is a chance for there to be an escape char
+		if (hlType == HighlightType::String && endPos >= 1) // If there is a chance for there to be an escape char, and the current highlight is a string
 		{
 			if (currentWord[endPos - 1] == mCurrentSyntax->escapeChar)
 			{
-				if (!(endPos > 1 && currentWord.substr(endPos - 2, 2) == std::string() + mCurrentSyntax->escapeChar + mCurrentSyntax->escapeChar))
-				{ // If the end marker is preceded by an escape character, and the escape character is not escaped itself
+				if (!(endPos >= 2 && currentWord[endPos - 2] == mCurrentSyntax->escapeChar))
+				{
 					size_t newOffset = endPos + 1;
 					posOffset += newOffset;
 					currentWord = currentWord.substr(newOffset);
+					offset = 0;
 					continue;
 				}
 			}
@@ -244,106 +245,70 @@ void SyntaxHighlight::highlightKeywordNumberCheck(std::string_view& currentWord,
 	}
 }
 
+void SyntaxHighlight::eraseHighlight(const size_t i)
+{
+	mHighlights.erase(mHighlights.begin() + i);
+}
+
 std::tuple<size_t, size_t, size_t> SyntaxHighlight::removeOffScreenHighlights(size_t rowOffset, size_t rows, size_t fileCursorY)
 {
 	size_t rowToStart = std::numeric_limits<size_t>::max();
-	size_t startColOffset = std::numeric_limits<size_t>::max();
+	size_t colToStart = std::numeric_limits<size_t>::max();
 	size_t rowToEnd = std::numeric_limits<size_t>::max();
 
-startover:
 	for (size_t i = 0; i < mHighlights.size(); ++i) // First pass gets rid of all unnecessary syntax highlights (all the off-screen ones)
 	{
-		if (mHighlights[i].highlightType == HighlightType::MultilineComment || mHighlights[i].highlightType == HighlightType::String)
+		HighlightLocation& highlight = mHighlights[i];
+		if (highlight.highlightType != HighlightType::String && highlight.highlightType != HighlightType::MultilineComment)
 		{
-			if (mHighlights[i].startRow < rowOffset && mHighlights[i].endRow < rowOffset) // Don't erase this or we will lose the starting point
+			eraseHighlight(i);
+		}
+		else
+		{
+			if (highlight.startRow < rowOffset && highlight.endRow < rowOffset)
 			{
-				mHighlights[i].drawColor = false; // Don't want to actually set the render color for this since it is offscreen
+				highlight.drawColor = false;
 				continue;
 			}
+			else if (highlight.startRow >= rowOffset && highlight.startRow < rowOffset + rows)
+			{
+				if (highlight.endRow >= rowOffset + rows) rowToEnd = highlight.endRow;
+				eraseHighlight(i);
+			}
+			else if (highlight.endRow >= rowOffset && highlight.endRow < rowOffset + rows)
+			{
+				if (highlight.startRow < rowOffset && rowToStart == std::numeric_limits<size_t>::max())
+				{
+					rowToStart = highlight.startRow;
+					colToStart = highlight.startCol;
+				}
+				eraseHighlight(i);
+			}
+			else if (highlight.endRow >= rowOffset + rows && highlight.startRow < rowOffset)
+			{
+				if (rowToStart == std::numeric_limits<size_t>::max())
+				{
+					rowToStart = highlight.startRow;
+					colToStart = highlight.startCol;
+					if (rowToEnd == std::numeric_limits<size_t>::max() || highlight.endRow > rowToEnd) rowToEnd = highlight.endRow;
+					eraseHighlight(i);
+				}
+			}
+			else if (!highlight.endFound)
+			{
+				if (highlight.startRow < rowOffset && rowToStart == std::numeric_limits<size_t>::max())
+				{
+					rowToStart = highlight.startRow;
+					colToStart = highlight.startCol;
+				}
+				eraseHighlight(i);
+			}
+			else if (highlight.startRow >= rowOffset + rows) //Erase all remaining highlights
+			{
+				mHighlights.erase(mHighlights.begin() + i, mHighlights.end());
+			}
 		}
 
-		if (mHighlights[i].startRow >= rowOffset && mHighlights[i].startRow < rowOffset + rows)
-		{
-			if (mHighlights[i].highlightType == HighlightType::MultilineComment || mHighlights[i].highlightType == HighlightType::String)
-			{
-				if (mHighlights[i].endRow >= rowOffset + rows)
-				{
-					rowToEnd = mHighlights[i].endRow;
-				}
-			}
-			goto eraseHighlight;
-		}
-		else if (mHighlights[i].startRow < rowOffset && !(mHighlights[i].highlightType == HighlightType::MultilineComment || mHighlights[i].highlightType == HighlightType::String))
-		{ // Can't remove multiline comments and strings just yet, their position may need to be saved
-			goto eraseHighlight;
-		}
-		else if (mHighlights[i].endRow >= rowOffset && mHighlights[i].endRow < rowOffset + rows)
-		{
-			if (mHighlights[i].highlightType == HighlightType::String || mHighlights[i].highlightType == HighlightType::MultilineComment)
-			{
-				if (mHighlights[i].startRow < rowOffset && rowToStart == std::numeric_limits<size_t>::max())
-				{
-					rowToStart = mHighlights[i].startRow;
-					startColOffset = mHighlights[i].startCol;
-				}
-				goto eraseHighlight;
-			}
-		}
-		else if (mHighlights[i].endRow >= rowOffset + rows)
-		{
-			if (mHighlights[i].highlightType == HighlightType::String || mHighlights[i].highlightType == HighlightType::MultilineComment)
-			{
-				if (mHighlights[i].startRow < rowOffset && rowToStart == std::numeric_limits<size_t>::max())
-				{
-					rowToStart = mHighlights[i].startRow;
-					startColOffset = mHighlights[i].startCol;
-					if (rowToEnd == std::numeric_limits<size_t>::max() || mHighlights[i].endRow > rowToEnd)
-					{
-						rowToEnd = mHighlights[i].endRow;
-					}
-					goto eraseHighlight;
-				}
-			}
-		}
-		else if (mHighlights[i].startRow >= rowOffset + rows)
-		{
-			mHighlights.erase(mHighlights.begin() + i, mHighlights.end());
-		}
-		else if (mHighlights[i].endRow < rowOffset)
-		{
-			goto eraseHighlight;
-		}
-		else if (mHighlights[i].startRow == fileCursorY)
-		{
-			goto eraseHighlight;
-		}
-		else if (mHighlights[i].endRow == fileCursorY && mHighlights[i].endFound)
-		{
-			if (mHighlights[i].highlightType == HighlightType::String || mHighlights[i].highlightType == HighlightType::MultilineComment)
-			{
-				if (mHighlights[i].startRow < rowOffset && rowToStart == std::numeric_limits<size_t>::max())
-				{
-					rowToStart = mHighlights[i].startRow;
-					startColOffset = mHighlights[i].startCol;
-				}
-			}
-			goto eraseHighlight;
-		}
-		else if (!mHighlights[i].endFound)
-		{
-			if (mHighlights[i].startRow < rowOffset && rowToStart == std::numeric_limits<size_t>::max())
-			{
-				rowToStart = mHighlights[i].startRow;
-				startColOffset = mHighlights[i].startCol;
-			}
-			goto eraseHighlight;
-		}
-
-	eraseHighlight:
-		mHighlights.erase(mHighlights.begin() + i);
-
-		if (i == 0)
-			goto startover;
 		--i;
 	}
 
@@ -351,5 +316,5 @@ startover:
 	{
 		rowToEnd = mHighlights.back().endRow;
 	}
-	return std::tuple<size_t, size_t, size_t>(rowToStart, startColOffset, rowToEnd);
+	return std::tuple<size_t, size_t, size_t>(rowToStart, colToStart, rowToEnd);
 }
