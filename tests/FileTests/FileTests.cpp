@@ -53,7 +53,7 @@ TEST(FileTest, LargeFileOpensQuickly)
 
 	std::chrono::milliseconds expectedMaxTime(1000); //Want it to open and parse in < 1 second.
 
-	std::chrono::milliseconds actualTime = std::chrono::duration_cast<std::chrono::milliseconds>(after - before);
+	std::chrono::milliseconds actualTime = std::chrono::duration_cast<std::chrono::milliseconds>(after - before); //Get the actual time
 
 	EXPECT_TRUE(actualTime <= expectedMaxTime);
 }
