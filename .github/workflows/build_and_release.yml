@@ -10,12 +10,6 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v4.1.7
 
-            - name: Download artifacts
-              uses: actions/download-artifact@v4
-              with:
-                name: Mini-Winx64-Release
-                path: out/build
-
             - name: Create Release
               uses: ncipollo/release-action@v1
               with:
