@@ -14,20 +14,14 @@ jobs:
               uses: seanmiddleditch/gha-setup-ninja@v5
                 
             - name: Build Project
-              uses: threeal/cmake-action@v2.1.0
-              with:
-                build-dir: out/build
-                generator: Ninja
-                cxx-compiler: clang++
-                c-compiler: clang
-                cxx-flags: -std=c++20
-                options: CMAKE_BUILD_TYPE=Release
+              uses: actions/setup-python@v5
+            - run: python build.py --create-release
 
             - name: Upload artifacts
               uses: actions/upload-artifact@v4
               with:
                 name: Mini-Winx64-Release
-                path: out/build/mini.exe
+                path: out/build/mini.zip
 
     release:
         runs-on: windows-latest
@@ -49,5 +43,5 @@ jobs:
                 prerelease: true
                 name: v0.7.0a - Massive performance improvement for large files
                 tag: v0.7.0a
-                artifacts: "config.json,out/build/mini.exe"
+                artifacts: "config.json,out/build/mini.zip"
                 makeLatest: true
