@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 option(BUILD_TESTS "WithTests" OFF)
 option(BUILD_PROJECT "BuildMini" ON)
 option(CREATE_RELEASE "CpackRelease" OFF)
+option(DEBUG_BUILD "Debug" OFF)
 
 
 set(SOURCES
@@ -32,6 +33,9 @@ set (HEADERS
 )
 
 if(BUILD_PROJECT)
+	if(DEBUG_BUILD)
+		add_compile_definitions(DEBUG_BUILD)
+	endif(DEBUG_BUILD)
 	add_executable (mini "src/main.cpp" ${SOURCES} ${HEADERS})
 
 	if(WIN32)

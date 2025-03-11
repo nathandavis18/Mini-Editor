@@ -36,7 +36,7 @@ SOFTWARE.
 
 int main(int argc, const char** argv)
 {
-#ifndef NDEBUG
+#ifdef DEBUG_BUILD
 	argc = 2;
 	argv[1] = "test.cpp";
 #endif
