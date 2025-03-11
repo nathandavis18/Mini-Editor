@@ -50,6 +50,10 @@ public:
 	/// <returns></returns>
 	std::vector<Row>* getFileContents();
 
+	/// <summary>
+	/// Called when the editor needs access to the file name (for display purposes)
+	/// </summary>
+	/// <returns></returns>
 	const std::string_view fileName();
 
 	/// <summary>
@@ -68,7 +72,7 @@ private:
 
 	/// <summary>
 	/// Loads the file into a stringstream for loadRows to work with.
-	/// Called by initFileHandler()
+	/// Called on initialization
 	/// </summary>
 	void loadFileContents();
 

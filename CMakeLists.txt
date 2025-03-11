@@ -1,4 +1,4 @@
-﻿cmake_minimum_required (VERSION 3.12)
+﻿cmake_minimum_required (VERSION 3.14)
 
 project (mini)
 
@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
 option(BUILD_TESTS "WithTests" OFF)
 option(BUILD_PROJECT "BuildMini" ON)
+option(CREATE_RELEASE "CpackRelease" OFF)
 
 
 set(SOURCES
@@ -81,3 +82,18 @@ if(BUILD_TESTS)
 	target_include_directories(mini_tests PUBLIC src)
 	add_subdirectory(tests)
 endif(BUILD_TESTS)
+
+if(CREATE_RELEASE)
+	install(TARGETS mini DESTINATION /)
+	install(FILES "${CMAKE_CURRENT_LIST_DIR}/config.json" DESTINATION /)
+	set(CPACK_PACKAGE_NAME "mini")
+	set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt")
+	set(CPACK_PACKAGE_VERSION "0.7.0a")
+	set(CPACK_PACKAGE_VERSION_MAJOR "0")
+	set(CPACK_PACKAGE_VERSION_MINOR "7")
+	set(CPACK_PACKAGE_VERSION_PATCH "0")
+	set(CPACK_GENERATOR "ZIP")
+	set(CPACK_SOURCE_GENERATOR "ZIP")
+	set(CPACK_PACKAGE_FILE_NAME "mini")
+	include(CPack)
+endif(CREATE_RELEASE)
