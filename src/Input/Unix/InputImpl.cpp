@@ -72,6 +72,13 @@ namespace InputImpl
 						case '3': return KeyAction::Delete;
 						case '5': return KeyAction::PageUp;
 						case '6': return KeyAction::PageDown;
+
+						case 'A': return KeyAction::ArrowUp;
+						case 'B': return KeyAction::ArrowDown;
+						case 'C': return KeyAction::ArrowRight;
+						case 'D': return KeyAction::ArrowLeft;
+						case 'H': return KeyAction::Home;
+						case 'F': return KeyAction::End;
 						}
 					}
 					else if (seq[2] == ';')

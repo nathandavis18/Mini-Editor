@@ -57,7 +57,6 @@ int main(int argc, const char** argv)
 	{
 		extension = std::string_view();
 	}
-
 	Editor editor(SyntaxHighlight(extension), FileHandler(fName), std::make_unique<Console>(Console()));
 
 	std::atomic<bool> running = true;

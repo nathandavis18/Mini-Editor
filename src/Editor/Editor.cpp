@@ -334,6 +334,8 @@ int8_t Editor::moveCursorLeftRight(const KeyActions::KeyAction key)
 
 void Editor::moveCursor(const KeyActions::KeyAction key)
 {
+	if (mWindow->fileRows->size() == 0) return;
+
 	int8_t returnCode = 0;
 	if (key == KeyActions::KeyAction::ArrowLeft || key == KeyActions::KeyAction::ArrowRight 
 		|| key == KeyActions::KeyAction::CtrlArrowLeft || key == KeyActions::KeyAction::CtrlArrowRight)
@@ -458,6 +460,8 @@ void Editor::moveCursor(const KeyActions::KeyAction key)
 
 void Editor::shiftRowOffset(const KeyActions::KeyAction key)
 {
+	if (mWindow->fileRows->size() == 0) return;
+
 	switch (key)
 	{
 	case KeyActions::KeyAction::CtrlArrowDown:

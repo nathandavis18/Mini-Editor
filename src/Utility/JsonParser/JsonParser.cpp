@@ -74,7 +74,7 @@ namespace JsonParser
 		iter valueStartIter;
 		do
 		{
-			while (*currentPos == ' ' || *currentPos == '\n' || *currentPos == ',') ++currentPos;
+			while (*currentPos == ' ' || *currentPos == '\n' || *currentPos == ',' || *currentPos == '\r') ++currentPos;
 			if (*currentPos == '\"')
 			{
 				++currentPos;
@@ -89,7 +89,7 @@ namespace JsonParser
 
 	const std::pair<std::string, JsonValue> getKeyValuePair(std::string_view contents, iter& currentPos, bool initial)
 	{
-		while (*currentPos == ' ' || *currentPos == '\n' || *currentPos == ',')
+		while (*currentPos == ' ' || *currentPos == '\n' || *currentPos == ',' || *currentPos == '\r')
 		{
 			++currentPos;
 		}
@@ -112,7 +112,7 @@ namespace JsonParser
 
 		while (*currentPos != ':' && *currentPos != '}') ++currentPos;
 		if(*currentPos != '}') ++currentPos;
-		while (*currentPos == ' ' || *currentPos == '\n' || *currentPos == ',') ++currentPos;
+		while (*currentPos == ' ' || *currentPos == '\n' || *currentPos == ',' || *currentPos == '\r') ++currentPos;
 
 		if (*currentPos == '{')
 		{
