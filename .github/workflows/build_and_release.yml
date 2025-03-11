@@ -6,7 +6,6 @@ on:
 jobs:
     release:
         runs-on: windows-latest
-        needs: [ build ]
         steps:
             - name: Checkout
               uses: actions/checkout@v4.1.7
