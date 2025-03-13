@@ -38,7 +38,7 @@ int main(int argc, const char** argv)
 {
 #ifdef DEBUG_BUILD
 	argc = 2;
-	argv[1] = "test.cpp";
+	argv[1] = "test.py";
 #endif
 	if (argc != 2)
 	{
