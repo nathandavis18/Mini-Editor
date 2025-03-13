@@ -60,6 +60,8 @@ namespace InputHandler
 				editor.refreshScreen(true);
 			}
 			break;
+
+		case KeyAction::CtrlF:
 		case static_cast<KeyAction>('f'):
 			editor.enableFindMode();
 			editor.refreshScreen();
@@ -149,6 +151,13 @@ namespace InputHandler
 		case KeyAction::CtrlC: //Don't need to do anything for this yet
 			break;
 
+		case KeyAction::CtrlF:
+			editor.enableFindMode();
+			editor.refreshScreen();
+
+			find(editor);
+			break;
+
 		case KeyAction::CtrlS:
 			editor.save();
 			break;
@@ -189,6 +198,7 @@ namespace InputHandler
 		case KeyAction::CtrlZ:
 		case KeyAction::CtrlQ:
 		case KeyAction::CtrlS:
+		case KeyAction::CtrlF:
 		case KeyAction::Delete:
 		case KeyAction::CtrlDelete:
 		case KeyAction::Tab:
@@ -320,6 +330,7 @@ namespace InputHandler
 			editor.enableExitMode();
 			break;
 
+		case KeyAction::CtrlF:
 		case static_cast<KeyAction>('f'):
 			editor.refreshScreen();
 
