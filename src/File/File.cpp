@@ -79,8 +79,6 @@ void FileHandler::loadFileContents()
 	const std::string& fileStr = fileContents.str();
 	if (fileStr.length() == 0) return;
 
-	mRows.reserve(fileStr.length() / charactersPerRowAverage); 
-
 	if (fileStr.length() <= maxLengthPerThread)
 	{
 		std::promise<std::vector<FileHandler::Row>> promise;
@@ -103,21 +101,20 @@ void FileHandler::loadFileContents()
 
 		size_t endPos = (i == threads - 1) ? fileStr.length() : startPos + lengthPerThread;
 
-		if (startPos > 0)
-		{
-			while (fileStr.at(startPos) != '\n') ++startPos;
-		}
-
 		if (endPos < fileStr.length())
 		{
-			while (fileStr.at(endPos) != '\n') ++endPos;
+			while (fileStr.at(endPos) != '\n' && endPos != fileStr.length()) ++endPos;
 		}
 		prevEndPos = endPos;
 
 		std::promise<std::vector<FileHandler::Row>> p;
 		retValues.emplace_back(p.get_future());
 		allThreads.emplace_back(&FileHandler::loadRows, this, startPos, endPos, fileStr, std::move(p));
+
+		if (endPos == fileStr.length()) break;
 	}
+
+	mRows.reserve(fileStr.length() / charactersPerRowAverage);
 
 	for (unsigned int i = 0; i < threads; ++i)
 	{

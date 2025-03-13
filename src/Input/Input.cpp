@@ -303,7 +303,8 @@ namespace InputHandler
 		} while (input != KeyAction::Enter);
 
 		previousFindString = findString;
-		editor.findString(findString);
+		if(!findString.empty()) editor.findString(findString);
+		else editor.enableReadMode();
 	}
 
 	void findModeInput(const KeyAction key, Editor& editor)
