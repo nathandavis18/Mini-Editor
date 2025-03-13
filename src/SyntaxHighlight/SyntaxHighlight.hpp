@@ -110,7 +110,7 @@ public:
 	/// Should only be called one time by the Editor, and that is on program load
 	/// </summary>
 	/// <returns></returns>
-	const std::vector<HighlightLocation>& highlights() const;
+	std::vector<HighlightLocation>& highlights();
 
 	/// <summary>
 	/// Called when a multiline comment or string highlight location is started

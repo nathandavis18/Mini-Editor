@@ -126,7 +126,7 @@ void SyntaxHighlight::setColors(const JsonValue& syntax)
 	mColors[static_cast<uint8_t>(HighlightType::Number)] = mColorKeys.at(getColor("number", "seablue", syntax));
 }
 
-const std::vector<SyntaxHighlight::HighlightLocation>& SyntaxHighlight::highlights() const
+std::vector<SyntaxHighlight::HighlightLocation>& SyntaxHighlight::highlights()
 {
 	return mHighlights;
 }

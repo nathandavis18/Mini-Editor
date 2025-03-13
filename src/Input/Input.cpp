@@ -59,7 +59,7 @@ namespace InputHandler
 			}
 			break;
 		case static_cast<KeyAction>('f'):
-			editor.enableCommandMode();
+			editor.enableFindMode();
 			editor.refreshScreen();
 
 			find(editor);

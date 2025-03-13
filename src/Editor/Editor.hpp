@@ -163,6 +163,8 @@ public:
 	/// </summary>
 	void enableCommandMode();
 
+	void enableFindMode();
+
 	/// <summary>
 	/// When changing from read mode to edit mode (when 'i' is pressed while in read mode)
 	/// Steps include:
@@ -350,7 +352,9 @@ private:
 	std::unique_ptr<IConsole> mConsole;
 	FileHandler mFile;
 	SyntaxHighlight mSyntax;
+
 	std::vector<FindString::FindLocation> mFindLocations;
+	size_t mCurrentFindPos = 0;
 
 
 	std::stack<FileHistory> mRedoHistory;
@@ -361,6 +365,7 @@ private:
 
 	//Some constants to give specific values an identifying name
 	inline static const std::string_view separators = " \"',.()+-/*=~%;:[]{}<>";
+	inline static const std::string normalBackgroundColor = "\x1b[48;5;0m";
 	inline static constexpr uint8_t tabSpacing = 8;
 	inline static constexpr uint8_t maxSpacesForTab = 7;
 	inline static constexpr uint8_t statusMessageRows = 2;

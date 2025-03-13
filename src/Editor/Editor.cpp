@@ -120,7 +120,7 @@ void Editor::prepRenderedLineForRender()
 
 std::string Editor::renderCursor()
 {
-	if (mMode == Mode::CommandMode)
+	if (mMode == Mode::CommandMode || mMode == Mode::FindMode)
 	{
 		mWindow->renderedCursorX = 0; mWindow->renderedCursorY = mWindow->rows + statusMessageRows;
 	}
@@ -153,15 +153,20 @@ std::string Editor::renderStatus()
 		rStatus = std::format("row {}/{} col {}", currentRowToDisplay, mWindow->fileRows->size(), currentColToDisplay);
 		modeToDisplay = "EDIT";
 	}
+	else if (mMode == Mode::ReadMode)
+	{
+		rStatus = std::format("row {}/{} col {}", currentRowToDisplay, mWindow->fileRows->size(), currentColToDisplay);
+		modeToDisplay = "READ ONLY";
+	}
 	else if (mMode == Mode::CommandMode)
 	{
 		rStatus = "Enter command";
 		modeToDisplay = "COMMAND";
 	}
-	else if (mMode == Mode::ReadMode)
+	else if (mMode == Mode::FindMode)
 	{
-		rStatus = std::format("row {}/{} col {}", currentRowToDisplay, mWindow->fileRows->size(), currentColToDisplay);
-		modeToDisplay = "READ ONLY";
+		rStatus = std::format("match {}/{}", mCurrentFindPos, mFindLocations.size());
+		modeToDisplay = "FIND";
 	}
 	
 	size_t statusLength = std::min(status.length(), static_cast<size_t>(mWindow->cols));
@@ -211,7 +216,7 @@ std::string Editor::renderStatusAndCursor()
 	statusAndCursorBuffer.append(renderCursor());
 	statusAndCursorBuffer.append("\x1b[0m");
 
-	if (mMode == Mode::CommandMode)
+	if (mMode == Mode::CommandMode || mMode == Mode::FindMode)
 	{
 		statusAndCursorBuffer.append(mCommandBuffer);
 	}
@@ -753,6 +758,12 @@ void Editor::enableCommandMode()
 	mWindow->renderedCursorX = 0; mWindow->renderedCursorY = mWindow->rows + statusMessageRows;
 }
 
+void Editor::enableFindMode()
+{
+	mMode = Mode::FindMode;
+	mWindow->renderedCursorX = 0; mWindow->renderedCursorY = mWindow->rows + statusMessageRows;
+}
+
 void Editor::enableEditMode()
 {
 	if (mWindow->fileRows->size() == 0)
@@ -879,10 +890,116 @@ const size_t Editor::getRenderedTabSpaces(const FileHandler::Row& row, size_t en
 
 void Editor::updateRenderedColor(const size_t rowOffset, const size_t colOffset)
 {
-	if (!mSyntax.hasSyntax()) return;
-
 	size_t charactersToAdjust = 0; //The amount of characters to adjust for in the string position based on how many color code escape sequences have been added
 	size_t prevRow = 0;
+	size_t syntaxToFindAdjustmentsMade = 0;
+	constexpr uint8_t findColorId = 237;
+	for (const auto& findLocation : mFindLocations)
+	{
+		if (findLocation.row < rowOffset || findLocation.startCol >= mWindow->cols + colOffset) continue;
+		if (findLocation.row >= rowOffset + mWindow->rows) break;
+
+		std::string findLocationColor = std::format("\x1b[48;5;{}m", std::to_string(findColorId));
+		std::string* renderString = &mWindow->fileRows->at(findLocation.row).renderedLine;
+
+		if (prevRow != findLocation.row)
+		{
+			charactersToAdjust = 0;
+		}
+
+		size_t insertPos = findLocation.startCol;
+		if (insertPos < colOffset) insertPos = 0;
+		else if (insertPos >= colOffset) insertPos -= colOffset;
+
+		insertPos += charactersToAdjust;
+		if (insertPos >= renderString->length()) insertPos = renderString->length();
+		
+		renderString->insert(insertPos, findLocationColor);
+		charactersToAdjust += findLocationColor.length();
+
+		insertPos += findLocation.length + charactersToAdjust;
+		if (insertPos >= renderString->length()) insertPos = renderString->length();
+		renderString->insert(insertPos, normalBackgroundColor);
+
+		if (!mSyntax.hasSyntax()) continue;
+		size_t adjustmentToMake = 0;
+		const size_t highlightsSize = mSyntax.highlights().size();
+		for (size_t i = 0; i < highlightsSize;)
+		{
+			SyntaxHighlight::HighlightLocation* highlight = &mSyntax.highlights().at(i);
+			if (highlight->startRow > findLocation.row) break;
+
+			if (highlight->startRow < findLocation.row)
+			{
+				i = (highlightsSize + i) / 2;
+				highlight = &mSyntax.highlights().at(i);
+				if (highlight->startRow >= findLocation.row)
+				{
+					do
+					{
+						--i;
+						highlight = &mSyntax.highlights().at(i);
+					} while (highlight->startRow >= findLocation.row);
+
+					++i;
+				}
+				else
+				{
+					continue;
+				}
+			}
+
+			if (highlight->startRow == findLocation.row || highlight->endRow == findLocation.row)
+			{
+				if (highlight->startRow == findLocation.row)
+				{
+					if (highlight->startCol >= findLocation.startCol + syntaxToFindAdjustmentsMade)
+					{
+						if (highlight->startCol <= findLocation.startCol + findLocation.length + syntaxToFindAdjustmentsMade)
+						{
+							highlight->startCol += findLocationColor.length();
+							adjustmentToMake = (adjustmentToMake == 0) ? findLocationColor.length() : adjustmentToMake;
+						}
+						else
+						{
+							highlight->startCol += findLocationColor.length() + normalBackgroundColor.length();
+							adjustmentToMake = findLocationColor.length() + normalBackgroundColor.length();
+						}
+					}
+				}
+				if (highlight->endRow == findLocation.row)
+				{
+					if (highlight->endCol >= findLocation.startCol + syntaxToFindAdjustmentsMade)
+					{
+						if (highlight->endCol <= findLocation.startCol + findLocation.length + syntaxToFindAdjustmentsMade)
+						{
+							highlight->endCol += findLocationColor.length();
+							adjustmentToMake = (adjustmentToMake == 0) ? findLocationColor.length() : adjustmentToMake;
+						}
+						else
+						{
+							highlight->endCol += findLocationColor.length() + normalBackgroundColor.length();
+							adjustmentToMake = findLocationColor.length() + normalBackgroundColor.length();
+						}
+					}
+				}
+				++i;
+				continue;
+			}
+			
+			break; //If there is no syntax highlight locations that match the row
+
+		}
+
+		syntaxToFindAdjustmentsMade += adjustmentToMake;
+		charactersToAdjust += normalBackgroundColor.length();
+		prevRow = findLocation.row;
+	}
+
+	if (!mSyntax.hasSyntax()) return;
+	charactersToAdjust = 0;
+	prevRow = 0;
+
 	for (const auto& highlight : mSyntax.highlights())
 	{
 		if (!highlight.drawColor) continue;
@@ -894,6 +1011,7 @@ void Editor::updateRenderedColor(const size_t rowOffset, const size_t colOffset)
 
 		const uint8_t color = mSyntax.color(highlight.highlightType);
 		std::string colorFormat = std::format("\x1b[38;5;{}m", std::to_string(color));
+
 		if (rowOffset > highlight.startRow)
 		{
 			renderString = &mWindow->fileRows->at(rowOffset).renderedLine;
@@ -907,30 +1025,31 @@ void Editor::updateRenderedColor(const size_t rowOffset, const size_t colOffset)
 			//Need to make sure the insert position is in within the rendered string
 			if (insertPos < colOffset) insertPos = 0;
 			else if (insertPos >= colOffset) insertPos -= colOffset;
-			if (insertPos >= mWindow->cols) insertPos = mWindow->cols;
 
-			renderString->insert(insertPos + charactersToAdjust, colorFormat);
+			insertPos += charactersToAdjust;
+			if (insertPos >= renderString->length()) insertPos = renderString->length();
+
+			renderString->insert(insertPos, colorFormat);
 			charactersToAdjust += colorFormat.length();
+			
 			prevRow = highlight.startRow;
 		}
 
 		size_t insertPos = highlight.endCol;
 		if (insertPos >= colOffset) insertPos -= colOffset;
 		else if (insertPos < colOffset) insertPos = 0;
-		if (insertPos >= mWindow->cols) insertPos = mWindow->cols;
-		renderString = &mWindow->fileRows->at(highlight.endRow).renderedLine;
 
 		if (prevRow != highlight.endRow) charactersToAdjust = 0;
-		renderString->insert(insertPos + charactersToAdjust, normalColorMode);
+		insertPos += charactersToAdjust;
+
+		renderString = &mWindow->fileRows->at(highlight.endRow).renderedLine;
+		if (insertPos >= renderString->length()) insertPos = renderString->length();
+
+
+		renderString->insert(insertPos, normalColorMode);
 		charactersToAdjust += normalColorMode.length();
 
 		prevRow = highlight.endRow;
-	}
-	for (const auto& findLocation : mFindLocations)
-	{
-		if (findLocation.row < rowOffset || findLocation.row >= rowOffset + mWindow->rows) break;
-
-		std::string highlightColor = std::format("\x1b[48;5;{}m", std::to_string(103));
 	}
 }
 
@@ -1012,4 +1131,10 @@ void Editor::updateCommandBuffer(const std::string& command)
 void Editor::findString(const std::string& findString)
 {
 	mFindLocations = FindString::find(findString, *mWindow->fileRows);
+	for (auto& location : mFindLocations)
+	{
+		const size_t tabs = getRenderedTabSpaces(mWindow->fileRows->at(location.row), location.startCol);
+		location.startCol += tabs;
+	}
+	mCurrentFindPos = (mFindLocations.size() > 0) ? 1 : 0;
 }
