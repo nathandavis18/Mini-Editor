@@ -9,6 +9,8 @@ Be sure to check out [Getting Starting](#getting-started)!
 ### Demo
 
 
+[Mini Editor Demo](https://github.com/user-attachments/assets/ccb2e40c-d786-4dde-bf4f-0d617091cf9d)
+
 
 <hr>
 
