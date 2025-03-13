@@ -22,6 +22,7 @@ set(SOURCES
 	"SyntaxHighlightTests/SyntaxHighlightTests.cpp"
 	"JsonParserTests/JsonParserTests.cpp"
 	"GetProgramPathTests/GetProgramPathTests.cpp"
+	"FindStringTests/FindStringTests.cpp"
 )
 
 set(CMAKE_CXX_STANDARD 20)
