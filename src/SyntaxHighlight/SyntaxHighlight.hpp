@@ -47,10 +47,10 @@ public:
 	/// </summary>
 	struct EditorSyntax
 	{
-		std::unordered_set<std::string> filematch;
-		std::unordered_set<std::string> builtInTypeKeywords;
-		std::unordered_set<std::string> controlKeywords;
-		std::unordered_set<std::string> otherKeywords;
+		JsonParser::JsonSet filematch;
+		JsonParser::JsonSet builtInTypeKeywords;
+		JsonParser::JsonSet controlKeywords;
+		JsonParser::JsonSet otherKeywords;
 
 		//These values may need a default/fallback value for when a syntax exists but doesn't define them
 		std::string singlelineComment = "//";
@@ -114,8 +114,7 @@ public:
 	};
 
 	/// <summary>
-	/// Returns a const reference to the internal highlight locations
-	/// Should only be called one time by the Editor, and that is on program load
+	/// Returns a reference to the internal highlight locations
 	/// </summary>
 	/// <returns></returns>
 	std::vector<HighlightLocation>& highlights();
