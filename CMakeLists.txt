@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 option(BUILD_TESTS "WithTests" OFF)
 option(BUILD_PROJECT "BuildMini" ON)
 option(CREATE_RELEASE "CpackRelease" OFF)
+option(DEBUG_BUILD "Debug" OFF)
 
 
 set(SOURCES
@@ -16,6 +17,7 @@ set(SOURCES
 	"src/Input/Input.cpp"
 	"src/SyntaxHighlight/SyntaxHighlight.cpp"
 	"src/Utility/JsonParser/JsonParser.cpp"
+	"src/FindString/FindString.cpp"
 )
 
 set (HEADERS
@@ -29,9 +31,13 @@ set (HEADERS
 	"src/Utility/GetProgramPath/GetProgramPath.hpp"
 	"src/Utility/JsonParser/JsonParser.hpp"
 	"src/EventHandler/EventHandler.hpp"
+	"src/FindString/FindString.hpp"
 )
 
 if(BUILD_PROJECT)
+	if(DEBUG_BUILD)
+		add_compile_definitions(DEBUG_BUILD)
+	endif(DEBUG_BUILD)
 	add_executable (mini "src/main.cpp" ${SOURCES} ${HEADERS})
 
 	if(WIN32)

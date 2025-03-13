@@ -21,47 +21,29 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
-/**
-* @file KeyActions.hh
-* @brief Lists the action keys and their corresponding key code
-*/
 #pragma once
-namespace KeyActions
+
+#include "File/File.hpp"
+
+#include <vector>
+#include <string_view>
+
+namespace FindString
 {
 	/// <summary>
-	/// The list of action keys and their unique input value
+	/// The structure for storing the find locations.
 	/// </summary>
-	enum class KeyAction
+	struct FindLocation
 	{
-		None = 0,
-
-		CtrlC = 3,
-		CtrlF = 6,
-		CtrlQ = 17,
-		CtrlS = 19,
-		CtrlX = 24,
-		CtrlY = 25,
-		CtrlZ = 26,
-
-		Tab = 9,
-		Enter = 13,
-		Esc = 27,
-
-#ifdef _WIN32
-		Backspace = 8, CtrlBackspace = 127,
-#else
-		Backspace = 127, CtrlBackspace = 8,
-#endif
-
-		ArrowLeft = 1000,	CtrlArrowLeft, //Just give these an arbitrary, unused value to make them unique
-		ArrowRight,			CtrlArrowRight,
-		ArrowUp,			CtrlArrowUp,
-		ArrowDown,			CtrlArrowDown,
-		Home,				CtrlHome,
-		Delete,				CtrlDelete,
-		End,				CtrlEnd,
-		PageUp,				CtrlPageUp,
-		PageDown,			CtrlPageDown
+		size_t row = 0, startCol = 0, length = 0, filePos = 0;
 	};
+
+	/// <summary>
+	/// Finds all the strings that match a given string and builds the location vector. Returns the vector after all locations are found.
+	/// Currently this is a blocking call, so on large files this may cause performance issues
+	/// </summary>
+	/// <param name="strToFind"></param>
+	/// <param name="fileRows"></param>
+	/// <returns></returns>
+	std::vector<FindLocation> find(const std::string_view strToFind, const std::vector<FileHandler::Row>& fileRows);
 }
