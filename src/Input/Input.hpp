@@ -56,5 +56,16 @@ namespace InputHandler
 	/// <returns> True if program should exit, false otherwise </returns>
 	bool doCommand(Editor& editor);
 
+	/// <summary>
+	/// Gets the find string from the user in a similar fashion to inputting a command
+	/// </summary>
+	/// <param name="editor"></param>
 	void find(Editor& editor);
+
+	/// <summary>
+	/// Controls what happens when find mode is enabled and the user presses a key
+	/// </summary>
+	/// <param name=""></param>
+	/// <param name="editor"></param>
+	void findModeInput(const KeyActions::KeyAction, Editor& editor);
 }

@@ -163,6 +163,9 @@ public:
 	/// </summary>
 	void enableCommandMode();
 
+	/// <summary>
+	/// Enables find mode, which enables the user to cycle through the find locations
+	/// </summary>
 	void enableFindMode();
 
 	/// <summary>
@@ -201,7 +204,17 @@ public:
 	/// <param name="command"></param>
 	void updateCommandBuffer(const std::string& command);
 
+	/// <summary>
+	/// Gets the locations of the strings that match strToFind
+	/// </summary>
+	/// <param name="strToFind"></param>
 	void findString(const std::string& strToFind);
+
+	/// <summary>
+	/// Moves the cursor to the next/previous find location depending on key pressed
+	/// </summary>
+	/// <param name="key"></param>
+	void moveCursorToFind(const KeyActions::KeyAction key);
 
 private:
 	/// <summary>
@@ -237,18 +250,18 @@ private:
 	/// Steps that need to be taken before refreshScreen() does its thing.
 	/// This sets the rendered string up for each line, including replacing tabs with spaces, and sets the highlight positions.
 	/// </summary>
-	void prepRenderedString();
+	void prepForRender();
 
 	/// <summary>
 	/// Sets the rendered lines that are currently on screen and replaces the tabs with spaces
 	/// </summary>
-	void setRenderedString(const size_t startRow, const size_t endRow);
+	void setRenderedLine(const size_t startRow, const size_t endRow);
 
 	/// <summary>
 	/// Preps the rendered line to be rendered by making sure the line length < console width
 	/// Also checks the position of the colOffset compared to the rendered line to make sure it should be rendered at all
 	/// </summary>
-	void prepRenderedLineForRender();
+	void setRenderedLineLength();
 
 	/// <summary>
 	/// Sets up the buffer to render the cursor position
@@ -330,6 +343,15 @@ private:
 	/// <param name=""></param>
 	/// <returns> The amount of spaces the rendered cursor needs to move </returns>
 	const size_t getRenderedTabSpaces(const FileHandler::Row&, size_t endPos) const;
+
+	/// <summary>
+	/// Creates the escape code sequence insert adjusments needed when find string highlights have been added
+	/// </summary>
+	/// <param name="adjustmentsMade"></param>
+	/// <param name="findLocation"></param>
+	/// <param name="findColorLength"></param>
+	/// <returns></returns>
+	size_t adjustSyntaxHighlightLocations(const size_t adjustmentsMade, const FindString::FindLocation& findLocation, const size_t findColorLength);
 
 	/// <summary>
 	/// Adds the colors to the screen to be displayed to the user, utilizing the highlight token system

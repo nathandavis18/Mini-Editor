@@ -85,6 +85,10 @@ int main(int argc, const char** argv)
 				{
 					InputHandler::handleInput(inputCode, editor);
 				}
+				else if (editor.mode() == Editor::Mode::FindMode)
+				{
+					InputHandler::findModeInput(inputCode, editor);
+				}
 			}
 		}
 	}

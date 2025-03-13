@@ -32,6 +32,8 @@ using KeyActions::KeyAction;
 
 namespace InputHandler
 {
+	std::string previousFindString = "";
+
 	const KeyAction getInput()
 	{
 		return InputImpl::getInput();
@@ -253,8 +255,8 @@ namespace InputHandler
 	void find(Editor& editor)
 	{
 		const char* startStr = "\r\x1b[0KString to find:";
-		std::string findString;
-		std::string commandBuffer = startStr;
+		std::string findString = previousFindString;
+		std::string commandBuffer = startStr + findString;
 		KeyAction input;
 
 		do
@@ -266,7 +268,12 @@ namespace InputHandler
 			input = getInput();
 
 			if (isActionKey(input)) continue;
-			if (input == KeyAction::Esc) return;
+			if (input == KeyAction::Esc)
+			{
+				editor.updateCommandBuffer("");
+				editor.enableReadMode();
+				return;
+			}
 
 			if (input == KeyAction::Backspace && findString.length() > 0)
 			{
@@ -284,6 +291,40 @@ namespace InputHandler
 			commandBuffer = startStr + findString;
 		} while (input != KeyAction::Enter);
 
+		previousFindString = findString;
 		editor.findString(findString);
+	}
+
+	void findModeInput(const KeyAction key, Editor& editor)
+	{
+		switch (key)
+		{
+		case KeyAction::ArrowLeft:
+		case KeyAction::ArrowRight:
+		case KeyAction::ArrowDown:
+		case KeyAction::ArrowUp:
+		case KeyAction::Enter:
+			editor.moveCursorToFind(key);
+			break;
+
+		case KeyAction::Esc:
+			editor.updateCommandBuffer("");
+			editor.enableReadMode();
+			break;
+
+		case KeyAction::CtrlS:
+			editor.save();
+			break;
+
+		case KeyAction::CtrlQ:
+			editor.enableExitMode();
+			break;
+
+		case static_cast<KeyAction>('f'):
+			editor.refreshScreen();
+
+			find(editor);
+			break;
+		}
 	}
 }
