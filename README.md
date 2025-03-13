@@ -9,8 +9,6 @@ Be sure to check out [Getting Starting](#getting-started)!
 ### Demo
 
 
-https://github.com/user-attachments/assets/ba6fbc34-5d92-448f-b9ac-2994f407eeba
-
 
 <hr>
 
@@ -28,6 +26,7 @@ Controls are listed as follows:
 	WHILE IN READ MODE (Default Mode):
 	- i - Enable Edit Mode
 	- : - Enable Command Mode
+	- f - Enable Find Mode
 	
 	WHILE IN COMMAND MODE:
 	- q: Quit (File must be saved if changes have been made)
@@ -57,9 +56,15 @@ Controls are listed as follows:
  	- Ctrl+Z: Undo most recent change.
   	- Ctrl+Y: Redo most recent undo.
 
+	FIND MODE CONTROLS:
+	- Arrow Left/Up: Go to previous find location
+	- Enter/Arrow Right/Down: Go to next find location
+	- f/Ctrl+F: Edit string to find
+
 	OTHER CONTROLS:
 	- Ctrl+S: Saves the file while not in command mode.
 	- Ctrl+Q: Force quits the program while not in command mode (WARNING: DOES NOT SAVE FILE).
+	- Ctrl+F: Enter Find Mode while not in command mode
 
 More key functionality will be added as this project progresses.
 

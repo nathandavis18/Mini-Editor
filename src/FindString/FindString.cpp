@@ -25,7 +25,7 @@ SOFTWARE.
 
 namespace FindString
 {
-	std::vector<FindLocation> FindString::find(const std::string_view strToFind, const std::vector<FileHandler::Row>& fileRows)
+	std::vector<FindLocation> find(const std::string_view strToFind, const std::vector<FileHandler::Row>& fileRows)
 	{
 		std::vector<FindLocation> findLocations;
 

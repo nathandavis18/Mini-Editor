@@ -38,7 +38,7 @@ int main(int argc, const char** argv)
 {
 #ifdef DEBUG_BUILD
 	argc = 2;
-	argv[1] = "test.cpp";
+	argv[1] = "test.py";
 #endif
 	if (argc != 2)
 	{
@@ -57,7 +57,6 @@ int main(int argc, const char** argv)
 	{
 		extension = std::string_view();
 	}
-
 	Editor editor(SyntaxHighlight(extension), FileHandler(fName), std::make_unique<Console>(Console()));
 
 	std::atomic<bool> running = true;

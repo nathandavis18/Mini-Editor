@@ -37,6 +37,7 @@ namespace KeyActions
 		None = 0,
 
 		CtrlC = 3,
+		CtrlF = 6,
 		CtrlQ = 17,
 		CtrlS = 19,
 		CtrlX = 24,

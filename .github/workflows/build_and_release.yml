@@ -15,5 +15,5 @@ jobs:
               with:
                 token: ${{ secrets.GITHUB_TOKEN }}
                 prerelease: true
-                name: v0.7.0a - Massive performance improvement for large files
-                tag: v0.7.0a
+                name: v0.8.0a - Find Functionality
+                tag: v0.8.0a

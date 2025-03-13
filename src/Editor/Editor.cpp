@@ -39,7 +39,7 @@ SOFTWARE.
 #include <utility>
 #include <format> //C++20 is required. MSVC/GCC-13/Clang-14/17/AppleClang-15
 
-constexpr char MiniVersion[7] = "0.7.0a";
+constexpr char MiniVersion[7] = "0.8.0a";
 
 Editor::Window::Window(FileHandler& file) : fileCursorX(0), fileCursorY(0), cols(0), rows(0), renderedCursorX(0), renderedCursorY(0), colNumberToDisplay(0), savedRenderedCursorXPos(0),
 rowOffset(0), colOffset(0), dirty(false), fileRows(file.getFileContents())
@@ -62,7 +62,8 @@ Editor::Editor(SyntaxHighlight syntax, FileHandler fileHandler, std::unique_ptr<
 	}
 	else
 	{
-		normalColorMode = "\x1b[0m";
+		constexpr uint8_t white = 15;
+		normalColorMode = std::format("\x1b[38;5;{}m", std::to_string(white));
 	}
 }
 
@@ -76,7 +77,8 @@ void Editor::clearScreen()
 void Editor::prepForRender()
 {
 	if (mWindow->fileRows->size() > 0 && mMode != Mode::CommandMode) fixRenderedCursorPosition(mWindow->fileRows->at(mWindow->fileCursorY));
-	setHighlight();
+	if(mSyntax.hasSyntax()) setHighlight();
+	else setRenderedLine(mWindow->rowOffset, mWindow->rowOffset + mWindow->rows);
 	setRenderedLineLength();
 }
 
@@ -345,6 +347,8 @@ int8_t Editor::moveCursorLeftRight(const KeyActions::KeyAction key)
 
 void Editor::moveCursor(const KeyActions::KeyAction key)
 {
+	if (mWindow->fileRows->size() == 0) return;
+
 	int8_t returnCode = 0;
 	if (key == KeyActions::KeyAction::ArrowLeft || key == KeyActions::KeyAction::ArrowRight 
 		|| key == KeyActions::KeyAction::CtrlArrowLeft || key == KeyActions::KeyAction::CtrlArrowRight)
@@ -469,6 +473,8 @@ void Editor::moveCursor(const KeyActions::KeyAction key)
 
 void Editor::shiftRowOffset(const KeyActions::KeyAction key)
 {
+	if (mWindow->fileRows->size() == 0) return;
+
 	switch (key)
 	{
 	case KeyActions::KeyAction::CtrlArrowDown:
@@ -1186,6 +1192,16 @@ void Editor::findString(const std::string& findString)
 		location.startCol += tabs;
 	}
 	mCurrentFindPos = (mFindLocations.size() > 0) ? 1 : 0;
+
+	if (mCurrentFindPos == 1)
+	{
+		mWindow->fileCursorY = mFindLocations.at(0).row;
+		mWindow->fileCursorX = mFindLocations.at(0).filePos;
+		if (mFindLocations.at(0).startCol + mFindLocations.at(0).length >= mWindow->colOffset + mWindow->cols)
+		{
+			mWindow->colOffset = mFindLocations.at(0).startCol + mFindLocations.at(0).length - mWindow->cols + 1;
+		}
+	}
 }
 
 void Editor::moveCursorToFind(const KeyActions::KeyAction key)
