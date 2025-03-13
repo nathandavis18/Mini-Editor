@@ -102,7 +102,15 @@ public:
 	{
 		HighlightType highlightType = HighlightType::Normal;
 		size_t startRow = 0, startCol = 0, endRow = 0, endCol = 0;
+		size_t startPosAdjustment = 0, endPosAdjustment = 0;
 		bool endFound = true, drawColor = true;
+
+		//Adding constructors depending on what type of highlight is being inserted
+		//StartPosAdjustment and EndPosAdjustment will always be 0 at time of insert, so they don't need to be involved with constructor
+		HighlightLocation(HighlightType hl, size_t sr, size_t sc, size_t er, size_t ec)
+			: highlightType(hl), startRow(sr), startCol(sc), endRow(er), endCol(ec) {}
+		HighlightLocation(HighlightType hl, size_t sr, size_t sc, size_t er, size_t ec, bool ef, bool dc)
+			: highlightType(hl), startRow(sr), startCol(sc), endRow(er), endCol(ec), endFound(ef), drawColor(dc) {}
 	};
 
 	/// <summary>
@@ -110,7 +118,7 @@ public:
 	/// Should only be called one time by the Editor, and that is on program load
 	/// </summary>
 	/// <returns></returns>
-	const std::vector<HighlightLocation>& highlights() const;
+	std::vector<HighlightLocation>& highlights();
 
 	/// <summary>
 	/// Called when a multiline comment or string highlight location is started

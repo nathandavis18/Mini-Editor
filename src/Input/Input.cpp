@@ -32,6 +32,8 @@ using KeyActions::KeyAction;
 
 namespace InputHandler
 {
+	std::string previousFindString = "";
+
 	const KeyAction getInput()
 	{
 		return InputImpl::getInput();
@@ -57,6 +59,12 @@ namespace InputHandler
 				editor.enableReadMode(); //Go back to read mode after executing a command
 				editor.refreshScreen(true);
 			}
+			break;
+		case static_cast<KeyAction>('f'):
+			editor.enableFindMode();
+			editor.refreshScreen();
+
+			find(editor);
 			break;
 
 		case KeyAction::ArrowDown:
@@ -242,5 +250,81 @@ namespace InputHandler
 			shouldExit = true;
 		}
 		return shouldExit;
+	}
+
+	void find(Editor& editor)
+	{
+		const char* startStr = "\r\x1b[0KString to find:";
+		std::string findString = previousFindString;
+		std::string commandBuffer = startStr + findString;
+		KeyAction input;
+
+		do
+		{
+			std::cout << commandBuffer;
+			std::cout.flush();
+			editor.updateCommandBuffer(commandBuffer);
+
+			input = getInput();
+
+			if (isActionKey(input)) continue;
+			if (input == KeyAction::Esc)
+			{
+				editor.updateCommandBuffer("");
+				editor.enableReadMode();
+				return;
+			}
+
+			if (input == KeyAction::Backspace && findString.length() > 0)
+			{
+				findString.pop_back();
+			}
+			else if (input == KeyAction::Backspace && findString.length() == 0) continue;
+			else if (input == KeyAction::CtrlBackspace)
+			{
+				findString.clear();
+			}
+			else if (input != KeyAction::Enter)
+			{
+				findString += static_cast<unsigned char>(input);
+			}
+			commandBuffer = startStr + findString;
+		} while (input != KeyAction::Enter);
+
+		previousFindString = findString;
+		editor.findString(findString);
+	}
+
+	void findModeInput(const KeyAction key, Editor& editor)
+	{
+		switch (key)
+		{
+		case KeyAction::ArrowLeft:
+		case KeyAction::ArrowRight:
+		case KeyAction::ArrowDown:
+		case KeyAction::ArrowUp:
+		case KeyAction::Enter:
+			editor.moveCursorToFind(key);
+			break;
+
+		case KeyAction::Esc:
+			editor.updateCommandBuffer("");
+			editor.enableReadMode();
+			break;
+
+		case KeyAction::CtrlS:
+			editor.save();
+			break;
+
+		case KeyAction::CtrlQ:
+			editor.enableExitMode();
+			break;
+
+		case static_cast<KeyAction>('f'):
+			editor.refreshScreen();
+
+			find(editor);
+			break;
+		}
 	}
 }
