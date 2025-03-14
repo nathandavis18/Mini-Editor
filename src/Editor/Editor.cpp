@@ -541,6 +541,8 @@ void Editor::shiftRowOffset(const KeyActions::KeyAction key)
 
 void Editor::addRow()
 {
+	mRedoHistory = {}; //Empty the redo stack when a new char is inserted or deleted
+
 	addUndoHistory(FileHistory::ChangeType::RowInserted);
 
 	FileHandler::Row& row = mWindow->fileRows->at(mWindow->fileCursorY);
@@ -575,7 +577,7 @@ void Editor::deleteRow(const size_t rowNum)
 
 void Editor::deleteChar(const KeyActions::KeyAction key)
 {
-	mRedoHistory = {};
+	mRedoHistory = {}; //Empty the redo stack when a new char is inserted or deleted
 	FileHandler::Row& row = mWindow->fileRows->at(mWindow->fileCursorY);
 	switch (key)
 	{
@@ -692,9 +694,10 @@ void Editor::deleteChar(const KeyActions::KeyAction key)
 
 void Editor::insertChar(const unsigned char c)
 {
+	mRedoHistory = {}; //Empty the redo stack when a new char is inserted or deleted
+
 	FileHandler::Row& row = mWindow->fileRows->at(mWindow->fileCursorY);
 
-	mRedoHistory = {};
 	addUndoHistory(FileHistory::ChangeType::CharInserted);
 
 	row.line.insert(row.line.begin() + mWindow->fileCursorX, c);
