@@ -246,11 +246,13 @@ private:
 			CharInserted,
 			CharDeleted,
 			RowInserted,
-			RowDeleted
-		} changeType;
+			RowDeleted,
+			None
+		} changeType = ChangeType::None;
 		std::vector<std::string> rows;
 		size_t fileCursorX = 0, fileCursorY = 0;
 		size_t colOffset = 0, rowOffset = 0;
+		int8_t direction = 0;
 	};
 	
 	/// <summary>
@@ -318,12 +320,12 @@ private:
 	/// <summary>
 	/// Called when a change is being made and we need to save the current state to be able to undo
 	/// </summary>
-	void addUndoHistory(FileHistory::ChangeType change);
+	void addUndoHistory(FileHistory::ChangeType change, const int8_t direction = 0);
 
 	/// <summary>
 	/// Called when an undo happens and we need to save the current state to be able to redo
 	/// </summary>
-	void addRedoHistory(FileHistory::ChangeType change);
+	void addRedoHistory(FileHistory::ChangeType change, const int8_t direction = 0);
 
 	/// <summary>
 	/// Called when moving the cursor up/down, retaining the cursor's horizontal position

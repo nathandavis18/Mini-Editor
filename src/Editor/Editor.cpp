@@ -575,6 +575,7 @@ void Editor::deleteRow(const size_t rowNum)
 
 void Editor::deleteChar(const KeyActions::KeyAction key)
 {
+	mRedoHistory = {};
 	FileHandler::Row& row = mWindow->fileRows->at(mWindow->fileCursorY);
 	switch (key)
 	{
@@ -586,7 +587,7 @@ void Editor::deleteChar(const KeyActions::KeyAction key)
 
 		if (mWindow->fileCursorX == 0)
 		{
-			addUndoHistory(FileHistory::ChangeType::RowDeleted);
+			addUndoHistory(FileHistory::ChangeType::RowDeleted, -1);
 			mWindow->fileCursorX = mWindow->fileRows->at(mWindow->fileCursorY - 1).line.length();
 			mWindow->fileRows->at(mWindow->fileCursorY - 1).line.append(row.line);
 			deleteRow(mWindow->fileCursorY);
@@ -608,7 +609,7 @@ void Editor::deleteChar(const KeyActions::KeyAction key)
 
 		if (mWindow->fileCursorX == row.line.length())
 		{
-			addUndoHistory(FileHistory::ChangeType::RowDeleted);
+			addUndoHistory(FileHistory::ChangeType::RowDeleted, 1);
 			row.line.append(mWindow->fileRows->at(mWindow->fileCursorY + 1).line);
 			deleteRow(mWindow->fileCursorY + 1);
 		}
@@ -627,7 +628,7 @@ void Editor::deleteChar(const KeyActions::KeyAction key)
 
 		if (mWindow->fileCursorX == 0)
 		{
-			addUndoHistory(FileHistory::ChangeType::RowDeleted);
+			addUndoHistory(FileHistory::ChangeType::RowDeleted, -1);
 			mWindow->fileCursorX = mWindow->fileRows->at(mWindow->fileCursorY - 1).line.length();
 			mWindow->fileRows->at(mWindow->fileCursorY - 1).line.append(row.line);
 			deleteRow(mWindow->fileCursorY);
@@ -662,7 +663,7 @@ void Editor::deleteChar(const KeyActions::KeyAction key)
 
 		if (mWindow->fileCursorX == row.line.length())
 		{
-			addUndoHistory(FileHistory::ChangeType::RowDeleted);
+			addUndoHistory(FileHistory::ChangeType::RowDeleted, 1);
 			row.line.append(mWindow->fileRows->at(mWindow->fileCursorY + 1).line);
 			deleteRow(mWindow->fileCursorY + 1);
 		}
@@ -693,6 +694,7 @@ void Editor::insertChar(const unsigned char c)
 {
 	FileHandler::Row& row = mWindow->fileRows->at(mWindow->fileCursorY);
 
+	mRedoHistory = {};
 	addUndoHistory(FileHistory::ChangeType::CharInserted);
 
 	row.line.insert(row.line.begin() + mWindow->fileCursorX, c);
@@ -701,36 +703,38 @@ void Editor::insertChar(const unsigned char c)
 	mWindow->updateSavedPos = true;
 }
 
-void Editor::addUndoHistory(FileHistory::ChangeType change)
+void Editor::addUndoHistory(FileHistory::ChangeType change, const int8_t direction)
 {
 	FileHistory history;
 	history.changeType = change;
 	history.rows.push_back(mWindow->fileRows->at(mWindow->fileCursorY).line); //Only need the updated line
 	if (change == FileHistory::ChangeType::RowDeleted)
 	{
-		history.rows.push_back(mWindow->fileRows->at(mWindow->fileCursorY - 1).line);
+		history.rows.push_back(mWindow->fileRows->at(mWindow->fileCursorY + direction).line);
 	}
 	history.fileCursorX = mWindow->fileCursorX;
 	history.fileCursorY = mWindow->fileCursorY;
 	history.colOffset = mWindow->colOffset;
 	history.rowOffset = mWindow->rowOffset;
+	history.direction = direction;
 
 	mUndoHistory.push(history);
 }
 
-void Editor::addRedoHistory(FileHistory::ChangeType change)
+void Editor::addRedoHistory(FileHistory::ChangeType change, const int8_t direction)
 {
 	FileHistory history;
 	history.rows.push_back(mWindow->fileRows->at(mWindow->fileCursorY).line); //Only need the updated line
 	if (change == FileHistory::ChangeType::RowDeleted)
 	{
-		history.rows.push_back(mWindow->fileRows->at(mWindow->fileCursorY - 1).line);
+		history.rows.push_back(mWindow->fileRows->at(mWindow->fileCursorY + direction).line);
 	}
 	history.changeType = change;
 	history.fileCursorX = mWindow->fileCursorX;
 	history.fileCursorY = mWindow->fileCursorY;
 	history.colOffset = mWindow->colOffset;
 	history.rowOffset = mWindow->rowOffset;
+	history.direction = direction;
 
 	mRedoHistory.push(history);
 }
@@ -745,7 +749,7 @@ void Editor::undoChange()
 	else if (mUndoHistory.top().changeType == FileHistory::ChangeType::RowDeleted) type = FileHistory::ChangeType::RowInserted;
 	else type = FileHistory::ChangeType::RowDeleted;
 
-	addRedoHistory(type);
+	addRedoHistory(type, -mUndoHistory.top().direction);
 
 	if (mUndoHistory.top().changeType == FileHistory::ChangeType::RowInserted)
 	{
@@ -753,7 +757,7 @@ void Editor::undoChange()
 	}
 	else if (mUndoHistory.top().changeType == FileHistory::ChangeType::RowDeleted)
 	{
-		mWindow->fileRows->insert(mWindow->fileRows->begin() + mUndoHistory.top().fileCursorY - 1, FileHandler::Row(mUndoHistory.top().rows.at(1)));
+		mWindow->fileRows->insert(mWindow->fileRows->begin() + mUndoHistory.top().fileCursorY + mUndoHistory.top().direction, FileHandler::Row(mUndoHistory.top().rows.at(1)));
 	}
 	mWindow->fileRows->at(mUndoHistory.top().fileCursorY).line = mUndoHistory.top().rows.at(0);
 
@@ -775,7 +779,7 @@ void Editor::redoChange()
 	else if (mRedoHistory.top().changeType == FileHistory::ChangeType::RowDeleted) type = FileHistory::ChangeType::RowInserted;
 	else type = FileHistory::ChangeType::RowDeleted;
 
-	addUndoHistory(type);
+	addUndoHistory(type, -mRedoHistory.top().direction);
 
 	if (mRedoHistory.top().changeType == FileHistory::ChangeType::RowInserted)
 	{
@@ -783,7 +787,7 @@ void Editor::redoChange()
 	}
 	else if (mRedoHistory.top().changeType == FileHistory::ChangeType::RowDeleted)
 	{
-		mWindow->fileRows->insert(mWindow->fileRows->begin() + mRedoHistory.top().fileCursorY - 1, FileHandler::Row(mRedoHistory.top().rows.at(1)));
+		mWindow->fileRows->insert(mWindow->fileRows->begin() + mRedoHistory.top().fileCursorY + mRedoHistory.top().direction, FileHandler::Row(mRedoHistory.top().rows.at(1)));
 	}
 	mWindow->fileRows->at(mRedoHistory.top().fileCursorY).line = mRedoHistory.top().rows.at(0);
 
