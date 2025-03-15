@@ -4,12 +4,8 @@
 class MockConsole : public IConsole
 {
 public:
-	MockConsole() : mWindowSize(WindowSize(10, 10))
+	MockConsole() : mWindowSize(WindowSize(10, 120))
 	{}
-	~MockConsole()
-	{
-		return;
-	}
 	void enableRawInput() override
 	{
 		return;

@@ -420,4 +420,9 @@ private:
 	inline static constexpr int8_t cursorCantMove = -1;
 	inline static constexpr int8_t cursorMovedNewLine = 0;
 	inline static constexpr int8_t cursorMoveNormal = 1;
+
+#ifdef TESTING
+public:
+	const Window getWindowForTesting() const { return *mWindow; } //Need some way to access the file rows when testing
+#endif
 };

@@ -67,6 +67,8 @@ if(BUILD_PROJECT)
 endif(BUILD_PROJECT)
 
 if(BUILD_TESTS)
+	add_compile_definitions(TESTING)
+
 	add_library(mini_tests ${SOURCES} ${HEADERS})
 
 	if(WIN32)
