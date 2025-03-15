@@ -38,11 +38,16 @@ SOFTWARE.
 #include <limits>
 #include <utility>
 #include <format> //C++20 is required. MSVC/GCC-13/Clang-14/17/AppleClang-15
+#include <cmath>
 
 constexpr char MiniVersion[7] = "0.8.0a";
 
 Editor::Window::Window(FileHandler& file) : fileCursorX(0), fileCursorY(0), cols(0), rows(0), renderedCursorX(0), renderedCursorY(0), colNumberToDisplay(0), savedRenderedCursorXPos(0),
 rowOffset(0), colOffset(0), dirty(false), fileRows(file.getFileContents())
+{}
+
+Editor::FileHistory::FileHistory(FileHistory::ChangeType change, const Window& window) :
+	changeType(change), fileCursorX(window.fileCursorX), fileCursorY(window.fileCursorY), rowOffset(window.rowOffset), colOffset(window.colOffset)
 {}
 
 const Editor::Mode Editor::mode() const
@@ -51,7 +56,7 @@ const Editor::Mode Editor::mode() const
 }
 
 Editor::Editor(SyntaxHighlight syntax, FileHandler fileHandler, std::unique_ptr<IConsole> console) : mSyntax(std::move(syntax)), 
-	mFile(std::move(fileHandler)), mConsole(std::move(console)), mFindLocations()
+	mFile(std::move(fileHandler)), mConsole(std::move(console))
 {
 	mWindow = std::make_unique<Window>(Window(mFile));
 	updateWindowSize();
@@ -285,7 +290,7 @@ void Editor::refreshScreen(bool forceRedrawScreen)
 
 	mTextRenderBuffer = "\x1b[H"; //Move cursor to start of screen to redraw changes.
 
-	updateRenderedColor(mWindow->rowOffset, mWindow->colOffset);
+	updateRenderedColor();
 	for (size_t i = mWindow->rowOffset; i < mWindow->fileRows->size() && i < mWindow->rowOffset + mWindow->rows; ++i)
 	{
 		mTextRenderBuffer.append(mWindow->fileRows->at(i).renderedLine);
@@ -422,7 +427,6 @@ void Editor::moveCursor(const KeyActions::KeyAction key)
 				if (separators.find(charToFind) != std::string::npos) break;
 			}
 		}
-
 		break;
 
 	case KeyActions::KeyAction::Home:
@@ -541,7 +545,7 @@ void Editor::shiftRowOffset(const KeyActions::KeyAction key)
 
 void Editor::addRow()
 {
-	mRedoHistory = {}; //Empty the redo stack when a new char is inserted or deleted
+	clearRedoHistory();
 
 	addUndoHistory(FileHistory::ChangeType::RowInserted);
 
@@ -568,16 +572,24 @@ void Editor::addRow()
 	mWindow->updateSavedPos = true;
 }
 
-void Editor::deleteRow(const size_t rowNum)
+void Editor::deleteRow(const size_t fileCursor, const size_t rowNumToAppend)
 {
-	if (rowNum > mWindow->fileRows->size()) return;
-	mWindow->fileRows->erase(mWindow->fileRows->begin() + rowNum);
-	mWindow->dirty = true;
+	if (fileCursor >= mWindow->fileRows->size() || rowNumToAppend >= mWindow->fileRows->size()) return;
+
+	addUndoHistory(FileHistory::ChangeType::RowDeleted, rowNumToAppend - mWindow->fileCursorY);
+
+	mWindow->fileCursorX = mWindow->fileRows->at(fileCursor).line.length();
+	mWindow->fileCursorY = fileCursor;
+
+	const FileHandler::Row& row = mWindow->fileRows->at(rowNumToAppend);
+	mWindow->fileRows->at(fileCursor).line.append(row.line);
+	mWindow->fileRows->erase(mWindow->fileRows->begin() + fileCursor + 1);
 }
 
 void Editor::deleteChar(const KeyActions::KeyAction key)
 {
-	mRedoHistory = {}; //Empty the redo stack when a new char is inserted or deleted
+	clearRedoHistory();
+
 	FileHandler::Row& row = mWindow->fileRows->at(mWindow->fileCursorY);
 	switch (key)
 	{
@@ -589,15 +601,11 @@ void Editor::deleteChar(const KeyActions::KeyAction key)
 
 		if (mWindow->fileCursorX == 0)
 		{
-			addUndoHistory(FileHistory::ChangeType::RowDeleted, -1);
-			mWindow->fileCursorX = mWindow->fileRows->at(mWindow->fileCursorY - 1).line.length();
-			mWindow->fileRows->at(mWindow->fileCursorY - 1).line.append(row.line);
-			deleteRow(mWindow->fileCursorY);
-			--mWindow->fileCursorY;
+			deleteRow(mWindow->fileCursorY - 1, mWindow->fileCursorY);
 		}
 		else
 		{
-			addUndoHistory(FileHistory::ChangeType::CharDeleted);
+			addUndoHistory(FileHistory::ChangeType::CharDeleted, -1);
 			row.line.erase(row.line.begin() + mWindow->fileCursorX - 1);
 			--mWindow->fileCursorX;
 		}
@@ -611,13 +619,11 @@ void Editor::deleteChar(const KeyActions::KeyAction key)
 
 		if (mWindow->fileCursorX == row.line.length())
 		{
-			addUndoHistory(FileHistory::ChangeType::RowDeleted, 1);
-			row.line.append(mWindow->fileRows->at(mWindow->fileCursorY + 1).line);
-			deleteRow(mWindow->fileCursorY + 1);
+			deleteRow(mWindow->fileCursorY, mWindow->fileCursorY + 1);
 		}
 		else
 		{
-			addUndoHistory(FileHistory::ChangeType::CharDeleted);
+			addUndoHistory(FileHistory::ChangeType::CharDeleted, 1);
 			row.line.erase(row.line.begin() + mWindow->fileCursorX);
 		}
 		break;
@@ -630,27 +636,28 @@ void Editor::deleteChar(const KeyActions::KeyAction key)
 
 		if (mWindow->fileCursorX == 0)
 		{
-			addUndoHistory(FileHistory::ChangeType::RowDeleted, -1);
-			mWindow->fileCursorX = mWindow->fileRows->at(mWindow->fileCursorY - 1).line.length();
-			mWindow->fileRows->at(mWindow->fileCursorY - 1).line.append(row.line);
-			deleteRow(mWindow->fileCursorY);
-			--mWindow->fileCursorY; 
+			deleteRow(mWindow->fileCursorY - 1, mWindow->fileCursorY);
 		}
 		else
 		{
-			addUndoHistory(FileHistory::ChangeType::CharDeleted);
+			int16_t charsDeleted = 0;
 			size_t findPos;
 			if ((findPos = row.line.substr(0, mWindow->fileCursorX).find_last_of(separators)) == std::string::npos) //Delete everything in the row to the beginning
 			{
+				charsDeleted = mWindow->fileCursorX;
+				addUndoHistory(FileHistory::ChangeType::CharDeleted, -charsDeleted);
 				row.line.erase(row.line.begin(), row.line.begin() + mWindow->fileCursorX);
 				mWindow->fileCursorX = 0;
 			}
 			else if (findPos == mWindow->fileCursorX - 1)
 			{
 				deleteChar(KeyActions::KeyAction::Backspace); //Delete just the separator
+				break;
 			}
 			else
 			{
+				charsDeleted = mWindow->fileCursorX - findPos + 1;
+				addUndoHistory(FileHistory::ChangeType::CharDeleted, -charsDeleted);
 				row.line.erase(row.line.begin() + findPos + 1, row.line.begin() + mWindow->fileCursorX);
 				mWindow->fileCursorX = findPos + 1;
 			}
@@ -665,36 +672,40 @@ void Editor::deleteChar(const KeyActions::KeyAction key)
 
 		if (mWindow->fileCursorX == row.line.length())
 		{
-			addUndoHistory(FileHistory::ChangeType::RowDeleted, 1);
-			row.line.append(mWindow->fileRows->at(mWindow->fileCursorY + 1).line);
-			deleteRow(mWindow->fileCursorY + 1);
+			deleteRow(mWindow->fileCursorY, mWindow->fileCursorY + 1);
 		}
 		else
 		{
-			addUndoHistory(FileHistory::ChangeType::CharDeleted);
+			int16_t charsDeleted = 0;
 			size_t findPos;
 			if ((findPos = row.line.substr(mWindow->fileCursorX).find_first_of(separators)) == std::string::npos) //Delete everything in the row to the beginning
 			{
+				charsDeleted = row.line.length() - mWindow->fileCursorX;
+				addUndoHistory(FileHistory::ChangeType::CharDeleted, charsDeleted);
 				row.line.erase(row.line.begin() + mWindow->fileCursorX, row.line.end());
 			}
 			else if (findPos == 0)
 			{
 				deleteChar(KeyActions::KeyAction::Delete); //Delete just the separator
+				break;
 			}
 			else
 			{
+				charsDeleted = findPos - mWindow->fileCursorX;
+				addUndoHistory(FileHistory::ChangeType::CharDeleted, charsDeleted);
 				row.line.erase(row.line.begin() + mWindow->fileCursorX, row.line.begin() + findPos + mWindow->fileCursorX);
 			}
 		}
 		break;
 	}
+
 	mWindow->dirty = true;
 	mWindow->updateSavedPos = true;
 }
 
 void Editor::insertChar(const unsigned char c)
 {
-	mRedoHistory = {}; //Empty the redo stack when a new char is inserted or deleted
+	clearRedoHistory();
 
 	FileHandler::Row& row = mWindow->fileRows->at(mWindow->fileCursorY);
 
@@ -706,100 +717,163 @@ void Editor::insertChar(const unsigned char c)
 	mWindow->updateSavedPos = true;
 }
 
-void Editor::addUndoHistory(FileHistory::ChangeType change, const int8_t direction)
+void Editor::clearRedoHistory()
 {
-	FileHistory history;
-	history.changeType = change;
-	history.rows.push_back(mWindow->fileRows->at(mWindow->fileCursorY).line); //Only need the updated line
-	if (change == FileHistory::ChangeType::RowDeleted)
+	while (mRedoCounter > 0)
 	{
-		history.rows.push_back(mWindow->fileRows->at(mWindow->fileCursorY + direction).line);
+		mFileHistory.pop_back();
+		--mRedoCounter;
 	}
-	history.fileCursorX = mWindow->fileCursorX;
-	history.fileCursorY = mWindow->fileCursorY;
-	history.colOffset = mWindow->colOffset;
-	history.rowOffset = mWindow->rowOffset;
-	history.direction = direction;
-
-	mUndoHistory.push(history);
 }
 
-void Editor::addRedoHistory(FileHistory::ChangeType change, const int8_t direction)
+void Editor::addUndoHistory(FileHistory::ChangeType change, const int16_t offset)
 {
-	FileHistory history;
-	history.rows.push_back(mWindow->fileRows->at(mWindow->fileCursorY).line); //Only need the updated line
-	if (change == FileHistory::ChangeType::RowDeleted)
+	FileHistory history(change, *mWindow);
+	if (change == FileHistory::ChangeType::CharInserted)
 	{
-		history.rows.push_back(mWindow->fileRows->at(mWindow->fileCursorY + direction).line);
+		history.rowChanged = mWindow->fileCursorY;
+		history.colChanged = mWindow->fileCursorX;
 	}
-	history.changeType = change;
-	history.fileCursorX = mWindow->fileCursorX;
-	history.fileCursorY = mWindow->fileCursorY;
-	history.colOffset = mWindow->colOffset;
-	history.rowOffset = mWindow->rowOffset;
-	history.direction = direction;
+	else if (change == FileHistory::ChangeType::CharDeleted)
+	{
+		history.rowChanged = mWindow->fileCursorY;
+		history.colChanged = mWindow->fileCursorX;
+		if (offset < 0) history.colChanged += offset;
+		history.changeMade = mWindow->fileRows->at(history.rowChanged).line.substr(history.colChanged, std::abs(offset));
+	}
+	else if (change == FileHistory::ChangeType::RowInserted)
+	{
+		history.rowChanged = mWindow->fileCursorY;
+		history.colChanged = mWindow->fileCursorX;
+		history.changeMade = mWindow->fileRows->at(history.rowChanged).line.substr(mWindow->fileCursorX);
+	}
+	else if (change == FileHistory::ChangeType::RowDeleted)
+	{
+		history.rowChanged = mWindow->fileCursorY + offset;
+		history.colChanged = mWindow->fileCursorX;
+		history.changeMade = mWindow->fileRows->at(history.rowChanged).line;
+		history.prevLineLength = mWindow->fileRows->at(history.rowChanged - 1).line.length();
+	}
+	mFileHistory.push_front(std::move(history));
+}
 
-	mRedoHistory.push(history);
+void Editor::addUndoHistory(FileHistory history)
+{
+	if (history.changeType == FileHistory::ChangeType::CharInserted)
+	{
+		history.changeType = FileHistory::ChangeType::CharDeleted;
+	}
+	else if (history.changeType == FileHistory::ChangeType::CharDeleted)
+	{
+		history.changeType = FileHistory::ChangeType::CharInserted;
+	}
+	else if (history.changeType == FileHistory::ChangeType::RowInserted)
+	{
+		history.changeType = FileHistory::ChangeType::RowDeleted;
+	}
+	else if (history.changeType == FileHistory::ChangeType::RowDeleted)
+	{
+		history.changeType = FileHistory::ChangeType::RowInserted;
+	}
+	mFileHistory.push_front(history);
+}
+
+void Editor::addRedoHistory(FileHistory history)
+{
+	if (history.changeType == FileHistory::ChangeType::CharInserted)
+	{
+		history.changeType = FileHistory::ChangeType::CharDeleted;
+		history.changeMade = mWindow->fileRows->at(history.rowChanged).line.substr(history.colChanged, 1);
+	}
+	else if (history.changeType == FileHistory::ChangeType::CharDeleted)
+	{
+		history.changeType = FileHistory::ChangeType::CharInserted;
+	}
+	else if (history.changeType == FileHistory::ChangeType::RowInserted)
+	{
+		history.changeType = FileHistory::ChangeType::RowDeleted;
+		history.prevLineLength = mWindow->fileRows->at(history.rowChanged).line.length();
+	}
+	else if (history.changeType == FileHistory::ChangeType::RowDeleted)
+	{
+		history.changeType = FileHistory::ChangeType::RowInserted;
+	}
+	mFileHistory.push_back(history);
+	++mRedoCounter;
 }
 
 void Editor::undoChange()
 {
-	if (mUndoHistory.size() == 0) return;
+	if (mFileHistory.size() == 0 || mFileHistory.size() == mRedoCounter) return; //If there is no history, or if there is only redo history
 
-	FileHistory::ChangeType type;
-	if (mUndoHistory.top().changeType == FileHistory::ChangeType::CharDeleted) type = FileHistory::ChangeType::CharInserted;
-	else if (mUndoHistory.top().changeType == FileHistory::ChangeType::CharInserted) type = FileHistory::ChangeType::CharDeleted;
-	else if (mUndoHistory.top().changeType == FileHistory::ChangeType::RowDeleted) type = FileHistory::ChangeType::RowInserted;
-	else type = FileHistory::ChangeType::RowDeleted;
+	const FileHistory& undo = mFileHistory.front();
+	addRedoHistory(undo);
 
-	addRedoHistory(type, -mUndoHistory.top().direction);
+	mWindow->fileCursorX = undo.fileCursorX;
+	mWindow->fileCursorY = undo.fileCursorY;
+	mWindow->rowOffset = undo.rowOffset;
+	mWindow->colOffset = undo.colOffset;
 
-	if (mUndoHistory.top().changeType == FileHistory::ChangeType::RowInserted)
+	if (undo.changeType == FileHistory::ChangeType::CharInserted)
 	{
-		mWindow->fileRows->erase(mWindow->fileRows->begin() + mUndoHistory.top().fileCursorY + 1);
+		mWindow->fileRows->at(undo.rowChanged).line.erase(undo.colChanged, 1);
 	}
-	else if (mUndoHistory.top().changeType == FileHistory::ChangeType::RowDeleted)
+	else if (undo.changeType == FileHistory::ChangeType::CharDeleted)
 	{
-		mWindow->fileRows->insert(mWindow->fileRows->begin() + mUndoHistory.top().fileCursorY + mUndoHistory.top().direction, FileHandler::Row(mUndoHistory.top().rows.at(1)));
+		mWindow->fileRows->at(undo.rowChanged).line.insert(undo.colChanged, undo.changeMade);
 	}
-	mWindow->fileRows->at(mUndoHistory.top().fileCursorY).line = mUndoHistory.top().rows.at(0);
+	else if (undo.changeType == FileHistory::ChangeType::RowInserted)
+	{
+		mWindow->fileRows->at(undo.rowChanged).line.insert(undo.colChanged, undo.changeMade);
+		mWindow->fileRows->erase(mWindow->fileRows->begin() + undo.rowChanged + 1);
+	}
+	else if (undo.changeType == FileHistory::ChangeType::RowDeleted)
+	{
+		mWindow->fileRows->insert(mWindow->fileRows->begin() + undo.rowChanged, FileHandler::Row(undo.changeMade));
+		mWindow->fileRows->at(undo.rowChanged - 1).line.resize(undo.prevLineLength);
+	}
 
-	mWindow->fileCursorX = mUndoHistory.top().fileCursorX;
-	mWindow->fileCursorY = mUndoHistory.top().fileCursorY;
-	mWindow->colOffset = mUndoHistory.top().colOffset;
-	mWindow->rowOffset = mUndoHistory.top().rowOffset;
-
-	mUndoHistory.pop();
+	mFileHistory.pop_front();
 }
 
 void Editor::redoChange()
 {
-	if (mRedoHistory.size() == 0) return;
+	if (mRedoCounter == 0) return;
 
-	FileHistory::ChangeType type;
-	if (mRedoHistory.top().changeType == FileHistory::ChangeType::CharDeleted) type = FileHistory::ChangeType::CharInserted;
-	else if (mRedoHistory.top().changeType == FileHistory::ChangeType::CharInserted) type = FileHistory::ChangeType::CharDeleted;
-	else if (mRedoHistory.top().changeType == FileHistory::ChangeType::RowDeleted) type = FileHistory::ChangeType::RowInserted;
-	else type = FileHistory::ChangeType::RowDeleted;
+	const FileHistory& redo = mFileHistory.back();
+	addUndoHistory(redo);
 
-	addUndoHistory(type, -mRedoHistory.top().direction);
+	mWindow->fileCursorX = redo.colChanged;
+	mWindow->fileCursorY = redo.fileCursorY;
+	mWindow->rowOffset = redo.rowOffset;
+	mWindow->colOffset = redo.colOffset;
 
-	if (mRedoHistory.top().changeType == FileHistory::ChangeType::RowInserted)
+	if (redo.changeType == FileHistory::ChangeType::CharInserted)
 	{
-		mWindow->fileRows->erase(mWindow->fileRows->begin() + mRedoHistory.top().fileCursorY + 1);
+		mWindow->fileRows->at(redo.rowChanged).line.erase(redo.colChanged, redo.changeMade.length());
 	}
-	else if (mRedoHistory.top().changeType == FileHistory::ChangeType::RowDeleted)
+	else if (redo.changeType == FileHistory::ChangeType::CharDeleted)
 	{
-		mWindow->fileRows->insert(mWindow->fileRows->begin() + mRedoHistory.top().fileCursorY + mRedoHistory.top().direction, FileHandler::Row(mRedoHistory.top().rows.at(1)));
+		mWindow->fileRows->at(redo.rowChanged).line.insert(redo.colChanged, redo.changeMade);
+		if (redo.fileCursorX == redo.colChanged) ++mWindow->fileCursorX;
 	}
-	mWindow->fileRows->at(mRedoHistory.top().fileCursorY).line = mRedoHistory.top().rows.at(0);
+	else if (redo.changeType == FileHistory::ChangeType::RowInserted)
+	{
+		mWindow->fileRows->at(redo.rowChanged - 1).line.insert(redo.prevLineLength, redo.changeMade);
+		mWindow->fileRows->erase(mWindow->fileRows->begin() + redo.rowChanged);
+		mWindow->fileCursorY = redo.rowChanged - 1;
+		mWindow->fileCursorX = redo.prevLineLength;
+	}
+	else if (redo.changeType == FileHistory::ChangeType::RowDeleted)
+	{
+		mWindow->fileRows->insert(mWindow->fileRows->begin() + redo.rowChanged + 1, FileHandler::Row(redo.changeMade));
+		mWindow->fileRows->at(redo.rowChanged).line.resize(redo.prevLineLength);
+		mWindow->fileCursorX = 0;
+		++mWindow->fileCursorY;
+	}
 
-	mWindow->fileCursorX = mRedoHistory.top().fileCursorX;
-	mWindow->fileCursorY = mRedoHistory.top().fileCursorY;
-	mWindow->colOffset = mRedoHistory.top().colOffset;
-	mWindow->rowOffset = mRedoHistory.top().rowOffset;
-
-	mRedoHistory.pop();
+	mFileHistory.pop_back();
+	--mRedoCounter;
 }
 
 const bool Editor::isDirty() const
@@ -1003,64 +1077,63 @@ size_t Editor::adjustSyntaxHighlightLocations(const size_t adjustmentsMade, cons
 	return adjustmentToMake;
 }
 
-void Editor::updateRenderedColor(const size_t rowOffset, const size_t colOffset)
+void Editor::updateFindLocationRenderColor(const size_t rowOffset, const size_t colOffset)
+{
+	size_t charactersToAdjust = 0; //The amount of characters to adjust for in the string position based on how many color code escape sequences have been added
+	size_t prevRow = 0;
+	size_t syntaxToFindAdjustmentsMade = 0;
+	constexpr uint8_t findColorId = 237;
+	constexpr uint8_t currentFindColorId = 102;
+
+	for (size_t i = 0; i < mFindLocations.size(); ++i)
+	{
+		const FindString::FindLocation& findLocation = mFindLocations.at(i);
+		if (findLocation.row < rowOffset || findLocation.startCol >= mWindow->cols + colOffset || findLocation.startCol + findLocation.length < colOffset) continue;
+		if (findLocation.row >= rowOffset + mWindow->rows) break;
+
+		const uint8_t currentColorId = (i == mCurrentFindPos - 1) ? currentFindColorId : findColorId;
+		std::string findLocationColor = std::format("\x1b[48;5;{}m", std::to_string(currentColorId));
+		std::string* renderString = &mWindow->fileRows->at(findLocation.row).renderedLine;
+
+		if (prevRow != findLocation.row)
+		{
+			charactersToAdjust = 0;
+			syntaxToFindAdjustmentsMade = 0;
+		}
+
+		size_t insertPos = findLocation.startCol;
+		if (insertPos < colOffset) insertPos = 0;
+		else if (insertPos >= colOffset) insertPos -= colOffset;
+
+		insertPos += charactersToAdjust;
+		if (insertPos >= renderString->length()) insertPos = renderString->length();
+
+		renderString->insert(insertPos, findLocationColor);
+		charactersToAdjust += findLocationColor.length();
+
+		insertPos = findLocation.startCol + findLocation.length;
+		if (insertPos >= colOffset) insertPos -= colOffset;
+
+		insertPos += charactersToAdjust;
+		if (insertPos >= renderString->length()) insertPos = renderString->length();
+
+		renderString->insert(insertPos, normalBackgroundColor);
+
+		charactersToAdjust += normalBackgroundColor.length();
+		prevRow = findLocation.row;
+
+		syntaxToFindAdjustmentsMade += adjustSyntaxHighlightLocations(syntaxToFindAdjustmentsMade, findLocation, findLocationColor.length());
+	}
+}
+
+void Editor::updateSyntaxHighlightRenderColor(const size_t rowOffset, const size_t colOffset)
 {
 	size_t charactersToAdjust = 0; //The amount of characters to adjust for in the string position based on how many color code escape sequences have been added
 	size_t prevRow = 0;
 
-	if (mMode == Mode::FindMode)
-	{
-		size_t syntaxToFindAdjustmentsMade = 0;
-		constexpr uint8_t findColorId = 237;
-		constexpr uint8_t currentFindColorId = 102;
-		for (size_t i = 0; i < mFindLocations.size(); ++i)
-		{
-			const FindString::FindLocation& findLocation = mFindLocations.at(i);
-			if (findLocation.row < rowOffset || findLocation.startCol >= mWindow->cols + colOffset || findLocation.startCol + findLocation.length < colOffset) continue;
-			if (findLocation.row >= rowOffset + mWindow->rows) break;
-
-			const uint8_t currentColorId = (i == mCurrentFindPos - 1) ? currentFindColorId : findColorId;
-			std::string findLocationColor = std::format("\x1b[48;5;{}m", std::to_string(currentColorId));
-			std::string* renderString = &mWindow->fileRows->at(findLocation.row).renderedLine;
-
-			if (prevRow != findLocation.row)
-			{
-				charactersToAdjust = 0;
-				syntaxToFindAdjustmentsMade = 0;
-			}
-
-			size_t insertPos = findLocation.startCol;
-			if (insertPos < colOffset) insertPos = 0;
-			else if (insertPos >= colOffset) insertPos -= colOffset;
-
-			insertPos += charactersToAdjust;
-			if (insertPos >= renderString->length()) insertPos = renderString->length();
-
-			renderString->insert(insertPos, findLocationColor);
-			charactersToAdjust += findLocationColor.length();
-
-			insertPos = findLocation.startCol + findLocation.length;
-			if (insertPos >= colOffset) insertPos -= colOffset;
-
-			insertPos += charactersToAdjust;
-			if (insertPos >= renderString->length()) insertPos = renderString->length();
-
-			renderString->insert(insertPos, normalBackgroundColor);
-
-			charactersToAdjust += normalBackgroundColor.length();
-			prevRow = findLocation.row;
-
-			syntaxToFindAdjustmentsMade += adjustSyntaxHighlightLocations(syntaxToFindAdjustmentsMade, findLocation, findLocationColor.length());
-		}
-	}
-
-	if (!mSyntax.hasSyntax()) return;
-	charactersToAdjust = 0;
-	prevRow = 0;
-
 	for (const auto& highlight : mSyntax.highlights())
 	{
- 		if (!highlight.drawColor) continue;
+		if (!highlight.drawColor) continue;
 		if (highlight.startRow == highlight.endRow && highlight.endCol < colOffset) continue;
 		if (highlight.startRow >= mWindow->rowOffset + mWindow->rows) break;
 
@@ -1089,7 +1162,7 @@ void Editor::updateRenderedColor(const size_t rowOffset, const size_t colOffset)
 
 			renderString->insert(insertPos, colorFormat);
 			charactersToAdjust += colorFormat.length();
-			
+
 			prevRow = highlight.startRow;
 		}
 
@@ -1109,6 +1182,18 @@ void Editor::updateRenderedColor(const size_t rowOffset, const size_t colOffset)
 		charactersToAdjust += normalColorMode.length();
 
 		prevRow = highlight.endRow;
+	}
+}
+
+void Editor::updateRenderedColor()
+{
+	if (mMode == Mode::FindMode)
+	{
+		updateFindLocationRenderColor(mWindow->rowOffset, mWindow->colOffset);
+	}
+	if (mSyntax.hasSyntax())
+	{
+		updateSyntaxHighlightRenderColor(mWindow->rowOffset, mWindow->colOffset);
 	}
 }
 

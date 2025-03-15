@@ -41,7 +41,7 @@ SOFTWARE.
 #include <memory>
 #include <string>
 #include <string_view>
-#include <stack>
+#include <deque>
 #include <mutex>
 #include <cstdint>
 
@@ -248,11 +248,14 @@ private:
 			RowInserted,
 			RowDeleted,
 			None
-		} changeType = ChangeType::None;
-		std::vector<std::string> rows;
-		size_t fileCursorX = 0, fileCursorY = 0;
-		size_t colOffset = 0, rowOffset = 0;
-		int8_t direction = 0;
+		} changeType;
+
+		FileHistory(ChangeType change, const Window& window);
+
+		std::string changeMade;
+		size_t fileCursorY, fileCursorX, rowOffset, colOffset;
+		size_t rowChanged = 0, colChanged = 0;
+		size_t prevLineLength = 0;
 	};
 	
 	/// <summary>
@@ -314,18 +317,29 @@ private:
 	/// <summary>
 	/// Called when the cursor is at the start of the row and Backspace is pressed, or end of the row and Delete is pressed
 	/// </summary>
-	/// <param name="rowNum"></param>
-	void deleteRow(const size_t rowNum);
+	/// <param name="fileCursor"></param>
+	void deleteRow(const size_t fileCursor, const size_t rowNumToAppend);
+
+	/// <summary>
+	/// Clears all the possible Redo's from the file history queue and sets Redo Count to 0
+	/// </summary>
+	void clearRedoHistory();
 
 	/// <summary>
 	/// Called when a change is being made and we need to save the current state to be able to undo
 	/// </summary>
-	void addUndoHistory(FileHistory::ChangeType change, const int8_t direction = 0);
+	void addUndoHistory(FileHistory::ChangeType change, const int16_t offset = 0);
+
+	/// <summary>
+	/// Called when moving a redo back to the undo queue
+	/// Just reverses the change type
+	/// </summary>
+	void addUndoHistory(FileHistory history);
 
 	/// <summary>
 	/// Called when an undo happens and we need to save the current state to be able to redo
 	/// </summary>
-	void addRedoHistory(FileHistory::ChangeType change, const int8_t direction = 0);
+	void addRedoHistory(FileHistory history);
 
 	/// <summary>
 	/// Called when moving the cursor up/down, retaining the cursor's horizontal position
@@ -362,12 +376,14 @@ private:
 	/// <returns></returns>
 	size_t adjustSyntaxHighlightLocations(const size_t adjustmentsMade, const FindString::FindLocation& findLocation, const size_t findColorLength);
 
+	void updateFindLocationRenderColor(const size_t rowOffset, const size_t colOffset);
+
+	void updateSyntaxHighlightRenderColor(const size_t rowOffset, const size_t colOffset);
+
 	/// <summary>
-	/// Adds the colors to the screen to be displayed to the user, utilizing the highlight token system
+	/// Calls the separate render color functions depending on if certain checks pass
 	/// </summary>
-	/// <param name="rowOffset"></param>
-	/// <param name="colOffset"></param>
-	void updateRenderedColor(const size_t rowOffset, const size_t colOffset);
+	void updateRenderedColor();
 
 	/// <summary>
 	/// Finds highlight keywords and adds them to the token system to be drawn
@@ -383,15 +399,14 @@ private:
 	std::unique_ptr<IConsole> mConsole;
 	FileHandler mFile;
 	SyntaxHighlight mSyntax;
+	Mode mMode = Mode::ReadMode; //Default mode is Read Mode.
 
 	std::vector<FindString::FindLocation> mFindLocations;
 	size_t mCurrentFindPos = 0;
 
-
-	std::stack<FileHistory> mRedoHistory;
-	std::stack<FileHistory> mUndoHistory;
-	Mode mMode = Mode::ReadMode; //Default mode is Read Mode.
-
+	std::deque<FileHistory> mFileHistory; //Double ended queue - Front for undo history, back for redo history
+	size_t mRedoCounter = 0; //Tracking how many redos we can do
+	
 	std::mutex mMutex;
 
 	//Some constants to give specific values an identifying name
