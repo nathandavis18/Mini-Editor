@@ -23,6 +23,7 @@ set(SOURCES
 	"JsonParserTests/JsonParserTests.cpp"
 	"GetProgramPathTests/GetProgramPathTests.cpp"
 	"FindStringTests/FindStringTests.cpp"
+	"RendererTests/RendererTests.cpp"
 )
 
 set(CMAKE_CXX_STANDARD 20)

@@ -138,7 +138,7 @@ void Editor::setRenderedLineLength()
 void Editor::prepStatusForRender()
 {
 	std::string mode;
-	if (mMode == Mode::ReadMode)	 mode = "READ ONLY";
+	if (mMode == Mode::ReadMode)		 mode = "READ ONLY";
 	else if (mMode == Mode::EditMode)	 mode = "EDIT";
 	else if (mMode == Mode::CommandMode) mode = "COMMAND";
 	else if (mMode == Mode::FindMode)	 mode = "FIND";
