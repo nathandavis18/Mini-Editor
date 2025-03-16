@@ -36,6 +36,7 @@ SOFTWARE.
 #include "File/File.hpp"
 #include "Console/ConsoleInterface.hpp"
 #include "FindString/FindString.hpp"
+#include "Renderer/Renderer.hpp"
 
 #include <vector>
 #include <memory>
@@ -71,13 +72,7 @@ public:
 	/// <summary>
 	/// Initializes the editor. Should only be called on program start.
 	/// </summary>
-	Editor(SyntaxHighlight syntax, FileHandler fileHandler, std::unique_ptr<IConsole> console);
-
-	/// <summary>
-	/// Called when exiting the program so the screen gets completely cleared
-	/// Does something different than refreshScreen() does to clear the screen, so don't use it there
-	/// </summary>
-	void clearScreen();
+	Editor(SyntaxHighlight syntax, FileHandler fileHandler, std::unique_ptr<IConsole> console, Renderer r = Renderer());
 
 	/// <summary>
 	/// When you want to display everything to the user, call this function
@@ -239,7 +234,7 @@ private:
 	/// <summary>
 	/// The structure for saving necessary information to the undo/redo stacks
 	/// </summary>
-	struct FileHistory
+	struct ChangeHistory
 	{
 		enum class ChangeType
 		{
@@ -250,7 +245,7 @@ private:
 			None
 		} changeType;
 
-		FileHistory(ChangeType change, const Window& window);
+		ChangeHistory(ChangeType change, const Window& window);
 
 		std::string changeMade;
 		size_t fileCursorY, fileCursorX, rowOffset, colOffset;
@@ -276,32 +271,9 @@ private:
 	void setRenderedLineLength();
 
 	/// <summary>
-	/// Sets up the buffer to render the cursor position
-	/// Called by renderStatusAndCursor()
+	/// Gets all the necessary information for the status buffer and sends it to the renderer
 	/// </summary>
-	/// <returns></returns>
-	std::string renderCursor();
-
-	/// <summary>
-	/// Sets up the buffer to render the status bar
-	/// Called by renderStatusAndCursor()
-	/// </summary>
-	/// <returns></returns>
-	std::string renderStatus();
-
-	/// <summary>
-	/// Simplifies the combination of rendering the status and cursor, since they will always render together
-	/// Called on every refresh and when enabling different modes (i.e. command mode)
-	/// </summary>
-	/// <returns></returns>
-	std::string renderStatusAndCursor();
-
-	/// <summary>
-	/// Adds EOF rendering stuff if the console height is not reached but EOF is.
-	/// Adds it to the main text buffer.
-	/// Called on every refresh
-	/// </summary>
-	void renderEndOfFile();
+	void prepStatusForRender();
 
 	/// <summary>
 	/// When a move cursor left/right operation is done, handles the common situations between them and returns a specific action code
@@ -328,18 +300,25 @@ private:
 	/// <summary>
 	/// Called when a change is being made and we need to save the current state to be able to undo
 	/// </summary>
-	void addUndoHistory(FileHistory::ChangeType change, const int16_t offset = 0);
+	void addUndoHistory(ChangeHistory::ChangeType change, const int16_t offset = 0);
+
+	/// <summary>
+	/// Reverses the ChangeType of the current File History when moving it from being undo history to redo history and vice versa
+	/// </summary>
+	/// <param name="current"></param>
+	/// <returns></returns>
+	ChangeHistory::ChangeType reverseChangeType(ChangeHistory::ChangeType current);
 
 	/// <summary>
 	/// Called when moving a redo back to the undo queue
 	/// Just reverses the change type
 	/// </summary>
-	void addUndoHistory(FileHistory history);
+	void addUndoHistory(ChangeHistory history);
 
 	/// <summary>
 	/// Called when an undo happens and we need to save the current state to be able to redo
 	/// </summary>
-	void addRedoHistory(FileHistory history);
+	void addRedoHistory(ChangeHistory history);
 
 	/// <summary>
 	/// Called when moving the cursor up/down, retaining the cursor's horizontal position
@@ -376,9 +355,19 @@ private:
 	/// <returns></returns>
 	size_t adjustSyntaxHighlightLocations(const size_t adjustmentsMade, const FindString::FindLocation& findLocation, const size_t findColorLength);
 
-	void updateFindLocationRenderColor(const size_t rowOffset, const size_t colOffset);
+	/// <summary>
+	/// Adds the find location color escape codes to the rendered string
+	/// </summary>
+	/// <param name="rowOffset"></param>
+	/// <param name="colOffset"></param>
+	void addFindLocationColor(const size_t rowOffset, const size_t colOffset);
 
-	void updateSyntaxHighlightRenderColor(const size_t rowOffset, const size_t colOffset);
+	/// <summary>
+	/// Adds the syntax highlight color escape codes to the rendered string
+	/// </summary>
+	/// <param name="rowOffset"></param>
+	/// <param name="colOffset"></param>
+	void addSyntaxHighlightColor(const size_t rowOffset, const size_t colOffset);
 
 	/// <summary>
 	/// Calls the separate render color functions depending on if certain checks pass
@@ -388,23 +377,24 @@ private:
 	/// <summary>
 	/// Finds highlight keywords and adds them to the token system to be drawn
 	/// </summary>
-	void setHighlight();
+	void setHighlightLocations(const size_t rowToStart, size_t colToStart);
 
 private:
-	std::string mTextRenderBuffer, mPreviousTextRenderBuffer; //Implementing double-buffering so the screen doesn't need to always update
 	std::string mCommandBuffer;
-	std::string normalColorMode;
+	std::string mNormalColorMode;
 
 	std::unique_ptr<Window> mWindow;
 	std::unique_ptr<IConsole> mConsole;
 	FileHandler mFile;
 	SyntaxHighlight mSyntax;
+	Renderer mRenderer;
+
 	Mode mMode = Mode::ReadMode; //Default mode is Read Mode.
 
 	std::vector<FindString::FindLocation> mFindLocations;
 	size_t mCurrentFindPos = 0;
 
-	std::deque<FileHistory> mFileHistory; //Double ended queue - Front for undo history, back for redo history
+	std::deque<ChangeHistory> mFileHistory; //Double ended queue - Front for undo history, back for redo history
 	size_t mRedoCounter = 0; //Tracking how many redos we can do
 	
 	std::mutex mMutex;

@@ -9,7 +9,7 @@ TEST(EditorTests, EditorInitializesSuccessfully)
 	Editor editor(SyntaxHighlight(".txt"), FileHandler("testFile.txt"), std::make_unique<MockConsole>(MockConsole()));
 }
 
-TEST(EditorTests, EditorRendersText)
+TEST(EditorTests, EditorSendsTextToRender)
 {
 	Editor editor(SyntaxHighlight(".txt"), FileHandler("testFile.txt"), std::make_unique<MockConsole>(MockConsole()));
 	testing::internal::CaptureStdout();
