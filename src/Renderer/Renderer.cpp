@@ -75,9 +75,10 @@ void Renderer::renderScreen(const bool forceDraw, const bool renderCommandBuffer
 		mPreviousTextRenderBuffer = mTextRenderBuffer;
 	}
 	bufferToRender.append(mStatusBuffer);
-	bufferToRender.append(mCursorBuffer);
 
 	if (renderCommandBuffer) bufferToRender.append(mCommandBuffer);
+
+	bufferToRender.append(mCursorBuffer);
 
 	std::cout << bufferToRender;
 	std::cout.flush();

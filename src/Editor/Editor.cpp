@@ -72,7 +72,7 @@ Editor::Editor(SyntaxHighlight syntax, FileHandler fileHandler, std::unique_ptr<
 
 void Editor::prepForRender()
 {
-	if (mWindow->fileRows->size() > 0 && mMode != Mode::CommandMode) fixRenderedCursorPosition(mWindow->fileRows->at(mWindow->fileCursorY));
+	if (mWindow->fileRows->size() > 0 && !(mMode == Mode::CommandMode || mMode == Mode::FindInputMode || mMode == Mode::ReplaceInputMode)) fixRenderedCursorPosition(mWindow->fileRows->at(mWindow->fileCursorY));
 
 	size_t rowToStart = mWindow->rowOffset;
 	size_t colToStart = 0;
@@ -138,10 +138,11 @@ void Editor::setRenderedLineLength()
 void Editor::prepStatusForRender()
 {
 	std::string mode;
-	if (mMode == Mode::ReadMode)		 mode = "READ ONLY";
-	else if (mMode == Mode::EditMode)	 mode = "EDIT";
-	else if (mMode == Mode::CommandMode) mode = "COMMAND";
-	else if (mMode == Mode::FindMode)	 mode = "FIND";
+	if (mMode == Mode::ReadMode)											mode = "READ ONLY";
+	else if (mMode == Mode::EditMode)										mode = "EDIT";
+	else if (mMode == Mode::CommandMode)									mode = "COMMAND";
+	else if (mMode == Mode::FindInputMode || mMode == Mode::FindMode)		mode = "FIND";
+	else if (mMode == Mode::ReplaceInputMode || mMode == Mode::ReplaceMode) mode = "REPLACE";
 
 	std::string rStatus;
 	if (mMode == Mode::ReadMode || mMode == Mode::EditMode)
@@ -152,9 +153,11 @@ void Editor::prepStatusForRender()
 	{
 		rStatus = "Enter Command";
 	}
-	else if (mMode == Mode::FindMode)
+	else if (mMode == Mode::FindInputMode || mMode == Mode::ReplaceInputMode || mMode == Mode::FindMode || mMode == Mode::ReplaceMode)
 	{
-		rStatus = std::format("match {}/{}", mCurrentFindPos, mFindLocations.size());
+		size_t findPosToDisplay = mCurrentFindPos + 1;
+		if (mFindLocations.empty()) findPosToDisplay = 0;
+		rStatus = std::format("match {}/{}", findPosToDisplay, mFindLocations.size());
 	}
 
 	mRenderer.setStatusBuffer(mWindow->rows + 1, mWindow->dirty, mFile.fileName(), mWindow->fileRows->size(), mWindow->fileCursorY + 1, mWindow->colNumberToDisplay + 1, mode, rStatus, mWindow->cols);
@@ -190,15 +193,18 @@ void Editor::refreshScreen(bool forceRedrawScreen)
 	}
 
 	prepStatusForRender();
-	mRenderer.setCursorBuffer(mWindow->renderedCursorY + 1, mWindow->renderedCursorX + 1);
 
 	bool renderCommandBuffer = false;
-	if (mMode == Mode::CommandMode || mMode == Mode::FindMode)
+	if (mMode == Mode::CommandMode || mMode == Mode::FindInputMode || mMode == Mode::ReplaceInputMode || mMode == Mode::FindMode || mMode == Mode::ReplaceMode)
 	{
 		renderCommandBuffer = true;
 		const uint16_t commandBufferRow = mWindow->rows + statusMessageRows;
 		mRenderer.setCommandBuffer(mCommandBuffer, commandBufferRow);
+		mWindow->renderedCursorY = commandBufferRow;
+		mWindow->renderedCursorX = mCommandBuffer.length() - std::string("\r\x1b[0K").length();
 	}
+
+	mRenderer.setCursorBuffer(mWindow->renderedCursorY + 1, mWindow->renderedCursorX + 1);
 	mRenderer.renderScreen(forceRedrawScreen, renderCommandBuffer);
 
 	mMutex.unlock(); //Finally unlock the mutex so main thread and secondary thread can do their thing
@@ -775,10 +781,26 @@ void Editor::enableCommandMode()
 	mWindow->renderedCursorX = 0; mWindow->renderedCursorY = mWindow->rows + statusMessageRows;
 }
 
+void Editor::enableFindInputMode()
+{
+	mMode = Mode::FindInputMode;
+	mWindow->renderedCursorX = 0; mWindow->renderedCursorY = mWindow->rows + statusMessageRows;
+}
+
 void Editor::enableFindMode()
 {
 	mMode = Mode::FindMode;
+}
+
+void Editor::enableReplaceInputMode()
+{
+	mMode = Mode::ReplaceInputMode;
 	mWindow->renderedCursorX = 0; mWindow->renderedCursorY = mWindow->rows + statusMessageRows;
+}
+
+void Editor::enableReplaceMode()
+{
+	mMode = Mode::ReplaceMode;
 }
 
 void Editor::enableEditMode()
@@ -903,7 +925,7 @@ const size_t Editor::getRenderedTabSpaces(const FileHandler::Row& row, size_t en
 	return spacesToAdd;
 }
 
-size_t Editor::adjustSyntaxHighlightLocations(const size_t adjustmentsMade, const FindString::FindLocation& findLocation, const size_t findColorLength)
+size_t Editor::adjustSyntaxHighlightLocations(const size_t adjustmentsMade, const FindAndReplace::FindLocation& findLocation, const size_t findColorLength)
 {
 	if (!mSyntax.hasSyntax()) return 0;
 
@@ -964,11 +986,11 @@ void Editor::addFindLocationColor(const size_t rowOffset, const size_t colOffset
 
 	for (size_t i = 0; i < mFindLocations.size(); ++i)
 	{
-		const FindString::FindLocation& findLocation = mFindLocations.at(i);
+		const FindAndReplace::FindLocation& findLocation = mFindLocations.at(i);
 		if (findLocation.row < rowOffset || findLocation.startCol >= mWindow->cols + colOffset || findLocation.startCol + findLocation.length < colOffset) continue;
 		if (findLocation.row >= rowOffset + mWindow->rows) break;
 
-		const uint8_t currentColorId = (i == mCurrentFindPos - 1) ? currentFindColorId : findColorId;
+		const uint8_t currentColorId = (i == mCurrentFindPos) ? currentFindColorId : findColorId;
 		std::string findLocationColor = std::format("\x1b[48;5;{}m", std::to_string(currentColorId));
 		std::string* renderString = &mWindow->fileRows->at(findLocation.row).renderedLine;
 
@@ -1064,7 +1086,7 @@ void Editor::addSyntaxHighlightColor(const size_t rowOffset, const size_t colOff
 
 void Editor::updateRenderedColor()
 {
-	if (mMode == Mode::FindMode)
+	if (mMode == Mode::FindInputMode || mMode == Mode::ReplaceInputMode || mMode == Mode::FindMode || mMode == Mode::ReplaceMode)
 	{
 		addFindLocationColor(mWindow->rowOffset, mWindow->colOffset);
 	}
@@ -1138,22 +1160,27 @@ void Editor::updateCommandBuffer(const std::string& command)
 
 void Editor::findString(const std::string& findString)
 {
-	mFindLocations = FindString::find(findString, *mWindow->fileRows);
+	mFindLocations = FindAndReplace::find(findString, *mWindow->fileRows);
 	for (auto& location : mFindLocations)
 	{
 		const size_t tabs = getRenderedTabSpaces(mWindow->fileRows->at(location.row), location.startCol);
 		location.startCol += tabs;
 	}
-	mCurrentFindPos = (mFindLocations.size() > 0) ? 1 : 0;
+	mCurrentFindPos = 0;
 
-	if (mCurrentFindPos == 1)
+	if (mFindLocations.empty())
 	{
-		mWindow->fileCursorY = mFindLocations.at(0).row;
-		mWindow->fileCursorX = mFindLocations.at(0).filePos;
-		if (mFindLocations.at(0).startCol + mFindLocations.at(0).length >= mWindow->colOffset + mWindow->cols)
-		{
-			mWindow->colOffset = mFindLocations.at(0).startCol + mFindLocations.at(0).length - mWindow->cols + 1;
-		}
+		enableReadMode();
+		return;
+	}
+
+	constexpr uint8_t startLocation = 0;
+	const FindAndReplace::FindLocation& findLocation = mFindLocations.at(startLocation);
+	mWindow->fileCursorY = findLocation.row;
+	mWindow->fileCursorX = findLocation.filePos;
+	if (findLocation.startCol + findLocation.length >= mWindow->colOffset + mWindow->cols)
+	{
+		mWindow->colOffset = findLocation.startCol + findLocation.length - mWindow->cols + 1;
 	}
 }
 
@@ -1165,7 +1192,7 @@ void Editor::moveCursorToFind(const KeyActions::KeyAction key)
 	{
 	case KeyActions::KeyAction::ArrowLeft:
 	case KeyActions::KeyAction::ArrowUp:
-		if (mCurrentFindPos == 1) mCurrentFindPos = mFindLocations.size();
+		if (mCurrentFindPos == 0) mCurrentFindPos = mFindLocations.size() - 1;
 		else --mCurrentFindPos;
 
 		break;
@@ -1173,16 +1200,62 @@ void Editor::moveCursorToFind(const KeyActions::KeyAction key)
 	case KeyActions::KeyAction::ArrowDown:
 	case KeyActions::KeyAction::ArrowRight:
 	case KeyActions::KeyAction::Enter:
-		if (mCurrentFindPos == mFindLocations.size()) mCurrentFindPos = 1;
+		if (mCurrentFindPos == mFindLocations.size() - 1) mCurrentFindPos = 0;
 		else ++mCurrentFindPos;
 
 		break;
+
+	default:
+		break;
 	}
 
-	mWindow->fileCursorY = mFindLocations.at(mCurrentFindPos - 1).row;
-	mWindow->fileCursorX = mFindLocations.at(mCurrentFindPos - 1).filePos;
-	if (mFindLocations.at(mCurrentFindPos - 1).startCol + mFindLocations.at(mCurrentFindPos - 1).length >= mWindow->colOffset + mWindow->cols)
+	mWindow->fileCursorY = mFindLocations.at(mCurrentFindPos).row;
+	mWindow->fileCursorX = mFindLocations.at(mCurrentFindPos).filePos;
+	if (mFindLocations.at(mCurrentFindPos).startCol + mFindLocations.at(mCurrentFindPos).length >= mWindow->colOffset + mWindow->cols)
 	{
-		mWindow->colOffset = mFindLocations.at(mCurrentFindPos - 1).startCol + mFindLocations.at(mCurrentFindPos - 1).length - mWindow->cols + 1;
+		mWindow->colOffset = mFindLocations.at(mCurrentFindPos).startCol + mFindLocations.at(mCurrentFindPos).length - mWindow->cols + 1;
 	}
+}
+
+void Editor::replaceFindString(const std::string& replaceStr, const bool replaceAll)
+{
+	if (mFindLocations.empty()) return;
+
+	if (replaceAll)
+	{
+		for (size_t i = mFindLocations.size() - 1; i > 0; --i)
+		{
+			const FindAndReplace::FindLocation& current = mFindLocations.at(i);
+			FindAndReplace::replace(mWindow->fileRows->at(current.row).line, replaceStr, current);
+		}
+		FindAndReplace::replace(mWindow->fileRows->at(mFindLocations.front().row).line, replaceStr, mFindLocations.front());
+		mFindLocations.clear();
+		mCurrentFindPos = 0;
+		enableReadMode();
+		return;
+	}
+
+	const FindAndReplace::FindLocation& current = mFindLocations.at(mCurrentFindPos);
+	FindAndReplace::replace(mWindow->fileRows->at(current.row).line, replaceStr, current);
+
+	if (replaceStr.length() != current.length)
+	{
+		const int16_t lengthDiff = replaceStr.length() - current.length;
+		for (size_t i = mCurrentFindPos + 1; i < mFindLocations.size(); ++i)
+		{
+			FindAndReplace::FindLocation& locationToUpdate = mFindLocations.at(i);
+			if (locationToUpdate.row > current.row) break; //No more to update
+
+			locationToUpdate.filePos += lengthDiff;
+
+			const size_t tabSpaces = getRenderedTabSpaces(mWindow->fileRows->at(locationToUpdate.row), locationToUpdate.filePos);
+			locationToUpdate.startCol = locationToUpdate.filePos + tabSpaces;
+		}
+	}
+
+	mFindLocations.erase(mFindLocations.begin() + mCurrentFindPos);
+	if (mFindLocations.empty()) mCurrentFindPos = 0;
+	else if (mCurrentFindPos > 0) --mCurrentFindPos;
+
+	moveCursorToFind(KeyActions::KeyAction::None);
 }

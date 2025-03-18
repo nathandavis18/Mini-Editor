@@ -89,6 +89,10 @@ int main(int argc, const char** argv)
 				{
 					InputHandler::findModeInput(inputCode, editor);
 				}
+				else if (editor.mode() == Editor::Mode::ReplaceMode)
+				{
+					InputHandler::replaceModeInput(inputCode, editor);
+				}
 			}
 		}
 	}

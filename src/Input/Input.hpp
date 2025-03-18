@@ -68,4 +68,8 @@ namespace InputHandler
 	/// <param name=""></param>
 	/// <param name="editor"></param>
 	void findModeInput(const KeyActions::KeyAction, Editor& editor);
+
+	void replace(Editor& editor);
+
+	void replaceModeInput(const KeyActions::KeyAction, Editor& editor);
 }

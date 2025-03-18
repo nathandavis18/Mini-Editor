@@ -51,7 +51,6 @@ void Console::setDefaultMode()
 		std::cerr << "Error retrieving current console mode";
 		exit(EXIT_FAILURE);
 	}
-	defaultMode = ENABLE_EXTENDED_FLAGS | ENABLE_WINDOW_INPUT | defaultMode;
 }
 
 Console::WindowSize Console::getWindowSize()
@@ -77,8 +76,8 @@ void Console::enableRawInput()
 {
 	if (rawModeEnabled) return;
 
-	DWORD rawMode = ENABLE_EXTENDED_FLAGS | ENABLE_WINDOW_INPUT | (defaultMode & ~ENABLE_LINE_INPUT & ~ENABLE_PROCESSED_INPUT
-		& ~ENABLE_ECHO_INPUT & ~ENABLE_PROCESSED_OUTPUT & ~ENABLE_WRAP_AT_EOL_OUTPUT); //Disabling certain input/output flags to enable raw mode
+	DWORD rawMode = ENABLE_EXTENDED_FLAGS |
+		(defaultMode & ~ENABLE_LINE_INPUT & ~ENABLE_PROCESSED_INPUT & ~ENABLE_ECHO_INPUT); //Disabling certain input/output flags to enable raw mode
 
 	if (SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), rawMode))
 	{

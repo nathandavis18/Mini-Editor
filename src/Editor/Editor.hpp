@@ -35,7 +35,7 @@ SOFTWARE.
 #include "KeyActions/KeyActions.hh"
 #include "File/File.hpp"
 #include "Console/ConsoleInterface.hpp"
-#include "FindString/FindString.hpp"
+#include "FindAndReplace/FindAndReplace.hpp"
 #include "Renderer/Renderer.hpp"
 
 #include <vector>
@@ -56,7 +56,10 @@ public:
 	{
 		CommandMode,
 		EditMode,
-		FindMode, //Currently unused, working on implementation
+		FindInputMode,
+		FindMode,
+		ReplaceInputMode,
+		ReplaceMode,
 		ReadMode,
 		ExitMode,
 		None
@@ -161,7 +164,13 @@ public:
 	/// <summary>
 	/// Enables find mode, which enables the user to cycle through the find locations
 	/// </summary>
+	void enableFindInputMode();
+
 	void enableFindMode();
+
+	void enableReplaceInputMode();
+
+	void enableReplaceMode();
 
 	/// <summary>
 	/// When changing from read mode to edit mode (when 'i' is pressed while in read mode)
@@ -210,6 +219,8 @@ public:
 	/// </summary>
 	/// <param name="key"></param>
 	void moveCursorToFind(const KeyActions::KeyAction key);
+
+	void replaceFindString(const std::string& replaceStr, const bool replaceAll = false);
 
 private:
 	/// <summary>
@@ -353,7 +364,7 @@ private:
 	/// <param name="findLocation"></param>
 	/// <param name="findColorLength"></param>
 	/// <returns></returns>
-	size_t adjustSyntaxHighlightLocations(const size_t adjustmentsMade, const FindString::FindLocation& findLocation, const size_t findColorLength);
+	size_t adjustSyntaxHighlightLocations(const size_t adjustmentsMade, const FindAndReplace::FindLocation& findLocation, const size_t findColorLength);
 
 	/// <summary>
 	/// Adds the find location color escape codes to the rendered string
@@ -391,7 +402,7 @@ private:
 
 	Mode mMode = Mode::ReadMode; //Default mode is Read Mode.
 
-	std::vector<FindString::FindLocation> mFindLocations;
+	std::vector<FindAndReplace::FindLocation> mFindLocations;
 	size_t mCurrentFindPos = 0;
 
 	std::deque<ChangeHistory> mFileHistory; //Double ended queue - Front for undo history, back for redo history

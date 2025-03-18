@@ -17,7 +17,7 @@ set(SOURCES
 	"src/Input/Input.cpp"
 	"src/SyntaxHighlight/SyntaxHighlight.cpp"
 	"src/Utility/JsonParser/JsonParser.cpp"
-	"src/FindString/FindString.cpp"
+	"src/FindAndReplace/FindAndReplace.cpp"
 	"src/Renderer/Renderer.cpp"
 )
 
@@ -32,7 +32,7 @@ set (HEADERS
 	"src/Utility/GetProgramPath/GetProgramPath.hpp"
 	"src/Utility/JsonParser/JsonParser.hpp"
 	"src/EventHandler/EventHandler.hpp"
-	"src/FindString/FindString.hpp"
+	"src/FindAndReplace/FindAndReplace.hpp"
 	"src/Renderer/Renderer.hpp"
 )
 
