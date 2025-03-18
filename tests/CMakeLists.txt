@@ -22,7 +22,7 @@ set(SOURCES
 	"SyntaxHighlightTests/SyntaxHighlightTests.cpp"
 	"JsonParserTests/JsonParserTests.cpp"
 	"GetProgramPathTests/GetProgramPathTests.cpp"
-	"FindStringTests/FindStringTests.cpp"
+	"FindAndReplaceTests/FindAndReplaceTests.cpp"
 	"RendererTests/RendererTests.cpp"
 )
 
