@@ -42,6 +42,11 @@ public:
 	{
 		std::string line;
 		std::string renderedLine;
+
+		bool operator==(const Row& other) const
+		{
+			return this->line == other.line;
+		}
 	};
 
 	/// <summary>

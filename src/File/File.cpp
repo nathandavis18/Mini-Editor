@@ -31,8 +31,8 @@ SOFTWARE.
 #include <thread>
 
 unsigned int maxThreads;
-constexpr uint16_t maxLengthPerThread = 20'000;
-constexpr uint8_t charactersPerRowAverage = 20; //Assume an average of 20 characters per row. This will need some testing to fine-tune
+constexpr uint16_t startingRowsPerThread = 20'000;
+constexpr uint8_t charactersPerRowAverage = 50; //Assume an average of 50 characters per row. This will need some testing to fine-tune
 
 FileHandler::FileHandler(const std::string_view fName) : mPath(std::filesystem::current_path() / fName), mFileName(fName)
 {
@@ -79,7 +79,7 @@ void FileHandler::loadFileContents()
 	const std::string& fileStr = fileContents.str();
 	if (fileStr.length() == 0) return;
 
-	if (fileStr.length() <= maxLengthPerThread)
+	if (fileStr.length() <= (startingRowsPerThread * charactersPerRowAverage))
 	{
 		std::promise<std::vector<FileHandler::Row>> promise;
 		std::future<std::vector<FileHandler::Row>> value = promise.get_future();
@@ -90,9 +90,9 @@ void FileHandler::loadFileContents()
 
 	std::vector<std::thread> allThreads;
 	std::vector<std::future<std::vector<FileHandler::Row>>> retValues;
-	unsigned int threads = (fileStr.length() / maxLengthPerThread) + 1;
+	unsigned int threads = (fileStr.length() / (startingRowsPerThread * charactersPerRowAverage)) + 1;
 	if (threads > maxThreads) threads = maxThreads;
-	const uint16_t lengthPerThread =  maxLengthPerThread / threads; //splitting the work up evenly
+	const uint16_t lengthPerThread =  (startingRowsPerThread * charactersPerRowAverage) / threads; //splitting the work up evenly
 	size_t prevEndPos = 0;
 	for (unsigned int i = 0; i < threads; ++i)
 	{

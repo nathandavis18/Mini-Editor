@@ -35,13 +35,14 @@ SOFTWARE.
 #include "KeyActions/KeyActions.hh"
 #include "File/File.hpp"
 #include "Console/ConsoleInterface.hpp"
-#include "FindString/FindString.hpp"
+#include "FindAndReplace/FindAndReplace.hpp"
+#include "Renderer/Renderer.hpp"
 
 #include <vector>
 #include <memory>
 #include <string>
 #include <string_view>
-#include <stack>
+#include <deque>
 #include <mutex>
 #include <cstdint>
 
@@ -55,7 +56,10 @@ public:
 	{
 		CommandMode,
 		EditMode,
-		FindMode, //Currently unused, working on implementation
+		FindInputMode,
+		FindMode,
+		ReplaceInputMode,
+		ReplaceMode,
 		ReadMode,
 		ExitMode,
 		None
@@ -71,13 +75,7 @@ public:
 	/// <summary>
 	/// Initializes the editor. Should only be called on program start.
 	/// </summary>
-	Editor(SyntaxHighlight syntax, FileHandler fileHandler, std::unique_ptr<IConsole> console);
-
-	/// <summary>
-	/// Called when exiting the program so the screen gets completely cleared
-	/// Does something different than refreshScreen() does to clear the screen, so don't use it there
-	/// </summary>
-	void clearScreen();
+	Editor(SyntaxHighlight syntax, FileHandler fileHandler, std::unique_ptr<IConsole> console, Renderer r = Renderer());
 
 	/// <summary>
 	/// When you want to display everything to the user, call this function
@@ -164,9 +162,24 @@ public:
 	void enableCommandMode();
 
 	/// <summary>
-	/// Enables find mode, which enables the user to cycle through the find locations
+	/// Enables FindInputMode mode, which is used when the user is inputting a find string
+	/// </summary>
+	void enableFindInputMode();
+
+	/// <summary>
+	/// Enables Find mode, which is used to cycle through the find locations, and enter replace mode
 	/// </summary>
 	void enableFindMode();
+
+	/// <summary>
+	/// Enables ReplaceInputMode, which is used when the user is inputting a replace string
+	/// </summary>
+	void enableReplaceInputMode();
+
+	/// <summary>
+	/// Enables Replace mode, which is used when the user is cycling through find locations to replace specific ones (or optionally all of them)
+	/// </summary>
+	void enableReplaceMode();
 
 	/// <summary>
 	/// When changing from read mode to edit mode (when 'i' is pressed while in read mode)
@@ -216,6 +229,14 @@ public:
 	/// <param name="key"></param>
 	void moveCursorToFind(const KeyActions::KeyAction key);
 
+	/// <summary>
+	/// Replaces the current find location with the given replaceStr.
+	/// If 'a' is pressed, replaces all of the find locations
+	/// </summary>
+	/// <param name="replaceStr"></param>
+	/// <param name="replaceAll"></param>
+	void replaceFindString(const std::string& replaceStr, const bool replaceAll = false);
+
 private:
 	/// <summary>
 	/// The structure for how the window stores information and tracks current position within the file
@@ -239,18 +260,23 @@ private:
 	/// <summary>
 	/// The structure for saving necessary information to the undo/redo stacks
 	/// </summary>
-	struct FileHistory
+	struct ChangeHistory
 	{
 		enum class ChangeType
 		{
 			CharInserted,
 			CharDeleted,
 			RowInserted,
-			RowDeleted
+			RowDeleted,
+			None
 		} changeType;
-		std::vector<std::string> rows;
-		size_t fileCursorX = 0, fileCursorY = 0;
-		size_t colOffset = 0, rowOffset = 0;
+
+		ChangeHistory(ChangeType change, const Window& window);
+
+		std::string changeMade;
+		size_t fileCursorY, fileCursorX, rowOffset, colOffset;
+		size_t rowChanged = 0, colChanged = 0;
+		size_t prevLineLength = 0;
 	};
 	
 	/// <summary>
@@ -271,32 +297,9 @@ private:
 	void setRenderedLineLength();
 
 	/// <summary>
-	/// Sets up the buffer to render the cursor position
-	/// Called by renderStatusAndCursor()
+	/// Gets all the necessary information for the status buffer and sends it to the renderer
 	/// </summary>
-	/// <returns></returns>
-	std::string renderCursor();
-
-	/// <summary>
-	/// Sets up the buffer to render the status bar
-	/// Called by renderStatusAndCursor()
-	/// </summary>
-	/// <returns></returns>
-	std::string renderStatus();
-
-	/// <summary>
-	/// Simplifies the combination of rendering the status and cursor, since they will always render together
-	/// Called on every refresh and when enabling different modes (i.e. command mode)
-	/// </summary>
-	/// <returns></returns>
-	std::string renderStatusAndCursor();
-
-	/// <summary>
-	/// Adds EOF rendering stuff if the console height is not reached but EOF is.
-	/// Adds it to the main text buffer.
-	/// Called on every refresh
-	/// </summary>
-	void renderEndOfFile();
+	void prepStatusForRender();
 
 	/// <summary>
 	/// When a move cursor left/right operation is done, handles the common situations between them and returns a specific action code
@@ -312,18 +315,36 @@ private:
 	/// <summary>
 	/// Called when the cursor is at the start of the row and Backspace is pressed, or end of the row and Delete is pressed
 	/// </summary>
-	/// <param name="rowNum"></param>
-	void deleteRow(const size_t rowNum);
+	/// <param name="fileCursor"></param>
+	void deleteRow(const size_t fileCursor, const size_t rowNumToAppend);
+
+	/// <summary>
+	/// Clears all the possible Redo's from the file history queue and sets Redo Count to 0
+	/// </summary>
+	void clearRedoHistory();
 
 	/// <summary>
 	/// Called when a change is being made and we need to save the current state to be able to undo
 	/// </summary>
-	void addUndoHistory(FileHistory::ChangeType change);
+	void addUndoHistory(ChangeHistory::ChangeType change, const int16_t offset = 0);
+
+	/// <summary>
+	/// Reverses the ChangeType of the current File History when moving it from being undo history to redo history and vice versa
+	/// </summary>
+	/// <param name="current"></param>
+	/// <returns></returns>
+	ChangeHistory::ChangeType reverseChangeType(ChangeHistory::ChangeType current);
+
+	/// <summary>
+	/// Called when moving a redo back to the undo queue
+	/// Just reverses the change type
+	/// </summary>
+	void addUndoHistory(ChangeHistory history);
 
 	/// <summary>
 	/// Called when an undo happens and we need to save the current state to be able to redo
 	/// </summary>
-	void addRedoHistory(FileHistory::ChangeType change);
+	void addRedoHistory(ChangeHistory history);
 
 	/// <summary>
 	/// Called when moving the cursor up/down, retaining the cursor's horizontal position
@@ -358,38 +379,50 @@ private:
 	/// <param name="findLocation"></param>
 	/// <param name="findColorLength"></param>
 	/// <returns></returns>
-	size_t adjustSyntaxHighlightLocations(const size_t adjustmentsMade, const FindString::FindLocation& findLocation, const size_t findColorLength);
+	size_t adjustSyntaxHighlightLocations(const size_t adjustmentsMade, const FindAndReplace::FindLocation& findLocation, const size_t findColorLength);
 
 	/// <summary>
-	/// Adds the colors to the screen to be displayed to the user, utilizing the highlight token system
+	/// Adds the find location color escape codes to the rendered string
 	/// </summary>
 	/// <param name="rowOffset"></param>
 	/// <param name="colOffset"></param>
-	void updateRenderedColor(const size_t rowOffset, const size_t colOffset);
+	void addFindLocationColor(const size_t rowOffset, const size_t colOffset);
+
+	/// <summary>
+	/// Adds the syntax highlight color escape codes to the rendered string
+	/// </summary>
+	/// <param name="rowOffset"></param>
+	/// <param name="colOffset"></param>
+	void addSyntaxHighlightColor(const size_t rowOffset, const size_t colOffset);
+
+	/// <summary>
+	/// Calls the separate render color functions depending on if certain checks pass
+	/// </summary>
+	void updateRenderedColor();
 
 	/// <summary>
 	/// Finds highlight keywords and adds them to the token system to be drawn
 	/// </summary>
-	void setHighlight();
+	void setHighlightLocations(const size_t rowToStart, size_t colToStart);
 
 private:
-	std::string mTextRenderBuffer, mPreviousTextRenderBuffer; //Implementing double-buffering so the screen doesn't need to always update
 	std::string mCommandBuffer;
-	std::string normalColorMode;
+	std::string mNormalColorMode;
 
 	std::unique_ptr<Window> mWindow;
 	std::unique_ptr<IConsole> mConsole;
 	FileHandler mFile;
 	SyntaxHighlight mSyntax;
+	Renderer mRenderer;
 
-	std::vector<FindString::FindLocation> mFindLocations;
-	size_t mCurrentFindPos = 0;
-
-
-	std::stack<FileHistory> mRedoHistory;
-	std::stack<FileHistory> mUndoHistory;
 	Mode mMode = Mode::ReadMode; //Default mode is Read Mode.
 
+	std::vector<FindAndReplace::FindLocation> mFindLocations;
+	size_t mCurrentFindPos = 0;
+
+	std::deque<ChangeHistory> mFileHistory; //Double ended queue - Front for undo history, back for redo history
+	size_t mRedoCounter = 0; //Tracking how many redos we can do
+	
 	std::mutex mMutex;
 
 	//Some constants to give specific values an identifying name
@@ -403,4 +436,9 @@ private:
 	inline static constexpr int8_t cursorCantMove = -1;
 	inline static constexpr int8_t cursorMovedNewLine = 0;
 	inline static constexpr int8_t cursorMoveNormal = 1;
+
+#ifdef TESTING
+public:
+	const Window getWindowForTesting() const { return *mWindow; } //Need some way to access the file rows and other information when testing
+#endif
 };

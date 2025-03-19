@@ -32,8 +32,14 @@ SOFTWARE.
 
 DWORD defaultMode; //Windows Console settings is stored in DWORD (an unsigned long)
 
+HANDLE consoleIn = nullptr;
+HANDLE consoleOut = nullptr;
+
 Console::Console()
 {
+	consoleIn = GetStdHandle(STD_INPUT_HANDLE);
+	consoleOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
 	setDefaultMode();
 	setWindowSize();
 	enableRawInput();
@@ -46,12 +52,11 @@ Console::Console()
 
 void Console::setDefaultMode()
 {
-	if (!GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &defaultMode)) //Try to get the default terminal settings
+	if (!GetConsoleMode(consoleIn, &defaultMode)) //Try to get the default terminal settings
 	{
 		std::cerr << "Error retrieving current console mode";
 		exit(EXIT_FAILURE);
 	}
-	defaultMode = ENABLE_EXTENDED_FLAGS | ENABLE_WINDOW_INPUT | defaultMode;
 }
 
 Console::WindowSize Console::getWindowSize()
@@ -63,7 +68,7 @@ Console::WindowSize Console::getWindowSize()
 void Console::setWindowSize()
 {
 	CONSOLE_SCREEN_BUFFER_INFO screenInfo; //Windows console size struct
-	if (!GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &screenInfo))
+	if (!GetConsoleScreenBufferInfo(consoleOut, &screenInfo))
 	{
 		std::cerr << "Error getting console screen buffer info";
 		exit(EXIT_FAILURE);
@@ -77,10 +82,10 @@ void Console::enableRawInput()
 {
 	if (rawModeEnabled) return;
 
-	DWORD rawMode = ENABLE_EXTENDED_FLAGS | ENABLE_WINDOW_INPUT | (defaultMode & ~ENABLE_LINE_INPUT & ~ENABLE_PROCESSED_INPUT
-		& ~ENABLE_ECHO_INPUT & ~ENABLE_PROCESSED_OUTPUT & ~ENABLE_WRAP_AT_EOL_OUTPUT); //Disabling certain input/output flags to enable raw mode
+	DWORD rawMode = ENABLE_EXTENDED_FLAGS |
+		(defaultMode & ~ENABLE_LINE_INPUT & ~ENABLE_PROCESSED_INPUT & ~ENABLE_ECHO_INPUT); //Disabling certain input/output flags to enable raw mode
 
-	if (SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), rawMode))
+	if (SetConsoleMode(consoleIn, rawMode))
 	{
 		atexit(forceDisableRawInput); //Make sure raw input mode gets disabled if the program exits due to an error
 		rawModeEnabled = true;
@@ -89,11 +94,11 @@ void Console::enableRawInput()
 
 void Console::disableRawInput()
 {
-	SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), defaultMode);
+	SetConsoleMode(consoleIn, defaultMode);
 	rawModeEnabled = false;
 }
 
 void Console::forceDisableRawInput()
 {
-	SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), defaultMode);
+	SetConsoleMode(consoleIn, defaultMode);
 }

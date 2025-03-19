@@ -33,6 +33,7 @@ using KeyActions::KeyAction;
 namespace InputHandler
 {
 	std::string previousFindString = "";
+	std::string replaceString = "";
 
 	const KeyAction getInput()
 	{
@@ -48,24 +49,16 @@ namespace InputHandler
 			editor.enableEditMode();
 			break;
 		case static_cast<KeyAction>(':'):
-			editor.enableCommandMode();
-			editor.refreshScreen();
-
 			shouldExit = doCommand(editor);
-			editor.updateCommandBuffer(std::string());
 
 			if (!shouldExit)
 			{
 				editor.enableReadMode(); //Go back to read mode after executing a command
-				editor.refreshScreen(true);
 			}
 			break;
 
 		case KeyAction::CtrlF:
 		case static_cast<KeyAction>('f'):
-			editor.enableFindMode();
-			editor.refreshScreen();
-
 			find(editor);
 			break;
 
@@ -153,7 +146,7 @@ namespace InputHandler
 			break;
 
 		case KeyAction::CtrlF:
-			editor.enableFindMode();
+			editor.enableFindInputMode();
 			editor.refreshScreen();
 
 			find(editor);
@@ -210,40 +203,57 @@ namespace InputHandler
 		}
 	}
 
-	bool doCommand(Editor& editor)
+	std::string getCommandInput(Editor& editor, const std::string& startStr, bool findMode = false)
 	{
-		bool shouldExit = false;
-		const char* startStr = "\r\x1b[0K:";
-		std::string command;
-		std::string commandBuffer = startStr;
-		KeyAction commandInput;
+		std::string inputStr;
+		if(findMode) inputStr = previousFindString;
+		std::string commandBuffer = startStr + inputStr;
 
+		KeyAction input;
 		do
 		{
 			std::cout << commandBuffer;
 			std::cout.flush();
 			editor.updateCommandBuffer(commandBuffer);
 
-			commandInput = getInput();
+			input = getInput();
 
-			if (isActionKey(commandInput)) continue;
-			if (commandInput == KeyAction::Esc) return shouldExit;
+			if (isActionKey(input)) continue;
+			if (input == KeyAction::Esc)
+			{
+				editor.updateCommandBuffer("");
+				editor.enableReadMode();
+				return std::string();
+			}
 
-			if (commandInput == KeyAction::Backspace && command.length() > 0)
+			if (input == KeyAction::Backspace && inputStr.length() > 0)
 			{
-				command.pop_back();
+				inputStr.pop_back();
 			}
-			else if (commandInput == KeyAction::Backspace && command.length() == 0) continue;
-			else if (commandInput == KeyAction::CtrlBackspace)
+			else if (input == KeyAction::Backspace && inputStr.empty()) continue;
+			else if (input == KeyAction::CtrlBackspace)
 			{
-				command.clear();
+				inputStr.clear();
 			}
-			else if(commandInput != KeyAction::Enter)
+			else if (input != KeyAction::Enter)
 			{
-				command += static_cast<unsigned char>(commandInput);
+				inputStr += static_cast<unsigned char>(input);
 			}
-			commandBuffer = startStr + command;
-		} while (commandInput != KeyAction::Enter);
+			commandBuffer = startStr + inputStr;
+		} while (input != KeyAction::Enter);
+
+		if(findMode) previousFindString = inputStr;
+
+		return inputStr;
+	}
+
+	bool doCommand(Editor& editor)
+	{
+		editor.enableCommandMode();
+		editor.refreshScreen();
+		bool shouldExit = false;
+		const char* startStr = "\r\x1b[0K:";
+		std::string command = getCommandInput(editor, startStr);
 
 		if ((command == "q" && !editor.isDirty()) || command == "q!") //Quit command - requires changes to be saved if not force quit
 		{
@@ -260,51 +270,23 @@ namespace InputHandler
 			editor.enableExitMode();
 			shouldExit = true;
 		}
+
+		editor.updateCommandBuffer(std::string());
 		return shouldExit;
 	}
 
 	void find(Editor& editor)
 	{
+		editor.enableFindInputMode();
+		editor.refreshScreen();
+
 		const char* startStr = "\r\x1b[0KString to find:";
-		std::string findString = previousFindString;
-		std::string commandBuffer = startStr + findString;
-		KeyAction input;
-
-		do
+		std::string findString = getCommandInput(editor, startStr, true);
+		if (!findString.empty())
 		{
-			std::cout << commandBuffer;
-			std::cout.flush();
-			editor.updateCommandBuffer(commandBuffer);
-
-			input = getInput();
-
-			if (isActionKey(input)) continue;
-			if (input == KeyAction::Esc)
-			{
-				editor.updateCommandBuffer("");
-				editor.enableReadMode();
-				return;
-			}
-
-			if (input == KeyAction::Backspace && findString.length() > 0)
-			{
-				findString.pop_back();
-			}
-			else if (input == KeyAction::Backspace && findString.length() == 0) continue;
-			else if (input == KeyAction::CtrlBackspace)
-			{
-				findString.clear();
-			}
-			else if (input != KeyAction::Enter)
-			{
-				findString += static_cast<unsigned char>(input);
-			}
-			commandBuffer = startStr + findString;
-		} while (input != KeyAction::Enter);
-
-		previousFindString = findString;
-		if(!findString.empty()) editor.findString(findString);
-		else editor.enableReadMode();
+			editor.enableFindMode();
+			editor.findString(findString);
+		}
 	}
 
 	void findModeInput(const KeyAction key, Editor& editor)
@@ -334,9 +316,66 @@ namespace InputHandler
 
 		case KeyAction::CtrlF:
 		case static_cast<KeyAction>('f'):
-			editor.refreshScreen();
-
 			find(editor);
+			break;
+
+		case static_cast<KeyAction>('r'):
+			replace(editor);
+			break;
+		}
+	}
+
+	void replace(Editor& editor)
+	{
+		editor.enableReplaceInputMode();
+		editor.refreshScreen();
+
+		const char* startStr = "\r\x1b[0KReplace With:";
+		std::string replaceStr = getCommandInput(editor, startStr);
+		replaceString = replaceStr;
+		editor.enableReplaceMode();
+	}
+
+	void replaceModeInput(const KeyAction key, Editor& editor)
+	{
+		switch (key)
+		{
+		case KeyAction::Enter:
+			editor.replaceFindString(replaceString);
+			break;
+
+		case static_cast<KeyAction>('a'):
+			editor.replaceFindString(replaceString, true);
+			break;
+
+		case KeyAction::ArrowLeft:
+		case KeyAction::ArrowRight:
+		case KeyAction::ArrowDown:
+		case KeyAction::ArrowUp:
+			editor.moveCursorToFind(key);
+			break;
+
+		case KeyAction::Esc:
+			editor.updateCommandBuffer("");
+			replaceString.clear();
+			editor.enableReadMode();
+			break;
+
+		case KeyAction::CtrlS:
+			editor.save();
+			break;
+
+		case KeyAction::CtrlQ:
+			editor.enableExitMode();
+			break;
+
+		case KeyAction::CtrlF:
+		case static_cast<KeyAction>('f'):
+			find(editor);
+			break;
+
+		case static_cast<KeyAction>('r'):
+			replace(editor);
 			break;
 		}
 	}

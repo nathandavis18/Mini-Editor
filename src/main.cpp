@@ -28,6 +28,7 @@ SOFTWARE.
 #include "KeyActions/KeyActions.hh"
 #include "File/File.hpp"
 #include "Console/Console.hpp"
+#include "Renderer/Renderer.hpp"
 
 #include <iostream>
 #include <string_view>
@@ -67,7 +68,7 @@ int main(int argc, const char** argv)
 		if (editor.mode() == Editor::Mode::ExitMode)
 		{
 			running = false;
-			editor.clearScreen();
+			Renderer::clearScreen();
 			break;
 		}
 		else
@@ -87,6 +88,10 @@ int main(int argc, const char** argv)
 				else if (editor.mode() == Editor::Mode::FindMode)
 				{
 					InputHandler::findModeInput(inputCode, editor);
+				}
+				else if (editor.mode() == Editor::Mode::ReplaceMode)
+				{
+					InputHandler::replaceModeInput(inputCode, editor);
 				}
 			}
 		}

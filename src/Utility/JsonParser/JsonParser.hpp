@@ -27,7 +27,6 @@ SOFTWARE.
 #include <unordered_set>
 #include <variant>
 #include <vector>
-#include <array>
 #include <string>
 #include <string_view>
 

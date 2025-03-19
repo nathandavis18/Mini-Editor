@@ -21,29 +21,32 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-#pragma once
+#include "FindAndReplace.hpp"
 
-#include "File/File.hpp"
-
-#include <vector>
-#include <string_view>
-
-namespace FindString
+namespace FindAndReplace
 {
-	/// <summary>
-	/// The structure for storing the find locations.
-	/// </summary>
-	struct FindLocation
+	std::vector<FindLocation> find(const std::string_view strToFind, const std::vector<FileHandler::Row>& fileRows)
 	{
-		size_t row = 0, startCol = 0, length = 0, filePos = 0;
-	};
+		std::vector<FindLocation> findLocations;
 
-	/// <summary>
-	/// Finds all the strings that match a given string and builds the location vector. Returns the vector after all locations are found.
-	/// Currently this is a blocking call, so on large files this may cause performance issues
-	/// </summary>
-	/// <param name="strToFind"></param>
-	/// <param name="fileRows"></param>
-	/// <returns></returns>
-	std::vector<FindLocation> find(const std::string_view strToFind, const std::vector<FileHandler::Row>& fileRows);
+		for (size_t i = 0; i < fileRows.size(); ++i)
+		{
+			const std::string_view line = fileRows.at(i).line;
+			size_t findPos;
+			size_t offset = 0;
+			while ((findPos = line.find(strToFind, offset)) != std::string_view::npos)
+			{
+				findLocations.emplace_back(i, findPos, strToFind.length(), findPos);
+				offset = findPos + strToFind.length();
+			}
+		}
+
+		return findLocations;
+	}
+
+	void replace(std::string& line, const std::string& insertStr, const FindLocation location)
+	{
+		line.erase(location.startCol, location.length);
+		line.insert(location.startCol, insertStr);
+	}
 }
