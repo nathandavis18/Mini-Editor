@@ -48,5 +48,11 @@ namespace FindAndReplace
 	/// <returns></returns>
 	std::vector<FindLocation> find(const std::string_view strToFind, const std::vector<FileHandler::Row>& fileRows);
 
+	/// <summary>
+	/// Replaces the find location in the given line with the new string
+	/// </summary>
+	/// <param name="line"></param>
+	/// <param name="insertStr"></param>
+	/// <param name="location"></param>
 	void replace(std::string& line, const std::string& insertStr, const FindLocation location);
 }

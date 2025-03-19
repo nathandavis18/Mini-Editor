@@ -162,14 +162,23 @@ public:
 	void enableCommandMode();
 
 	/// <summary>
-	/// Enables find mode, which enables the user to cycle through the find locations
+	/// Enables FindInputMode mode, which is used when the user is inputting a find string
 	/// </summary>
 	void enableFindInputMode();
 
+	/// <summary>
+	/// Enables Find mode, which is used to cycle through the find locations, and enter replace mode
+	/// </summary>
 	void enableFindMode();
 
+	/// <summary>
+	/// Enables ReplaceInputMode, which is used when the user is inputting a replace string
+	/// </summary>
 	void enableReplaceInputMode();
 
+	/// <summary>
+	/// Enables Replace mode, which is used when the user is cycling through find locations to replace specific ones (or optionally all of them)
+	/// </summary>
 	void enableReplaceMode();
 
 	/// <summary>
@@ -220,6 +229,12 @@ public:
 	/// <param name="key"></param>
 	void moveCursorToFind(const KeyActions::KeyAction key);
 
+	/// <summary>
+	/// Replaces the current find location with the given replaceStr.
+	/// If 'a' is pressed, replaces all of the find locations
+	/// </summary>
+	/// <param name="replaceStr"></param>
+	/// <param name="replaceAll"></param>
 	void replaceFindString(const std::string& replaceStr, const bool replaceAll = false);
 
 private:
@@ -424,6 +439,6 @@ private:
 
 #ifdef TESTING
 public:
-	const Window getWindowForTesting() const { return *mWindow; } //Need some way to access the file rows when testing
+	const Window getWindowForTesting() const { return *mWindow; } //Need some way to access the file rows and other information when testing
 #endif
 };

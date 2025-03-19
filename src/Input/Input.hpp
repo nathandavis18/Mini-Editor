@@ -69,7 +69,16 @@ namespace InputHandler
 	/// <param name="editor"></param>
 	void findModeInput(const KeyActions::KeyAction, Editor& editor);
 
+	/// <summary>
+	/// Gets the replace string from the user
+	/// </summary>
+	/// <param name="editor"></param>
 	void replace(Editor& editor);
 
+	/// <summary>
+	/// Controls what happens when the editor is in replace mode and a key is pressed
+	/// </summary>
+	/// <param name=""></param>
+	/// <param name="editor"></param>
 	void replaceModeInput(const KeyActions::KeyAction, Editor& editor);
 }

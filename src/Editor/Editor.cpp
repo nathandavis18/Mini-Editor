@@ -1255,7 +1255,7 @@ void Editor::replaceFindString(const std::string& replaceStr, const bool replace
 
 	mFindLocations.erase(mFindLocations.begin() + mCurrentFindPos);
 	if (mFindLocations.empty()) mCurrentFindPos = 0;
-	else if (mCurrentFindPos > 0) --mCurrentFindPos;
+	else if (mCurrentFindPos == mFindLocations.size()) --mCurrentFindPos;
 
 	moveCursorToFind(KeyActions::KeyAction::None);
 }
